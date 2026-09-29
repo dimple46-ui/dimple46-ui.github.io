@@ -1,44 +1,44 @@
 {
   "schemaVersion": 2,
   "fresh": true,
-  "relayUpdatedAt": "2026-09-29T10:58:38.305Z",
-  "sourceFetchedAt": "2026-09-29T10:58:38.300Z",
+  "relayUpdatedAt": "2026-09-29T11:00:39.952Z",
+  "sourceFetchedAt": "2026-09-29T11:00:39.946Z",
   "sourceAgeSeconds": 0,
   "koreaDate": "20260929",
   "stocks": {
     "samsung": {
       "code": "005930",
       "name": "Samsung Electronics",
-      "marketStatus": "OPEN",
+      "marketStatus": "CLOSE",
       "previousClose": 270000,
-      "price": 274500,
-      "change": 4500,
-      "changeRate": 1.67,
+      "price": 275000,
+      "change": 5000,
+      "changeRate": 1.85,
       "open": 266000,
       "high": 276000,
       "low": 266000,
-      "volume": 15643830,
-      "tradingValue": 4251195673500,
-      "nxtPrice": "275,000",
-      "nxtChangeRate": "1.85",
-      "lastTradedAt": "2026-09-29T19:58:37.751654+09:00"
+      "volume": 15653425,
+      "tradingValue": 4253832468500,
+      "nxtPrice": "274,500",
+      "nxtChangeRate": "1.67",
+      "lastTradedAt": "2026-09-29T20:00:00.000000+09:00"
     },
     "skHynix": {
       "code": "000660",
       "name": "SK hynix",
-      "marketStatus": "OPEN",
+      "marketStatus": "CLOSE",
       "previousClose": 1768000,
-      "price": 1788000,
-      "change": 20000,
-      "changeRate": 1.13,
+      "price": 1790000,
+      "change": 22000,
+      "changeRate": 1.24,
       "open": 1755000,
-      "high": 1788000,
+      "high": 1790000,
       "low": 1736000,
-      "volume": 2927313,
-      "tradingValue": 5166189655500,
-      "nxtPrice": "1,788,000",
-      "nxtChangeRate": "1.13",
-      "lastTradedAt": "2026-09-29T19:58:37.743112+09:00"
+      "volume": 2933822,
+      "tradingValue": 5177831849500,
+      "nxtPrice": "1,790,000",
+      "nxtChangeRate": "1.24",
+      "lastTradedAt": "2026-09-29T20:00:00.000000+09:00"
     }
   },
   "indexes": {
@@ -69,23 +69,23 @@
   },
   "kospiInvestors": {
     "bizdate": "20260929",
-    "time": "195836",
+    "time": "200039",
     "summary": {
-      "foreigner": -2992568000000,
-      "individual": 1243670000000,
-      "institution": 104188000000,
-      "otherCorporation": 1644062000000,
-      "otherForeigner": 648000000
+      "foreigner": -2992761000000,
+      "individual": 1244260000000,
+      "institution": 104162000000,
+      "otherCorporation": 1643687000000,
+      "otherForeigner": 654000000
     },
     "detail": [
       {
         "code": "1000",
         "name": "금융투자",
-        "netAmount": 17904000000,
-        "sellAmount": 1162959000000,
+        "netAmount": 17880000000,
+        "sellAmount": 1162983000000,
         "buyAmount": 1180863000000,
-        "sellQuantity": 9042807,
-        "buyQuantity": 9292200
+        "sellQuantity": 9043602,
+        "buyQuantity": 9292201
       },
       {
         "code": "2000",
@@ -99,10 +99,10 @@
       {
         "code": "3000",
         "name": "투신",
-        "netAmount": 135203000000,
-        "sellAmount": 462358000000,
+        "netAmount": 135201000000,
+        "sellAmount": 462360000000,
         "buyAmount": 597561000000,
-        "sellQuantity": 3628277,
+        "sellQuantity": 3628289,
         "buyQuantity": 4184690
       },
       {
@@ -153,47 +153,47 @@
       {
         "code": "7100",
         "name": "기타법인",
-        "netAmount": 1644062000000,
-        "sellAmount": 77665000000,
-        "buyAmount": 1721727000000,
-        "sellQuantity": 1390922,
-        "buyQuantity": 4779802
+        "netAmount": 1643687000000,
+        "sellAmount": 78067000000,
+        "buyAmount": 1721754000000,
+        "sellQuantity": 1393182,
+        "buyQuantity": 4780287
       },
       {
         "code": "8000",
         "name": "개인",
-        "netAmount": 1243670000000,
-        "sellAmount": 4783869000000,
-        "buyAmount": 6027539000000,
-        "sellQuantity": 112331893,
-        "buyQuantity": 135366230
+        "netAmount": 1244260000000,
+        "sellAmount": 4795672000000,
+        "buyAmount": 6039932000000,
+        "sellQuantity": 112477713,
+        "buyQuantity": 135516100
       },
       {
         "code": "9000",
         "name": "외국인",
-        "netAmount": -2992568000000,
-        "sellAmount": 8748352000000,
-        "buyAmount": 5755784000000,
-        "sellQuantity": 77014403,
-        "buyQuantity": 50985805
+        "netAmount": -2992761000000,
+        "sellAmount": 8748847000000,
+        "buyAmount": 5756086000000,
+        "sellQuantity": 77018397,
+        "buyQuantity": 50988329
       },
       {
         "code": "9001",
         "name": "기타외국인",
-        "netAmount": 648000000,
-        "sellAmount": 16769000000,
-        "buyAmount": 17417000000,
-        "sellQuantity": 380807,
-        "buyQuantity": 428260
+        "netAmount": 654000000,
+        "sellAmount": 16781000000,
+        "buyAmount": 17435000000,
+        "sellQuantity": 381031,
+        "buyQuantity": 428485
       }
     ]
   },
   "program": {
     "bizdate": "20260929",
-    "time": "195000",
-    "arbitrageNet": 15887017384,
-    "nonArbitrageNet": -2215937265961,
-    "totalNet": -2200050248577
+    "time": "200000",
+    "arbitrageNet": 15761249384,
+    "nonArbitrageNet": -2234845559724,
+    "totalNet": -2219084310340
   },
   "lastConfirmedStockFlow": {
     "samsung": {
