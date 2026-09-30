@@ -362,6 +362,10 @@ async function resolveKospi200FuturesCode(env, token, epochMs = Date.now()) {
 
 function compactFuturesQuote(body, code, fetchedAt) {
   const objects = [body?.output1, body?.output2, body?.output3].filter(Boolean);
+  const underlying =
+    objects.find(x => String(x?.bstp_cls_code ?? "") === "2001") ??
+    objects.find(x => /KOSPI\s*200|코스피\s*200/i.test(String(x?.hts_kor_isnm ?? ""))) ??
+    null;
   return {
     source: "KIS_OPEN_API",
     code,
@@ -385,7 +389,7 @@ function compactFuturesQuote(body, code, fetchedAt) {
     disparityRate: num(firstValue(objects, "dprt")),
     lastTradingDate: firstValue(objects, "futs_last_tr_date"),
     remainingDays: num(firstValue(objects, "hts_rmnn_dynu")),
-    underlyingIndex: num(body?.output3?.bstp_nmix_prpr),
+    underlyingIndex: num(underlying?.bstp_nmix_prpr),
   };
 }
 
