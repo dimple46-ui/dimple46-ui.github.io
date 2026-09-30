@@ -11,6 +11,7 @@ const ESTIMATE_SLOTS = [
   { hour: 14, minute: 30, key: "1430" }
 ];
 
+const QUALITY_VERSION = "2026-10-01.1";
 const memoryCache = new Map();
 
 function utf8ToBase64(str) {
@@ -48,10 +49,11 @@ function kstIsoFromYmdHms(ymd, hms = "000000") {
   const s = String(ymd || "");
   if (!/^\d{8}$/.test(s)) return null;
   const t = String(hms || "").replaceAll(":", "").padEnd(6, "0").slice(0, 6);
-  if (!/^\d{6}$/.test(t)) return null;
+  if (!/^\d{6}$/.test(t) || Number(t.slice(0,2)) > 23 || Number(t.slice(2,4)) > 59 || Number(t.slice(4,6)) > 59) return null;
   const iso = `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}T${t.slice(0,2)}:${t.slice(2,4)}:${t.slice(4,6)}+09:00`;
   const ms = Date.parse(iso);
-  return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+  if (!Number.isFinite(ms) || kstYmd(ms) !== s) return null;
+  return new Date(ms).toISOString();
 }
 
 function ageSeconds(iso, nowMs = Date.now()) {
@@ -99,11 +101,13 @@ function stockFlowMeta(value, koreaDate, fetchedAt, nowMs = Date.now()) {
     }, nowMs);
   }
   const inputTime = value.latest.inputTimeKst || null;
-  const marketTime = inputTime ? kstIsoFromYmdHms(koreaDate, inputTime) : null;
+  const fetchedMs = Date.parse(value.fetchedAt);
+  const businessDate = value.businessDate || (Number.isFinite(fetchedMs) ? kstYmd(fetchedMs) : null);
+  const marketTime = inputTime && businessDate ? kstIsoFromYmdHms(businessDate, inputTime) : null;
   const expected = estimateSlot(nowMs);
   const latestKey = inputTime ? inputTime.replace(":", "") : null;
   let status = "CURRENT_BUCKET";
-  if (String(koreaDate) !== kstYmd(nowMs)) status = "HISTORICAL";
+  if (businessDate && String(businessDate) !== kstYmd(nowMs)) status = "HISTORICAL";
   else if (!marketTime || ageSeconds(marketTime, nowMs) < -60) status = "INVALID_TIME";
   else if (!expected) status = "NOT_DUE";
   else if (latestKey !== expected.key) status = "STALE_BUCKET";
@@ -221,9 +225,10 @@ async function getKisToken(env) {
     })
   });
   const text = await res.text();
-  if (!res.ok) throw new Error(`KIS token HTTP ${res.status}: ${text.slice(0, 300)}`);
-  const body = JSON.parse(text);
-  if (!body.access_token) throw new Error(`KIS token missing access_token: ${text.slice(0, 300)}`);
+  if (!res.ok) throw kisHttpError("token", res.status);
+  let body;
+  try { body = JSON.parse(text); } catch { throw new Error("KIS token returned invalid JSON"); }
+  if (!body.access_token) throw new Error("KIS token missing access_token");
 
   const expiresIn = Math.max(600, Number(body.expires_in || 86400));
   const value = {
@@ -232,6 +237,12 @@ async function getKisToken(env) {
   };
   await cachePut(env, "kis:access-token:v1", value, Math.max(600, expiresIn - 120));
   return value.token;
+}
+
+function kisHttpError(operation, status) {
+  const error = new Error(`KIS ${operation} HTTP ${status}`);
+  error.category = status === 429 ? "API_LIMIT" : "SOURCE_ERROR";
+  return error;
 }
 
 async function kisGet(env, token, path, trId, params) {
@@ -251,7 +262,7 @@ async function kisGet(env, token, path, trId, params) {
     }
   });
   const text = await res.text();
-  if (!res.ok) throw new Error(`KIS ${trId} HTTP ${res.status}: ${text.slice(0, 500)}`);
+  if (!res.ok) throw kisHttpError(trId, res.status);
   const body = JSON.parse(text);
   if (body.rt_cd != null && String(body.rt_cd) !== "0") {
     throw new Error(`KIS ${trId} ${body.rt_cd}: ${body.msg1 || body.msg_cd || "unknown error"}`);
@@ -298,7 +309,7 @@ async function getStockFlowEstimate(env, token, code, epochMs = Date.now()) {
   const ymd = kstYmd(epochMs);
   const key = `kis:stock-flow:${ymd}:${code}:${slot.key}`;
   const cached = await cacheGet(env, key);
-  if (cached) return cached;
+  if (cached?.latest?.inputTimeKst?.replace(":", "") === slot.key) return cached;
 
   const body = await kisGet(
     env,
@@ -312,6 +323,7 @@ async function getStockFlowEstimate(env, token, code, epochMs = Date.now()) {
     source: "KIS_OPEN_API",
     isEstimate: true,
     stockCode: code,
+    businessDate: ymd,
     scheduledBucket: slot.key,
     fetchedAt: new Date().toISOString(),
     latest: compact.latest,
@@ -598,11 +610,19 @@ async function enrichWithKis(env, epochMs = Date.now()) {
   try {
     token = await getKisToken(env);
   } catch (e) {
-    return { enabled: true, data: {}, errors: [{ source: "KIS_TOKEN", message: String(e) }] };
+    return { enabled: true, data: {}, errors: [{ source: "KIS_TOKEN", category: e?.category || "SOURCE_ERROR", message: String(e) }] };
   }
 
+  let calendar = null;
+  try {
+    calendar = await getKoreaMarketCalendar(env, token, epochMs);
+  } catch (error) {
+    errors.push({ source: "calendar.korea", category: error?.category || "SOURCE_ERROR", message: String(error) });
+  }
+  if (koreaCalendarStatus(calendar, epochMs) === "HOLIDAY") {
+    return { enabled: true, data: { calendar: { korea: calendar } }, errors };
+  }
   const tasks = [
-    ["calendar.korea", () => getKoreaMarketCalendar(env, token, epochMs)],
     ["stockFlowEstimates.samsung", () => getStockFlowEstimate(env, token, "005930", epochMs)],
     ["stockFlowEstimates.skHynix", () => getStockFlowEstimate(env, token, "000660", epochMs)],
     ["futures.kospi200", () => getKospi200Futures(env, token, epochMs)],
@@ -610,11 +630,11 @@ async function enrichWithKis(env, epochMs = Date.now()) {
   ];
 
   const settled = await Promise.allSettled(tasks.map(([, fn]) => fn()));
-  const data = { calendar: {}, stockFlowEstimates: {}, futures: {}, futuresInvestors: {} };
+  const data = { calendar: { korea: calendar }, stockFlowEstimates: {}, futures: {}, futuresInvestors: {} };
   settled.forEach((r, i) => {
     const key = tasks[i][0];
     if (r.status === "rejected") {
-      errors.push({ source: key, message: String(r.reason) });
+      errors.push({ source: key, category: r.reason?.category || "SOURCE_ERROR", message: String(r.reason) });
       return;
     }
     const [group, field] = key.split(".");
@@ -709,9 +729,7 @@ function buildDataMeta(payload, data, kis, nowMs = Date.now()) {
   const investorTime = inv?.bizdate && inv?.time ? kstIsoFromYmdHms(inv.bizdate, inv.time) : null;
   const programTime = prog?.bizdate && prog?.time ? kstIsoFromYmdHms(prog.bizdate, prog.time) : null;
 
-  const calendarStatus = !cal
-    ? "UNKNOWN"
-    : String(cal.openDay || "").toUpperCase() === "Y" ? "TRADING_DAY" : "HOLIDAY";
+  const calendarStatus = koreaCalendarStatus(cal, nowMs);
 
   return {
     generatedAt: new Date(nowMs).toISOString(),
@@ -824,16 +842,86 @@ function buildDataMeta(payload, data, kis, nowMs = Date.now()) {
   };
 }
 
-function buildPayload(data, ageMs, kis) {
+// Fetch freshness and market freshness are different. Unknown exchange times
+// must remain null; callers can inspect fetchedAt without treating it as a trade.
+function koreaCalendarStatus(calendar, nowMs) {
+  if (!calendar || String(calendar.date) !== kstYmd(nowMs)) return "UNKNOWN";
+  const flag = String(calendar.openDay || "").toUpperCase();
+  return flag === "Y" ? "TRADING_DAY" : flag === "N" ? "HOLIDAY" : "UNKNOWN";
+}
+
+function applyDataQuality(payload, kis, nowMs) {
+  const meta = payload.dataMeta;
+  const calendarStatus = meta.session.status;
+  const closed = v => ["CLOSE", "CLOSED"].includes(String(v?.marketStatus || "").toUpperCase());
+  const records = [
+    ["stocks.samsung", meta.stocks.samsung, payload.stocks.samsung, "price"],
+    ["stocks.skHynix", meta.stocks.skHynix, payload.stocks.skHynix, "price"],
+    ["indexes.kospi", meta.indexes.kospi, payload.indexes.kospi, "value"],
+    ["indexes.kospi200", meta.indexes.kospi200, payload.indexes.kospi200, "value"],
+    ["kospiInvestors", meta.kospiInvestors, payload.kospiInvestors, "summary"],
+    ["program", meta.program, payload.program, "totalNet"],
+    ["stockFlowEstimates.samsung", meta.stockFlowEstimates.samsung, payload.stockFlowEstimates.samsung, "latest"],
+    ["stockFlowEstimates.skHynix", meta.stockFlowEstimates.skHynix, payload.stockFlowEstimates.skHynix, "latest"],
+    ["futures.kospi200", meta.futures.kospi200, payload.futures.kospi200, "price"],
+    ["futuresInvestors.kospi200", meta.futuresInvestors.kospi200, payload.futuresInvestors.kospi200, "foreign"],
+  ];
+  const issues = [];
+  for (const [path, record, value, required] of records) {
+    record.marketAgeSeconds = ageSeconds(record.marketTime, nowMs);
+    record.fetchAgeSeconds = ageSeconds(record.fetchedAt, nowMs);
+    record.hasValue = value?.[required] != null;
+    if (!record.hasValue && record.status !== "NOT_DUE") record.status = "MISSING";
+    if (record.timeBasis === "FETCH_TIME_NO_EXCHANGE_TIMESTAMP") {
+      record.marketTime = null;
+      record.marketAgeSeconds = null;
+      record.sourceAgeSeconds = null;
+      if (record.status === "LIVE") record.status = "RECENT_FETCH";
+    }
+    // Source-close evidence takes precedence over elapsed wall-clock age.
+    if (["kospiInvestors", "program"].includes(path) && record.hasValue &&
+        closed(payload.indexes.kospi) && !["UNKNOWN", "INVALID_TIME"].includes(record.status)) {
+      record.status = "CLOSED";
+    }
+    if (calendarStatus === "HOLIDAY" && record.status !== "INVALID_TIME") record.status = "HOLIDAY";
+    if (record.source === "KIS_OPEN_API" && !kis.enabled) record.status = "DISABLED";
+    const errors = payload.sourceErrors.filter(error => error?.source === path ||
+      (record.source === "KIS_OPEN_API" && error?.source === "KIS_TOKEN"));
+    if (errors.length) {
+      // Only explicit HTTP rate limits are classified here.
+      record.status = errors.some(error => error.category === "API_LIMIT") ? "API_LIMIT" : "SOURCE_ERROR";
+      record.errorSources = errors.map(error => error.source);
+    }
+    if (["MISSING", "UNKNOWN", "STALE", "STALE_BUCKET", "HISTORICAL", "INVALID_TIME", "SOURCE_ERROR", "API_LIMIT", "DISABLED"].includes(record.status)) {
+      issues.push({ path, status: record.status });
+    }
+  }
+  if (calendarStatus === "UNKNOWN") issues.push({ path: "calendar.korea", status: "UNKNOWN" });
+  const sourceAge = ageSeconds(payload.sourceFetchedAt, nowMs);
+  payload.sourceAgeSeconds = sourceAge;
+  payload.fresh = sourceAge != null && sourceAge >= -60 && sourceAge <= 180;
+  if (!payload.fresh) issues.push({ path: "sourceFetchedAt", status: "INVALID_OR_STALE" });
+  payload.qualityVersion = QUALITY_VERSION;
+  payload.dataQuality = {
+    evaluatedAt: new Date(nowMs).toISOString(),
+    issues,
+    unverifiedMarketTimes: records.filter(([, r]) => r.timeBasis === "FETCH_TIME_NO_EXCHANGE_TIMESTAMP").map(([path]) => path),
+    freshnessScope: "INGESTION_ONLY_RECOMPUTE_AT_READ_TIME"
+  };
+  payload.pipelineStatus = payload.sourceErrors.length || issues.length
+    ? "DEGRADED" : calendarStatus === "HOLIDAY" ? "HOLIDAY" : "OK";
+}
+
+function buildPayload(data, ageMs, kis, nowMs = Date.now()) {
   const indexes = Array.isArray(data.indexes) ? data.indexes : [];
   const sourceErrors = Array.isArray(data.errors) ? data.errors : [];
   const payload = {
     schemaVersion: 3,
     fresh: true,
-    relayUpdatedAt: new Date().toISOString(),
+    relayUpdatedAt: new Date(nowMs).toISOString(),
     sourceFetchedAt: data.fetchedAt,
     sourceAgeSeconds: Math.round(ageMs / 1000),
-    koreaDate: data.koreaDate ?? kstYmd(),
+    koreaDate: data.koreaDate ?? kstYmd(nowMs),
     stocks: {
       samsung: compactStock(data.stocks?.samsung),
       skHynix: compactStock(data.stocks?.skHynix)
@@ -874,12 +962,8 @@ function buildPayload(data, ageMs, kis) {
     sourceErrors: [...sourceErrors, ...(kis.errors || [])]
   };
   payload.calendar = { korea: kis.data?.calendar?.korea ?? null };
-  payload.dataMeta = buildDataMeta(payload, data, kis);
-  payload.pipelineStatus = payload.sourceErrors.length
-    ? "DEGRADED"
-    : payload.dataMeta?.session?.status === "HOLIDAY"
-      ? "HOLIDAY"
-      : "OK";
+  payload.dataMeta = buildDataMeta(payload, data, kis, nowMs);
+  applyDataQuality(payload, kis, nowMs);
   return payload;
 }
 async function updateGithubFile(env, payload) {
@@ -939,6 +1023,7 @@ export default {
       ok: true,
       service: "kr-market-github-relay-v3",
       schemaVersion: 3,
+      qualityVersion: QUALITY_VERSION,
       kisEnabled: kisEnabled(env),
       now: new Date().toISOString()
     });
