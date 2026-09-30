@@ -199,13 +199,21 @@ function estimateSlot(epochMs = Date.now()) {
 }
 
 function compactEstimateRows(body) {
+  const bucketTimes = {
+    "1": "09:30",
+    "2": "10:00",
+    "3": "11:20",
+    "4": "13:20",
+    "5": "14:30"
+  };
   const raw = Array.isArray(body?.output2) ? body.output2 : body?.output2 ? [body.output2] : [];
   const rows = raw.map(row => ({
     bucket: row.bsop_hour_gb ?? null,
+    inputTimeKst: bucketTimes[String(row.bsop_hour_gb ?? "")] ?? null,
     foreignNetBuyQty: num(row.frgn_fake_ntby_qty),
     institutionNetBuyQty: num(row.orgn_fake_ntby_qty),
     combinedNetBuyQty: num(row.sum_fake_ntby_qty)
-  }));
+  })).sort((a, b) => num(a.bucket) - num(b.bucket));
   const usable = rows.filter(r => r.foreignNetBuyQty != null || r.institutionNetBuyQty != null || r.combinedNetBuyQty != null);
   const latest = usable.length ? usable[usable.length - 1] : null;
   return { rows, latest };
