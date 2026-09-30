@@ -82,9 +82,10 @@ function metaRecord({
 
 function continuousStatus(value, marketTime, maxAgeSeconds, nowMs = Date.now()) {
   if (!value) return "MISSING";
-  if (String(value.marketStatus || "").toUpperCase() === "CLOSED") return "CLOSED";
   const age = ageSeconds(marketTime, nowMs);
   if (age == null) return "UNKNOWN";
+  if (age < -60) return "INVALID_TIME";
+  if (["CLOSE", "CLOSED"].includes(String(value.marketStatus || "").toUpperCase())) return "CLOSED";
   return age <= maxAgeSeconds ? "LIVE" : "STALE";
 }
 
@@ -93,7 +94,7 @@ function stockFlowMeta(value, koreaDate, fetchedAt, nowMs = Date.now()) {
     return metaRecord({
       source: "KIS_OPEN_API",
       fetchedAt,
-      status: "MISSING",
+      status: estimateSlot(nowMs) ? "MISSING" : "NOT_DUE",
       timeBasis: "SOURCE_SCHEDULED_BUCKET"
     }, nowMs);
   }
@@ -102,7 +103,9 @@ function stockFlowMeta(value, koreaDate, fetchedAt, nowMs = Date.now()) {
   const expected = estimateSlot(nowMs);
   const latestKey = inputTime ? inputTime.replace(":", "") : null;
   let status = "CURRENT_BUCKET";
-  if (!expected) status = "NOT_DUE";
+  if (String(koreaDate) !== kstYmd(nowMs)) status = "HISTORICAL";
+  else if (!marketTime || ageSeconds(marketTime, nowMs) < -60) status = "INVALID_TIME";
+  else if (!expected) status = "NOT_DUE";
   else if (latestKey !== expected.key) status = "STALE_BUCKET";
   return metaRecord({
     source: "KIS_OPEN_API",
@@ -314,12 +317,15 @@ async function getStockFlowEstimate(env, token, code, epochMs = Date.now()) {
     latest: compact.latest,
     rows: compact.rows
   };
-  await cachePut(env, key, value, 36 * 3600);
+  // Retry delayed or empty buckets on the next relay run.
+  if (compact.latest?.inputTimeKst?.replace(":", "") === slot.key) {
+    await cachePut(env, key, value, 36 * 3600);
+  }
   return value;
 }
 
 
-async async function getKoreaMarketCalendar(env, token, epochMs = Date.now()) {
+async function getKoreaMarketCalendar(env, token, epochMs = Date.now()) {
   const ymd = kstYmd(epochMs);
   const key = `kis:calendar:${ymd}`;
   const cached = await cacheGet(env, key);
@@ -333,8 +339,8 @@ async async function getKoreaMarketCalendar(env, token, epochMs = Date.now()) {
     { BASS_DT: ymd, CTX_AREA_FK: "", CTX_AREA_NK: "" }
   );
   const rows = Array.isArray(body?.output) ? body.output : body?.output ? [body.output] : [];
-  const row = rows.find(x => String(x?.bass_dt || "") === ymd) || rows[0] || null;
-  if (!row) throw new Error("KIS holiday calendar returned no rows");
+  const row = rows.find(x => String(x?.bass_dt || "") === ymd) || null;
+  if (!row) throw new Error("KIS holiday calendar missing requested date");
 
   const value = {
     source: "KIS_OPEN_API",
@@ -759,7 +765,7 @@ function buildDataMeta(payload, data, kis, nowMs = Date.now()) {
       source: "NAVER_NPAY",
       marketTime: investorTime,
       fetchedAt: sourceFetchedAt,
-      status: inv ? (ageSeconds(investorTime, nowMs) <= 300 ? "LIVE" : "STALE") : "MISSING",
+      status: continuousStatus(inv, investorTime, 300, nowMs),
       timeBasis: "SOURCE_MARKET_TIME",
       maxAgeSeconds: 300
     }, nowMs),
@@ -767,9 +773,9 @@ function buildDataMeta(payload, data, kis, nowMs = Date.now()) {
       source: "NAVER_NPAY",
       marketTime: programTime,
       fetchedAt: sourceFetchedAt,
-      status: prog ? (ageSeconds(programTime, nowMs) <= 900 ? "LIVE" : "STALE") : "MISSING",
+      status: continuousStatus(prog, programTime, 300, nowMs),
       timeBasis: "SOURCE_MARKET_TIME",
-      maxAgeSeconds: 900
+      maxAgeSeconds: 300
     }, nowMs),
     stockFlowEstimates: {
       samsung: stockFlowMeta(payload.stockFlowEstimates?.samsung, payload.koreaDate, sourceFetchedAt, nowMs),
