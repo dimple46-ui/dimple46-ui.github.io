@@ -278,6 +278,11 @@ async function resolveKospi200FuturesCode(env, token, epochMs = Date.now()) {
   if (!candidates.length) {
     candidates = rows.filter(r => /코스피\s*200|KOSPI\s*200/i.test(String(r.hts_kor_isnm || "")));
   }
+  // KOSPI200 board itself was requested (FID_COND_MRKT_CLS_CODE=""),
+  // so if vendor naming/code format changes, fall back to every valid futures row.
+  if (!candidates.length) {
+    candidates = rows.filter(r => String(r.futs_shrn_iscd || "").trim() !== "");
+  }
   candidates.sort((a, b) => {
     const da = num(a.hts_rmnn_dynu);
     const db = num(b.hts_rmnn_dynu);
