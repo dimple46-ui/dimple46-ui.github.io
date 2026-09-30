@@ -319,7 +319,7 @@ async function getStockFlowEstimate(env, token, code, epochMs = Date.now()) {
 }
 
 
-async function getKoreaMarketCalendar(env, token, epochMs = Date.now()) {
+async async function getKoreaMarketCalendar(env, token, epochMs = Date.now()) {
   const ymd = kstYmd(epochMs);
   const key = `kis:calendar:${ymd}`;
   const cached = await cacheGet(env, key);
