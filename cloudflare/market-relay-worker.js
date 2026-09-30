@@ -44,6 +44,76 @@ function kstYmd(epochMs = Date.now()) {
   return `${p.year}${String(p.month).padStart(2, "0")}${String(p.day).padStart(2, "0")}`;
 }
 
+function kstIsoFromYmdHms(ymd, hms = "000000") {
+  const s = String(ymd || "");
+  if (!/^\d{8}$/.test(s)) return null;
+  const t = String(hms || "").replaceAll(":", "").padEnd(6, "0").slice(0, 6);
+  if (!/^\d{6}$/.test(t)) return null;
+  const iso = `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}T${t.slice(0,2)}:${t.slice(2,4)}:${t.slice(4,6)}+09:00`;
+  const ms = Date.parse(iso);
+  return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+}
+
+function ageSeconds(iso, nowMs = Date.now()) {
+  if (!iso) return null;
+  const ms = Date.parse(iso);
+  if (!Number.isFinite(ms)) return null;
+  return Math.round((nowMs - ms) / 1000);
+}
+
+function metaRecord({
+  source,
+  marketTime = null,
+  fetchedAt = null,
+  status = "UNKNOWN",
+  timeBasis = null,
+  maxAgeSeconds = null
+}, nowMs = Date.now()) {
+  return {
+    source,
+    marketTime,
+    fetchedAt,
+    sourceAgeSeconds: ageSeconds(marketTime || fetchedAt, nowMs),
+    status,
+    timeBasis,
+    maxAgeSeconds
+  };
+}
+
+function continuousStatus(value, marketTime, maxAgeSeconds, nowMs = Date.now()) {
+  if (!value) return "MISSING";
+  if (String(value.marketStatus || "").toUpperCase() === "CLOSED") return "CLOSED";
+  const age = ageSeconds(marketTime, nowMs);
+  if (age == null) return "UNKNOWN";
+  return age <= maxAgeSeconds ? "LIVE" : "STALE";
+}
+
+function stockFlowMeta(value, koreaDate, fetchedAt, nowMs = Date.now()) {
+  if (!value?.latest) {
+    return metaRecord({
+      source: "KIS_OPEN_API",
+      fetchedAt,
+      status: "MISSING",
+      timeBasis: "SOURCE_SCHEDULED_BUCKET"
+    }, nowMs);
+  }
+  const inputTime = value.latest.inputTimeKst || null;
+  const marketTime = inputTime ? kstIsoFromYmdHms(koreaDate, inputTime) : null;
+  const expected = estimateSlot(nowMs);
+  const latestKey = inputTime ? inputTime.replace(":", "") : null;
+  let status = "CURRENT_BUCKET";
+  if (!expected) status = "NOT_DUE";
+  else if (latestKey !== expected.key) status = "STALE_BUCKET";
+  return metaRecord({
+    source: "KIS_OPEN_API",
+    marketTime,
+    fetchedAt: value.fetchedAt || fetchedAt,
+    status,
+    timeBasis: "SOURCE_SCHEDULED_BUCKET",
+    maxAgeSeconds: null
+  }, nowMs);
+}
+
 function num(v) {
   if (v == null || v === "") return null;
   const n = Number(String(v).replaceAll(",", ""));
@@ -244,6 +314,39 @@ async function getStockFlowEstimate(env, token, code, epochMs = Date.now()) {
     latest: compact.latest,
     rows: compact.rows
   };
+  await cachePut(env, key, value, 36 * 3600);
+  return value;
+}
+
+
+async function getKoreaMarketCalendar(env, token, epochMs = Date.now()) {
+  const ymd = kstYmd(epochMs);
+  const key = `kis:calendar:${ymd}`;
+  const cached = await cacheGet(env, key);
+  if (cached) return cached;
+
+  const body = await kisGet(
+    env,
+    token,
+    "/uapi/domestic-stock/v1/quotations/chk-holiday",
+    "CTCA0903R",
+    { BASS_DT: ymd, CTX_AREA_FK: "", CTX_AREA_NK: "" }
+  );
+  const rows = Array.isArray(body?.output) ? body.output : body?.output ? [body.output] : [];
+  const row = rows.find(x => String(x?.bass_dt || "") === ymd) || rows[0] || null;
+  if (!row) throw new Error("KIS holiday calendar returned no rows");
+
+  const value = {
+    source: "KIS_OPEN_API",
+    date: row.bass_dt ?? ymd,
+    weekdayCode: row.wday_dvsn_cd ?? null,
+    businessDay: row.bzdy_yn ?? null,
+    tradingDay: row.tr_day_yn ?? null,
+    openDay: row.opnd_yn ?? null,
+    settlementDay: row.sttl_day_yn ?? null,
+    fetchedAt: new Date().toISOString()
+  };
+  // Official KIS guidance recommends avoiding frequent calls; cache for the day.
   await cachePut(env, key, value, 36 * 3600);
   return value;
 }
@@ -493,6 +596,7 @@ async function enrichWithKis(env, epochMs = Date.now()) {
   }
 
   const tasks = [
+    ["calendar.korea", () => getKoreaMarketCalendar(env, token, epochMs)],
     ["stockFlowEstimates.samsung", () => getStockFlowEstimate(env, token, "005930", epochMs)],
     ["stockFlowEstimates.skHynix", () => getStockFlowEstimate(env, token, "000660", epochMs)],
     ["futures.kospi200", () => getKospi200Futures(env, token, epochMs)],
@@ -500,7 +604,7 @@ async function enrichWithKis(env, epochMs = Date.now()) {
   ];
 
   const settled = await Promise.allSettled(tasks.map(([, fn]) => fn()));
-  const data = { stockFlowEstimates: {}, futures: {}, futuresInvestors: {} };
+  const data = { calendar: {}, stockFlowEstimates: {}, futures: {}, futuresInvestors: {} };
   settled.forEach((r, i) => {
     const key = tasks[i][0];
     if (r.status === "rejected") {
@@ -515,6 +619,12 @@ async function enrichWithKis(env, epochMs = Date.now()) {
 
 function compactStock(stock) {
   if (!stock) return null;
+  const price = num(stock.price);
+  const previousClose = num(stock.previousClose);
+  const signedChange = price != null && previousClose != null ? price - previousClose : null;
+  const signedChangeRate = signedChange != null && previousClose
+    ? Math.round((signedChange / previousClose) * 10000) / 100
+    : null;
   return {
     code: stock.code ?? null,
     name: stock.name ?? null,
@@ -523,6 +633,8 @@ function compactStock(stock) {
     price: stock.price ?? null,
     change: stock.change ?? null,
     changeRate: stock.changeRate ?? null,
+    signedChange,
+    signedChangeRate,
     open: stock.open ?? null,
     high: stock.high ?? null,
     low: stock.low ?? null,
@@ -536,6 +648,11 @@ function compactStock(stock) {
 
 function compactIndex(index) {
   if (!index) return null;
+  const scale = 100;
+  const scaled = v => {
+    const n = num(v);
+    return n == null ? null : n / scale;
+  };
   return {
     code: index.code ?? null,
     marketStatus: index.marketStatus ?? null,
@@ -546,7 +663,13 @@ function compactIndex(index) {
     high: index.high ?? null,
     low: index.low ?? null,
     volume: index.volume ?? null,
-    tradingValue: index.tradingValue ?? null
+    tradingValue: index.tradingValue ?? null,
+    rawScale: scale,
+    normalizedValue: scaled(index.value),
+    normalizedChange: scaled(index.change),
+    normalizedOpen: scaled(index.open),
+    normalizedHigh: scaled(index.high),
+    normalizedLow: scaled(index.low)
   };
 }
 
@@ -564,10 +687,141 @@ function latestConfirmedFlow(history) {
   };
 }
 
+
+function buildDataMeta(payload, data, kis, nowMs = Date.now()) {
+  const sourceFetchedAt = data.fetchedAt ?? null;
+  const samsung = payload.stocks?.samsung ?? null;
+  const hynix = payload.stocks?.skHynix ?? null;
+  const kospi = payload.indexes?.kospi ?? null;
+  const k200 = payload.indexes?.kospi200 ?? null;
+  const inv = payload.kospiInvestors;
+  const prog = payload.program;
+  const fut = payload.futures?.kospi200 ?? null;
+  const futInv = payload.futuresInvestors?.kospi200 ?? null;
+  const cal = kis.data?.calendar?.korea ?? null;
+
+  const investorTime = inv?.bizdate && inv?.time ? kstIsoFromYmdHms(inv.bizdate, inv.time) : null;
+  const programTime = prog?.bizdate && prog?.time ? kstIsoFromYmdHms(prog.bizdate, prog.time) : null;
+
+  const calendarStatus = !cal
+    ? "UNKNOWN"
+    : String(cal.openDay || "").toUpperCase() === "Y" ? "TRADING_DAY" : "HOLIDAY";
+
+  return {
+    generatedAt: new Date(nowMs).toISOString(),
+    session: {
+      source: cal?.source ?? "KIS_OPEN_API",
+      marketTime: cal?.date ? kstIsoFromYmdHms(cal.date, "000000") : null,
+      fetchedAt: cal?.fetchedAt ?? null,
+      sourceAgeSeconds: ageSeconds(cal?.fetchedAt ?? null, nowMs),
+      status: calendarStatus,
+      openDay: cal?.openDay ?? null,
+      tradingDay: cal?.tradingDay ?? null,
+      businessDay: cal?.businessDay ?? null
+    },
+    stocks: {
+      samsung: metaRecord({
+        source: "NAVER_NPAY",
+        marketTime: samsung?.lastTradedAt ?? null,
+        fetchedAt: sourceFetchedAt,
+        status: continuousStatus(samsung, samsung?.lastTradedAt, 300, nowMs),
+        timeBasis: "SOURCE_TRADE_TIME",
+        maxAgeSeconds: 300
+      }, nowMs),
+      skHynix: metaRecord({
+        source: "NAVER_NPAY",
+        marketTime: hynix?.lastTradedAt ?? null,
+        fetchedAt: sourceFetchedAt,
+        status: continuousStatus(hynix, hynix?.lastTradedAt, 300, nowMs),
+        timeBasis: "SOURCE_TRADE_TIME",
+        maxAgeSeconds: 300
+      }, nowMs)
+    },
+    indexes: {
+      kospi: metaRecord({
+        source: "NAVER_NPAY",
+        marketTime: sourceFetchedAt,
+        fetchedAt: sourceFetchedAt,
+        status: continuousStatus(kospi, sourceFetchedAt, 300, nowMs),
+        timeBasis: "FETCH_TIME_NO_EXCHANGE_TIMESTAMP",
+        maxAgeSeconds: 300
+      }, nowMs),
+      kospi200: metaRecord({
+        source: "NAVER_NPAY",
+        marketTime: sourceFetchedAt,
+        fetchedAt: sourceFetchedAt,
+        status: continuousStatus(k200, sourceFetchedAt, 300, nowMs),
+        timeBasis: "FETCH_TIME_NO_EXCHANGE_TIMESTAMP",
+        maxAgeSeconds: 300
+      }, nowMs)
+    },
+    kospiInvestors: metaRecord({
+      source: "NAVER_NPAY",
+      marketTime: investorTime,
+      fetchedAt: sourceFetchedAt,
+      status: inv ? (ageSeconds(investorTime, nowMs) <= 300 ? "LIVE" : "STALE") : "MISSING",
+      timeBasis: "SOURCE_MARKET_TIME",
+      maxAgeSeconds: 300
+    }, nowMs),
+    program: metaRecord({
+      source: "NAVER_NPAY",
+      marketTime: programTime,
+      fetchedAt: sourceFetchedAt,
+      status: prog ? (ageSeconds(programTime, nowMs) <= 900 ? "LIVE" : "STALE") : "MISSING",
+      timeBasis: "SOURCE_MARKET_TIME",
+      maxAgeSeconds: 900
+    }, nowMs),
+    stockFlowEstimates: {
+      samsung: stockFlowMeta(payload.stockFlowEstimates?.samsung, payload.koreaDate, sourceFetchedAt, nowMs),
+      skHynix: stockFlowMeta(payload.stockFlowEstimates?.skHynix, payload.koreaDate, sourceFetchedAt, nowMs)
+    },
+    futures: {
+      kospi200: metaRecord({
+        source: "KIS_OPEN_API",
+        marketTime: fut?.fetchedAt ?? null,
+        fetchedAt: fut?.fetchedAt ?? null,
+        status: continuousStatus(fut, fut?.fetchedAt, 300, nowMs),
+        timeBasis: "FETCH_TIME_NO_EXCHANGE_TIMESTAMP",
+        maxAgeSeconds: 300
+      }, nowMs)
+    },
+    futuresInvestors: {
+      kospi200: metaRecord({
+        source: "KIS_OPEN_API",
+        marketTime: futInv?.fetchedAt ?? null,
+        fetchedAt: futInv?.fetchedAt ?? null,
+        status: continuousStatus(futInv, futInv?.fetchedAt, 300, nowMs),
+        timeBasis: "FETCH_TIME_NO_EXCHANGE_TIMESTAMP",
+        maxAgeSeconds: 300
+      }, nowMs)
+    },
+    lastConfirmedStockFlow: {
+      samsung: metaRecord({
+        source: "NAVER_NPAY",
+        marketTime: payload.lastConfirmedStockFlow?.samsung?.date
+          ? kstIsoFromYmdHms(String(payload.lastConfirmedStockFlow.samsung.date).replaceAll("-", ""), "153000")
+          : null,
+        fetchedAt: sourceFetchedAt,
+        status: payload.lastConfirmedStockFlow?.samsung ? "DAILY_CONFIRMED" : "MISSING",
+        timeBasis: "DAILY_CONFIRMED_CLOSE"
+      }, nowMs),
+      skHynix: metaRecord({
+        source: "NAVER_NPAY",
+        marketTime: payload.lastConfirmedStockFlow?.skHynix?.date
+          ? kstIsoFromYmdHms(String(payload.lastConfirmedStockFlow.skHynix.date).replaceAll("-", ""), "153000")
+          : null,
+        fetchedAt: sourceFetchedAt,
+        status: payload.lastConfirmedStockFlow?.skHynix ? "DAILY_CONFIRMED" : "MISSING",
+        timeBasis: "DAILY_CONFIRMED_CLOSE"
+      }, nowMs)
+    }
+  };
+}
+
 function buildPayload(data, ageMs, kis) {
   const indexes = Array.isArray(data.indexes) ? data.indexes : [];
   const sourceErrors = Array.isArray(data.errors) ? data.errors : [];
-  return {
+  const payload = {
     schemaVersion: 3,
     fresh: true,
     relayUpdatedAt: new Date().toISOString(),
@@ -613,8 +867,15 @@ function buildPayload(data, ageMs, kis) {
     },
     sourceErrors: [...sourceErrors, ...(kis.errors || [])]
   };
+  payload.calendar = { korea: kis.data?.calendar?.korea ?? null };
+  payload.dataMeta = buildDataMeta(payload, data, kis);
+  payload.pipelineStatus = payload.sourceErrors.length
+    ? "DEGRADED"
+    : payload.dataMeta?.session?.status === "HOLIDAY"
+      ? "HOLIDAY"
+      : "OK";
+  return payload;
 }
-
 async function updateGithubFile(env, payload) {
   if (!env.GITHUB_TOKEN) throw new Error("Missing GITHUB_TOKEN");
   if (!env.REPO_FULL_NAME) throw new Error("Missing REPO_FULL_NAME");
