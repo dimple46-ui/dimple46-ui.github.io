@@ -164,7 +164,7 @@ async function getKisToken(env) {
 async function kisGet(env, token, path, trId, params) {
   const url = new URL(KIS_BASE_URL + path);
   for (const [k, v] of Object.entries(params || {})) {
-    if (v != null && v !== "") url.searchParams.set(k, String(v));
+    if (v != null) url.searchParams.set(k, String(v));
   }
 
   const res = await fetch(url.toString(), {
@@ -262,7 +262,7 @@ async function resolveKospi200FuturesCode(env, token, epochMs = Date.now()) {
     {
       FID_COND_MRKT_DIV_CODE: "F",
       FID_COND_SCR_DIV_CODE: "20503",
-      FID_COND_MRKT_CLS_CODE: "MKI"
+      FID_COND_MRKT_CLS_CODE: ""
     }
   );
   const rows = Array.isArray(body?.output) ? body.output : body?.output ? [body.output] : [];
