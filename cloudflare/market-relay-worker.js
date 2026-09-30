@@ -255,50 +255,109 @@ function isFuturesRegularSession(epochMs = Date.now()) {
   return m >= 8 * 60 + 45 && m <= 15 * 60 + 45;
 }
 
+function secondThursdayDay(year, month) {
+  const first = new Date(Date.UTC(year, month - 1, 1));
+  const firstDow = first.getUTCDay();
+  const firstThursday = 1 + ((4 - firstDow + 7) % 7);
+  return firstThursday + 7;
+}
+
+function deriveKospi200FrontMonthCode(epochMs = Date.now()) {
+  const p = kstParts(epochMs);
+  let year = p.year;
+  let month = null;
+
+  for (const q of [3, 6, 9, 12]) {
+    if (q > p.month) {
+      month = q;
+      break;
+    }
+    if (q === p.month) {
+      const expiryDay = secondThursdayDay(year, q);
+      const afterExpiry =
+        p.day > expiryDay ||
+        (p.day === expiryDay && (p.hour > 15 || (p.hour === 15 && p.minute > 45)));
+      if (!afterExpiry) {
+        month = q;
+        break;
+      }
+    }
+  }
+
+  if (month == null) {
+    year += 1;
+    month = 3;
+  }
+
+  return `A${String(year - 2010).padStart(3, "0")}${String(month).padStart(2, "0")}`;
+}
+
 async function resolveKospi200FuturesCode(env, token, epochMs = Date.now()) {
   if (env.KOSPI200_FUTURES_CODE) return String(env.KOSPI200_FUTURES_CODE).trim();
+
   const ymd = kstYmd(epochMs);
   const key = `kis:k200-futures-code:${ymd}`;
   const cached = await cacheGet(env, key);
   if (cached?.code) return cached.code;
 
-  const body = await kisGet(
-    env,
-    token,
-    "/uapi/domestic-futureoption/v1/quotations/display-board-futures",
-    "FHPIF05030200",
-    {
-      FID_COND_MRKT_DIV_CODE: "F",
-      FID_COND_SCR_DIV_CODE: "20503",
-      FID_COND_MRKT_CLS_CODE: ""
-    }
-  );
-  const rows = Array.isArray(body?.output) ? body.output : body?.output ? [body.output] : [];
-  let candidates = rows.filter(r => String(r.futs_shrn_iscd || "").startsWith("101"));
-  if (!candidates.length) {
-    candidates = rows.filter(r => /코스피\s*200|KOSPI\s*200/i.test(String(r.hts_kor_isnm || "")));
-  }
-  // KOSPI200 board itself was requested (FID_COND_MRKT_CLS_CODE=""),
-  // so if vendor naming/code format changes, fall back to every valid futures row.
-  if (!candidates.length) {
-    candidates = rows.filter(r => String(r.futs_shrn_iscd || "").trim() !== "");
-  }
-  candidates.sort((a, b) => {
-    const da = num(a.hts_rmnn_dynu);
-    const db = num(b.hts_rmnn_dynu);
-    return (da ?? 99999) - (db ?? 99999);
-  });
-  const row = candidates[0];
-  if (!row?.futs_shrn_iscd) throw new Error("Unable to auto-resolve KOSPI200 front-month futures code");
+  try {
+    const body = await kisGet(
+      env,
+      token,
+      "/uapi/domestic-futureoption/v1/quotations/display-board-futures",
+      "FHPIF05030200",
+      {
+        FID_COND_MRKT_DIV_CODE: "F",
+        FID_COND_SCR_DIV_CODE: "20503",
+        FID_COND_MRKT_CLS_CODE: ""
+      }
+    );
 
-  const value = {
-    code: String(row.futs_shrn_iscd),
-    name: row.hts_kor_isnm ?? null,
-    remainingDays: num(row.hts_rmnn_dynu),
-    resolvedAt: new Date().toISOString()
-  };
-  await cachePut(env, key, value, 36 * 3600);
-  return value.code;
+    const blocks = [body?.output, body?.output1, body?.output2, body?.output3];
+    const rows = blocks.flatMap(v => Array.isArray(v) ? v : v ? [v] : []);
+
+    let candidates = rows.filter(r => {
+      const name = String(r?.hts_kor_isnm || "");
+      const code = String(r?.futs_shrn_iscd || "").trim();
+      return code && (/KOSPI\s*200|코스피\s*200|^F\s*20/i.test(name));
+    });
+
+    if (!candidates.length) {
+      candidates = rows.filter(r => String(r?.futs_shrn_iscd || "").trim() !== "");
+    }
+
+    candidates.sort((a, b) => {
+      const da = num(a.hts_rmnn_dynu);
+      const db = num(b.hts_rmnn_dynu);
+      return (da ?? 99999) - (db ?? 99999);
+    });
+
+    const row = candidates[0];
+    if (row?.futs_shrn_iscd) {
+      const value = {
+        code: String(row.futs_shrn_iscd).trim(),
+        name: row.hts_kor_isnm ?? null,
+        remainingDays: num(row.hts_rmnn_dynu),
+        resolvedAt: new Date().toISOString(),
+        resolution: "KIS_DISPLAY_BOARD"
+      };
+      await cachePut(env, key, value, 36 * 3600);
+      return value.code;
+    }
+  } catch (e) {
+    console.warn("KIS futures board resolver failed; using calendar fallback", String(e));
+  }
+
+  // KOSPI200 futures short-code scheme currently used by KIS:
+  // A + (year-2010, 3 digits) + expiry month. Example: 2026-12 => A01612.
+  // Expiry is the second Thursday of the quarterly month.
+  const fallbackCode = deriveKospi200FrontMonthCode(epochMs);
+  await cachePut(env, key, {
+    code: fallbackCode,
+    resolvedAt: new Date().toISOString(),
+    resolution: "CALENDAR_FALLBACK"
+  }, 36 * 3600);
+  return fallbackCode;
 }
 
 function compactFuturesQuote(body, code, fetchedAt) {
