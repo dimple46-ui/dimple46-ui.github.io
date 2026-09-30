@@ -1,8 +1,8 @@
 {
   "schemaVersion": 3,
   "fresh": true,
-  "relayUpdatedAt": "2026-09-30T06:28:06.792Z",
-  "sourceFetchedAt": "2026-09-30T06:28:06.795Z",
+  "relayUpdatedAt": "2026-09-30T06:30:06.733Z",
+  "sourceFetchedAt": "2026-09-30T06:30:06.735Z",
   "sourceAgeSeconds": 0,
   "koreaDate": "20260930",
   "stocks": {
@@ -11,14 +11,14 @@
       "name": "Samsung Electronics",
       "marketStatus": "OPEN",
       "previousClose": 272500,
-      "price": 269500,
-      "change": 3000,
-      "changeRate": 1.1,
+      "price": 268500,
+      "change": 4000,
+      "changeRate": 1.47,
       "open": 274500,
       "high": 276000,
       "low": 267500,
-      "volume": 12367388,
-      "tradingValue": 3352375262250,
+      "volume": 15229913,
+      "tradingValue": 4120963224750,
       "nxtPrice": "270,000",
       "nxtChangeRate": "-0.92",
       "lastTradedAt": "2026-09-30T15:20:00.000000+09:00"
@@ -44,7 +44,7 @@
   "indexes": {
     "kospi": {
       "code": "KOSPI",
-      "marketStatus": "OPEN",
+      "marketStatus": "CLOSE",
       "value": 685419,
       "change": -1662,
       "changeRate": -0.24,
@@ -56,20 +56,20 @@
     },
     "kospi200": {
       "code": "KPI200",
-      "marketStatus": "OPEN",
-      "value": 108475,
-      "change": -340,
-      "changeRate": -0.31,
+      "marketStatus": "CLOSE",
+      "value": 108333,
+      "change": -482,
+      "changeRate": -0.44,
       "open": 110009,
       "high": 110462,
       "low": 107850,
-      "volume": 118521,
-      "tradingValue": 14265158
+      "volume": 122248,
+      "tradingValue": 15163747
     }
   },
   "kospiInvestors": {
     "bizdate": "20260930",
-    "time": "152803",
+    "time": "153000",
     "summary": {
       "foreigner": -1456223000000,
       "individual": 978184000000,
@@ -305,66 +305,66 @@
       "code": "A01612",
       "name": "F 202612",
       "marketStatus": "OPEN",
-      "fetchedAt": "2026-09-30T06:28:05.565Z",
-      "price": 1091.4,
+      "fetchedAt": "2026-09-30T06:30:05.596Z",
+      "price": 1091.05,
       "previousClose": 1096.1,
-      "change": -4.7,
-      "changeRate": -0.43,
+      "change": -5.05,
+      "changeRate": -0.46,
       "open": 1105.55,
       "high": 1110.65,
       "low": 1083.75,
-      "volume": 91823,
-      "tradingValue": 25158080025,
-      "openInterest": 128896,
-      "openInterestChange": -3287,
-      "basis": 6.28,
-      "marketBasis": 6.65,
-      "theoreticalPrice": 1091.03,
-      "disparityRate": 0.03,
+      "volume": 93083,
+      "tradingValue": 25501717688,
+      "openInterest": 128911,
+      "openInterestChange": -3272,
+      "basis": 6.27,
+      "marketBasis": 7.72,
+      "theoreticalPrice": 1089.6,
+      "disparityRate": 0.13,
       "lastTradingDate": "20261210",
       "remainingDays": 72,
-      "underlyingIndex": 1084.75
+      "underlyingIndex": 1083.33
     }
   },
   "futuresInvestors": {
     "kospi200": {
       "source": "KIS_OPEN_API",
       "market": "KOSPI200_FUTURES",
-      "fetchedAt": "2026-09-30T06:28:05.498Z",
+      "fetchedAt": "2026-09-30T06:30:05.508Z",
       "foreign": {
-        "sellVolume": 69319,
-        "buyVolume": 64380,
-        "netBuyQty": -4939,
-        "sellAmount": 18989098,
-        "buyAmount": 17642653,
-        "netBuyAmount": -1346445
+        "sellVolume": 70128,
+        "buyVolume": 65358,
+        "netBuyQty": -4770,
+        "sellAmount": 19209743,
+        "buyAmount": 17909390,
+        "netBuyAmount": -1300353
       },
       "individual": {
-        "sellVolume": 12080,
-        "buyVolume": 12768,
-        "netBuyQty": 688,
-        "sellAmount": 3311176,
-        "buyAmount": 3498287,
-        "netBuyAmount": 187111
+        "sellVolume": 12118,
+        "buyVolume": 12879,
+        "netBuyQty": 761,
+        "sellAmount": 3321542,
+        "buyAmount": 3528560,
+        "netBuyAmount": 207018
       },
       "institution": {
-        "sellVolume": 9357,
-        "buyVolume": 13410,
-        "netBuyQty": 4053,
-        "sellAmount": 2565752,
-        "buyAmount": 3670980,
-        "netBuyAmount": 1105228
+        "sellVolume": 9658,
+        "buyVolume": 13457,
+        "netBuyQty": 3799,
+        "sellAmount": 2647842,
+        "buyAmount": 3683797,
+        "netBuyAmount": 1035955
       },
       "detail": {
-        "securitiesNetBuyQty": 4397,
+        "securitiesNetBuyQty": 4163,
         "investmentTrustNetBuyQty": -391,
         "privateFundNetBuyQty": 0,
         "bankNetBuyQty": 2,
         "insuranceNetBuyQty": -77,
         "merchantBankNetBuyQty": 63,
-        "fundNetBuyQty": 59,
+        "fundNetBuyQty": 39,
         "otherOrganizationNetBuyQty": 0,
-        "otherCorporationNetBuyQty": 198
+        "otherCorporationNetBuyQty": 210
       },
       "marketStatus": "OPEN"
     }
