@@ -19,14 +19,21 @@ Preserves API endpoints, TR_IDs, bindings, raw fields, schemaVersion and snapsho
 ## Validation
 `node --input-type=module --check < cloudflare/market-relay-worker.js`
 `node --test tests/relay-quality.test.mjs`
-Six focused tests pass. No authenticated KIS integration test or Cloudflare deployment was performed.
+Fourteen focused tests pass; a pinned public snapshot fixture prevents scheduled writes from changing the regression inputs. No authenticated KIS integration test or Cloudflare deployment was performed.
 
 ## Remaining before quality stage is complete
 - Inspect deployed source/version, LIVE_SOURCE and KIS_CACHE bindings, Secret names only, and actual Cron expression in Cloudflare.
 - Confirm deployment and next scheduled snapshot contain additive metadata; do not infer deployment from GitHub merge.
-- Calendar currently labels the session but does not gate all fetches. Validate holiday handling, calendar unavailable status, and per-source close behavior.
-- Index and futures freshness still uses fetch time without exchange timestamps. LIVE must not be interpreted as verified trade freshness for these sources.
-- pipelineStatus currently summarizes source errors rather than all missing/stale data. sourceErrors needs per-field propagation.
+- Confirm the calendar API response in production. This patch now gates KIS quote collection on confirmed holidays; unknown calendars degrade the pipeline.
+- Index and futures sources do not expose exchange timestamps in the current adapters. The patch uses RECENT_FETCH, marketTime:null and an explicit unverifiedMarketTimes list. Obtaining exchange timestamps remains future adapter work.
+- pipelineStatus now includes missing/stale/invalid metadata. Exact KIS source failures propagate to matching records. Unmapped upstream error labels still degrade the entire pipeline without speculative per-field mapping.
 - Top-level fresh is ingestion-time status; consumers must recompute age when reading a stored snapshot.
 - Public /run triggers writes; review access control separately without changing existing integrations blindly.
 - Then resume options/VKOSPI, overseas semiconductor sources, FX/rates, history in the agreed order.
+
+## Follow-up quality patch
+- qualityVersion: 2026-10-01.1 in payload and Worker health, while schemaVersion remains 3.
+- Calendar-gated KIS collection; strict date validation; per-source SOURCE_ERROR/API_LIMIT; ingestion age recalculated after enrichment.
+- Current bucket dates come from businessDate or the original estimate fetch, never from the new snapshot date.
+- /market read-only request at 2026-10-01 08:50:33 KST returned errors:[] from the live source. This is not an authenticated relay deployment test.
+- Cloudflare dashboard remains blocked by the previously observed security challenge. No production deployment or main merge has occurred.
