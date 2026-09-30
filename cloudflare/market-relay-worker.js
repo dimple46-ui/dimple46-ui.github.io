@@ -385,7 +385,7 @@ function compactFuturesQuote(body, code, fetchedAt) {
     disparityRate: num(firstValue(objects, "dprt")),
     lastTradingDate: firstValue(objects, "futs_last_tr_date"),
     remainingDays: num(firstValue(objects, "hts_rmnn_dynu")),
-    underlyingIndex: num(firstValue(objects, "bstp_nmix_prpr"))
+    underlyingIndex: num(body?.output3?.bstp_nmix_prpr),
   };
 }
 
