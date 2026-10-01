@@ -994,9 +994,184 @@ function isKoreaMarketRelayWindow(epochMs) {
   return m >= 9 * 60 && m <= 20 * 60;
 }
 
-async function runRelay(env) {
+// D1 history v1: public market metrics only; never serialize env or portfolio.
+const HISTORY_INTERVAL_MS = 120000;
+const HISTORY_VERSION = 1;
+function historyEnabled(env) {
+  return Boolean(env.MARKET_HISTORY) && String(env.HISTORY_ENABLED ?? "true") !== "false";
+}
+function historyMetric(value, meta, availableAt) {
+  return {
+    value: num(value), source: meta?.source ?? null, status: meta?.status ?? "UNKNOWN",
+    marketTime: meta?.marketTime ?? null,
+    fetchedAt: meta?.fetchedAt ?? null,
+    timeBasis: meta?.timeBasis ?? null,
+    availableAt
+  };
+}
+function historyObservation(payload) {
+  const observed = Date.parse(payload.relayUpdatedAt);
+  if (!Number.isFinite(observed)) throw new Error("HISTORY_INVALID_TIMESTAMP");
+  const day = kstYmd(observed);
+  if (day !== payload.koreaDate) throw new Error("HISTORY_DATE_MISMATCH");
+  const metrics = {};
+  const add = (name, value, meta) => { metrics[name] = historyMetric(value, meta, payload.relayUpdatedAt); };
+  for (const name of ["samsung", "skHynix"]) {
+    const stock = payload.stocks?.[name];
+    for (const field of ["price", "previousClose", "open", "high", "low", "volume", "tradingValue"]) {
+      add(`${name}.${field}`, stock?.[field], payload.dataMeta?.stocks?.[name]);
+    }
+    for (const [field, source] of [["foreignFlow", "foreignNetBuyQty"], ["institutionFlow", "institutionNetBuyQty"]]) {
+      add(`${name}.${field}`, payload.stockFlowEstimates?.[name]?.latest?.[source], payload.dataMeta?.stockFlowEstimates?.[name]);
+    }
+  }
+  for (const name of ["kospi", "kospi200"]) add(`${name}.price`, payload.indexes?.[name]?.normalizedValue, payload.dataMeta?.indexes?.[name]);
+  for (const name of ["foreigner", "institution", "individual"]) add(`market.${name}`, payload.kospiInvestors?.summary?.[name], payload.dataMeta?.kospiInvestors);
+  for (const name of ["arbitrageNet", "nonArbitrageNet", "totalNet"]) add(`program.${name}`, payload.program?.[name], payload.dataMeta?.program);
+  for (const name of ["price", "openInterest", "openInterestChange", "basis", "marketBasis"]) add(`futures.${name}`, payload.futures?.kospi200?.[name], payload.dataMeta?.futures?.kospi200);
+  for (const name of ["foreign", "institution", "individual"]) add(`futures.${name}Net`, payload.futuresInvestors?.kospi200?.[name]?.netBuyQty, payload.dataMeta?.futuresInvestors?.kospi200);
+  return {
+    slot_ms: Math.floor(observed / HISTORY_INTERVAL_MS) * HISTORY_INTERVAL_MS,
+    observed_at_ms: observed, available_at_ms: observed, trading_day: day,
+    schema_version: HISTORY_VERSION, quality_version: payload.qualityVersion ?? null,
+    pipeline_status: payload.pipelineStatus ?? "UNKNOWN", metrics,
+    quality: { dataQuality: payload.dataQuality ?? null, sourceErrors: (payload.sourceErrors || []).map(e => ({source:e.source, category:e.category ?? "SOURCE_ERROR"})),
+      futuresCode: payload.futures?.kospi200?.code ?? null }
+  };
+}
+function usableHistoryMetric(metric, atMs) {
+  if (!metric || metric.value == null || !Number.isFinite(metric.value)) return false;
+  const available = Date.parse(metric.availableAt);
+  if (!Number.isFinite(available) || available > atMs) return false;
+  if (!["LIVE", "RECENT_FETCH", "CURRENT_BUCKET"].includes(metric.status)) return false;
+  const timestamp = Date.parse(metric.marketTime || metric.fetchedAt);
+  if (!Number.isFinite(timestamp) || timestamp > atMs + 60000) return false;
+  return metric.status === "CURRENT_BUCKET" || atMs - timestamp <= 300000;
+}
+function decodeHistoryRow(row) {
+  return {...row, metrics: row.metrics ?? JSON.parse(row.metrics_json), quality: row.quality ?? JSON.parse(row.quality_json)};
+}
+function historyFeatures(current, rawRows) {
+  const now = current.observed_at_ms;
+  // The as-of cutoff rejects records collected later, even if backdated.
+  const rows = rawRows.map(decodeHistoryRow).filter(r => r.trading_day === current.trading_day &&
+    r.observed_at_ms <= now && r.available_at_ms <= now).sort((a,b) => a.observed_at_ms-b.observed_at_ms);
+  const windows = {};
+  for (const minutes of [5,10,30]) {
+    const target = now - minutes * 60000;
+    // Use only a sample at/before target; no interpolation or future sample.
+    const candidates = rows.filter(r => r.observed_at_ms <= target && target-r.observed_at_ms <= 150000);
+    const baseline = candidates.at(-1);
+    const window = {status: baseline ? "AVAILABLE" : "INSUFFICIENT_HISTORY", requestedMinutes:minutes,
+      baselineAt:baseline ? new Date(baseline.observed_at_ms).toISOString() : null,
+      actualElapsedSeconds:baseline ? (now-baseline.observed_at_ms)/1000 : null, metrics:{}};
+    for (const [name, metric] of Object.entries(current.metrics)) {
+      const old = baseline?.metrics?.[name];
+      const result = {value:null, status:"INSUFFICIENT_HISTORY"};
+      if (baseline) {
+        result.status = "UNUSABLE_DATA";
+        if (usableHistoryMetric(metric,now) && usableHistoryMetric(old,baseline.observed_at_ms)) {
+          result.status = "OK";
+          const bucket = name.endsWith("Flow");
+          const isFuture = name.startsWith("futures.");
+          if (isFuture && (!current.quality.futuresCode || current.quality.futuresCode !== baseline.quality.futuresCode)) {
+            result.status = "CONTRACT_CHANGED";
+          } else if (bucket) {
+            // Bucket data is stepwise; repeated observations are not fresh zero flows.
+            result.status = metric.marketTime === old.marketTime ? "UNCHANGED_BUCKET" : "BUCKET_CHANGE_ONLY";
+          } else if (name.endsWith(".price")) {
+            result.value = old.value > 0 ? (metric.value/old.value-1)*100 : null;
+            result.status = result.value == null ? "INVALID_BASELINE" : "OK";
+            result.unit = "percent";
+          } else if (!/\.(previousClose|open|high|low)$/.test(name)) {
+            result.value = metric.value-old.value;
+            if (/\.(volume|tradingValue)$/.test(name) && result.value < 0) {
+              result.value=null; result.status="COUNTER_RESET";
+            }
+          } else { result.status="NOT_APPLICABLE"; }
+          result.timeBasis = metric.timeBasis;
+        }
+      }
+      window.metrics[name]=result;
+    }
+    // Acceleration is change in shares/minute across two actual sampled windows.
+    const previousTarget = baseline ? baseline.observed_at_ms-minutes*60000 : null;
+    const earlier = baseline ? rows.filter(r => r.observed_at_ms<=previousTarget && previousTarget-r.observed_at_ms<=150000).at(-1) : null;
+    window.volumeAcceleration = {};
+    for (const name of ["samsung","skHynix"]) {
+      const field=`${name}.volume`, metric=current.metrics[field], old=baseline?.metrics[field], prev=earlier?.metrics[field];
+      const result={value:null,unit:"shares_per_minute_change",status:"INSUFFICIENT_HISTORY"};
+      if (baseline && earlier && usableHistoryMetric(metric,now) && usableHistoryMetric(old,baseline.observed_at_ms) && usableHistoryMetric(prev,earlier.observed_at_ms)) {
+        const d1=metric.value-old.value,d0=old.value-prev.value;
+        if(d1>=0 && d0>=0){result.value=d1/((now-baseline.observed_at_ms)/60000)-d0/((baseline.observed_at_ms-earlier.observed_at_ms)/60000);result.status="OK";}
+        else result.status="COUNTER_RESET";
+      }
+      window.volumeAcceleration[name]=result;
+    }
+    window.relativeStrength={};
+    for(const [a,b] of [["samsung","skHynix"],["samsung","kospi"],["skHynix","kospi"],["samsung","kospi200"],["skHynix","kospi200"]]) {
+      const av=window.metrics[`${a}.price`],bv=window.metrics[`${b}.price`];
+      window.relativeStrength[`${a}_vs_${b}`]={value:av?.value!=null&&bv?.value!=null?av.value-bv.value:null,unit:"percentage_points"};
+    }
+    windows[`${minutes}m`]=window;
+  }
+  const bucketChanges={};
+  for(const name of ["samsung","skHynix"]){
+    bucketChanges[name]={};
+    for(const field of ["foreignFlow","institutionFlow"]){
+      const key=`${name}.${field}`,metric=current.metrics[key];
+      const previous=rows.filter(r=>r.observed_at_ms<now && usableHistoryMetric(r.metrics[key],r.observed_at_ms) && r.metrics[key].marketTime !== metric?.marketTime).at(-1);
+      bucketChanges[name][field]={value:previous && usableHistoryMetric(metric,now)?metric.value-previous.metrics[key].value:null,
+        status:previous && usableHistoryMetric(metric,now)?"BUCKET_DELTA":"INSUFFICIENT_BUCKET_HISTORY",unit:"shares",
+        previousBucketTime:previous?.metrics[key]?.marketTime??null,currentBucketTime:metric?.marketTime??null};
+    }
+  }
+  const intraday={};
+  for(const name of ["samsung","skHynix"]){
+    const m=current.metrics,price=m[`${name}.price`],open=m[`${name}.open`],close=m[`${name}.previousClose`];
+    const valid=usableHistoryMetric(price,now);
+    intraday[name]={fromOpenPct:valid&&usableHistoryMetric(open,now)&&open.value>0?(price.value/open.value-1)*100:null,
+      fromPreviousClosePct:valid&&usableHistoryMetric(close,now)&&close.value>0?(price.value/close.value-1)*100:null};
+  }
+  return {version:1,generatedAt:new Date(now).toISOString(),windows,bucketChanges,intraday,
+    sameTimeHistoricalAverage:{status:"NOT_IMPLEMENTED",value:null},
+    limitations:["2-minute sampling: inspect actualElapsedSeconds", "RECENT_FETCH is not verified trade freshness", "stock flows use bucket deltas, not fabricated 5-minute flows"]};
+}
+async function persistMarketHistory(env,payload) {
+  if(!historyEnabled(env)) return {status:"DISABLED"};
+  if(payload.dataMeta?.session?.status==="HOLIDAY") return {status:"SKIPPED_HOLIDAY"};
+  const current=historyObservation(payload);
+  if(!isKoreaMarketRelayWindow(current.observed_at_ms)) return {status:"OUTSIDE_WINDOW"};
+  const db=env.MARKET_HISTORY;
+  const result=await db.prepare(`INSERT INTO market_observations
+    (slot_ms,observed_at_ms,available_at_ms,trading_day,schema_version,quality_version,pipeline_status,metrics_json,quality_json)
+    VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(slot_ms) DO NOTHING`).bind(
+      current.slot_ms,current.observed_at_ms,current.available_at_ms,current.trading_day,current.schema_version,
+      current.quality_version,current.pipeline_status,JSON.stringify(current.metrics),JSON.stringify(current.quality)).run();
+  if(!result.success) throw new Error("HISTORY_INSERT_FAILED");
+  // On retries use the immutable stored observation, not a later in-memory value.
+  const stored=await db.prepare("SELECT * FROM market_observations WHERE slot_ms = ?").bind(current.slot_ms).first();
+  if(!stored) throw new Error("HISTORY_INSERT_NOT_VISIBLE");
+  const rows=await db.prepare(`SELECT slot_ms, observed_at_ms, available_at_ms, trading_day, metrics_json, quality_json FROM market_observations
+    WHERE trading_day = ? AND slot_ms <= ? ORDER BY slot_ms DESC LIMIT 331`).bind(current.trading_day,current.slot_ms).all();
+  if(!rows.success) throw new Error("HISTORY_READ_FAILED");
+  const features=historyFeatures(decodeHistoryRow(stored),rows.results);
+  const updated=await db.prepare("UPDATE market_observations SET features_json = ? WHERE slot_ms = ? AND features_json IS NULL").bind(JSON.stringify(features),current.slot_ms).run();
+  if(!updated.success) throw new Error("HISTORY_FEATURE_WRITE_FAILED");
+  return {status:"STORED",slotMs:current.slot_ms};
+}
+function scheduleMarketHistory(env,payload,ctx) {
+  if(!historyEnabled(env)) return;
+  // Independent lifetime: database failures cannot block or reject GitHub writes.
+  ctx.waitUntil(persistMarketHistory(env,payload).then(result=>{
+    console.log("Market history",result.status,result.slotMs??null);
+  }).catch(()=>{ console.error("Market history failed; inspect D1 binding and migration"); }));
+}
+
+async function runRelay(env, ctx) {
   const [{ data, ageMs }, kis] = await Promise.all([fetchLiveMarket(env), enrichWithKis(env)]);
   const payload = buildPayload(data, ageMs, kis);
+  scheduleMarketHistory(env, payload, ctx);
   await updateGithubFile(env, payload);
   return payload;
 }
@@ -1004,16 +1179,16 @@ async function runRelay(env) {
 export default {
   async scheduled(controller, env, ctx) {
     if (!isKoreaMarketRelayWindow(controller.scheduledTime)) return;
-    ctx.waitUntil(runRelay(env).catch(error => {
+    ctx.waitUntil(runRelay(env, ctx).catch(error => {
       console.error("Relay failed:", error);
       throw error;
     }));
   },
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === "/run") {
       try {
-        const payload = await runRelay(env);
+        const payload = await runRelay(env, ctx);
         return Response.json({ ok: true, schemaVersion: payload.schemaVersion, payload });
       } catch (error) {
         return Response.json({ ok: false, error: String(error) }, { status: 500 });
@@ -1024,6 +1199,8 @@ export default {
       service: "kr-market-github-relay-v3",
       schemaVersion: 3,
       qualityVersion: QUALITY_VERSION,
+      historyVersion: HISTORY_VERSION,
+      historyEnabled: historyEnabled(env),
       kisEnabled: kisEnabled(env),
       now: new Date().toISOString()
     });
