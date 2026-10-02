@@ -94,6 +94,20 @@ test('D1 failure is isolated; GitHub write still executes',async()=>{
  assert.equal(s.run('githubWrites'),1);
  }finally{s.db.close();}
 });
+test('expiring synthetic D1 failure is bounded and isolated from GitHub write',async()=>{
+ const s=setup();try{s.ctx.payload=sample(10);s.ctx.jobs=[];s.ctx.context={waitUntil:p=>s.ctx.jobs.push(p)};
+ const observed=Date.parse(s.ctx.payload.relayUpdatedAt);
+ s.ctx.env.HISTORY_FAILURE_TEST_UNTIL=new Date(observed+5*60000).toISOString();
+ s.run(`let githubWrites=0; fetchLiveMarket=async()=>({data:{},ageMs:0}); enrichWithKis=async()=>({}); buildPayload=()=>payload; updateGithubFile=async()=>{githubWrites++;};`);
+ await s.run('runRelay(env,context)');await Promise.all(s.ctx.jobs);
+ assert.equal(s.run('githubWrites'),1);
+ assert.equal(s.db.prepare('SELECT COUNT(*) AS n FROM market_observations').get().n,0);
+ s.ctx.env.HISTORY_FAILURE_TEST_UNTIL=new Date(observed+16*60000).toISOString();
+ assert.equal(s.run('historyFailureTestActive(env,payload.relayUpdatedAt ? Date.parse(payload.relayUpdatedAt) : Date.now())'),false);
+ s.ctx.env.HISTORY_FAILURE_TEST_UNTIL=new Date(observed-1).toISOString();
+ assert.equal(s.run('historyFailureTestActive(env,payload.relayUpdatedAt ? Date.parse(payload.relayUpdatedAt) : Date.now())'),false);
+ }finally{s.db.close();}
+});
 test('unbound/disabled/holiday history does not write',async()=>{
  const s=setup();try{s.ctx.payload=sample(0);assert.equal((await s.run('persistMarketHistory({},payload)')).status,'DISABLED');
  assert.equal((await s.run('persistMarketHistory({...env,HISTORY_ENABLED:"false"},payload)')).status,'DISABLED');
