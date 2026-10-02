@@ -997,8 +997,13 @@ function isKoreaMarketRelayWindow(epochMs) {
 // D1 history v1: public market metrics only; never serialize env or portfolio.
 const HISTORY_INTERVAL_MS = 120000;
 const HISTORY_VERSION = 1;
+const HISTORY_FAILURE_TEST_MAX_MS = 15 * 60 * 1000;
 function historyEnabled(env) {
   return Boolean(env.MARKET_HISTORY) && String(env.HISTORY_ENABLED ?? "true") !== "false";
+}
+function historyFailureTestActive(env, nowMs = Date.now()) {
+  const untilMs = Date.parse(String(env.HISTORY_FAILURE_TEST_UNTIL ?? ""));
+  return Number.isFinite(untilMs) && untilMs >= nowMs && untilMs - nowMs <= HISTORY_FAILURE_TEST_MAX_MS;
 }
 function historyMetric(value, meta, availableAt) {
   return {
@@ -1142,6 +1147,8 @@ async function persistMarketHistory(env,payload) {
   if(payload.dataMeta?.session?.status==="HOLIDAY") return {status:"SKIPPED_HOLIDAY"};
   const current=historyObservation(payload);
   if(!isKoreaMarketRelayWindow(current.observed_at_ms)) return {status:"OUTSIDE_WINDOW"};
+  // Production fail-safe validation only. An expired or overly long window is always inert.
+  if(historyFailureTestActive(env,current.observed_at_ms)) throw new Error("HISTORY_SYNTHETIC_FAILURE");
   const db=env.MARKET_HISTORY;
   const result=await db.prepare(`INSERT INTO market_observations
     (slot_ms,observed_at_ms,available_at_ms,trading_day,schema_version,quality_version,pipeline_status,metrics_json,quality_json)
@@ -1201,6 +1208,7 @@ export default {
       qualityVersion: QUALITY_VERSION,
       historyVersion: HISTORY_VERSION,
       historyEnabled: historyEnabled(env),
+      historyFailureTestActive: historyFailureTestActive(env),
       kisEnabled: kisEnabled(env),
       now: new Date().toISOString()
     });
