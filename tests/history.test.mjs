@@ -18,11 +18,12 @@ function setup(){
  return {db,ctx,run:s=>vm.runInContext(s,ctx)};
 }
 const start=Date.parse('2026-10-01T09:00:00+09:00');
-function sample(minute){
- const at=new Date(start+minute*60000).toISOString();
+function sample(minute,ymd='20261001'){
+ const localDate=`${ymd.slice(0,4)}-${ymd.slice(4,6)}-${ymd.slice(6,8)}`;
+ const at=new Date(Date.parse(`${localDate}T09:00:00+09:00`)+minute*60000).toISOString();
  const meta={status:'LIVE',marketTime:at,fetchedAt:at,timeBasis:'SOURCE_TRADE_TIME'};
  const stock={price:100+minute,previousClose:100,open:100,high:200,low:90,volume:minute*100,tradingValue:minute*10000};
- return {relayUpdatedAt:at,sourceFetchedAt:at,koreaDate:'20261001',qualityVersion:'2026-10-01.1',pipelineStatus:'OK',
+ return {relayUpdatedAt:at,sourceFetchedAt:at,koreaDate:ymd,qualityVersion:'2026-10-01.1',pipelineStatus:'OK',
   stocks:{samsung:stock,skHynix:{...stock,price:100+minute*2}},indexes:{kospi:{normalizedValue:100+minute/2},kospi200:{normalizedValue:100+minute/2}},
   kospiInvestors:{summary:{foreigner:minute*10,institution:-minute*10,individual:0}},program:{arbitrageNet:0,nonArbitrageNet:minute*5,totalNet:minute*5},
   futures:{kospi200:{code:'A01612',price:100+minute,openInterest:1000+minute,basis:minute/10,marketBasis:minute/10}},
@@ -42,7 +43,22 @@ test('real SQLite migration and 21 distinct observations produce past-only featu
  assert.equal(f.windows['10m'].metrics['market.foreigner'].value,100);
  assert.equal(f.windows['30m'].metrics['futures.openInterest'].value,30);
  assert.equal(f.windows['5m'].volumeAcceleration.samsung.value,0);
- assert.equal(f.sameTimeHistoricalAverage.status,'NOT_IMPLEMENTED');
+ assert.equal(f.windows['2m'].actualElapsedSeconds,120);
+ assert.ok(Math.abs(f.windows['2m'].metrics['samsung.price'].value-(140/138-1)*100)<1e-9);
+ assert.equal(f.windows['10m'].futuresPosition.state,'NEW_LONG_CANDIDATE');
+ assert.equal(f.windows['10m'].futuresPosition.confidence,'MEDIUM');
+ assert.equal(f.windows['10m'].divergences.samsungPriceVsProgram.state,'CONFIRMING');
+ assert.equal(f.windows['10m'].divergences.samsungPriceVsOpenInterest.state,'CONFIRMING');
+ assert.equal(f.windows['10m'].acceleration['market.foreigner'].value,0);
+ assert.equal(f.windows['10m'].direction['market.foreigner'].state,'INCREASING');
+ assert.equal(f.windows['10m'].relativeStrength.samsung_vs_skHynix.quality,'VERIFIED');
+ assert.ok(f.windows['10m'].realizedVolatility.samsung.value>0);
+ assert.ok(Math.abs(f.intraday.samsung.highLowPosition-50/110)<1e-9);
+ assert.equal(f.intraday.samsung.vwap,100);
+ assert.ok(Math.abs(f.intraday.samsung.vwapDeviationPct-40)<1e-9);
+ assert.equal(f.sameTimeHistorical.status,'INSUFFICIENT_HISTORY');
+ assert.equal(f.sameTimeHistorical.windows['5d'].sampleCount,0);
+ assert.equal(f.version,2);
  console.log('Measured JSON bytes per row:',Buffer.byteLength(last.metrics_json)+Buffer.byteLength(last.quality_json)+Buffer.byteLength(last.features_json));
  }finally{s.db.close();}
 });
@@ -67,6 +83,55 @@ test('future availability and missing baseline are rejected',()=>{
  assert.equal(s.run("historyFeatures(current,rows).windows['10m'].status"),'INSUFFICIENT_HISTORY');
  }finally{s.db.close();}
 });
+test('same-time baselines require complete 5/10/20-day samples',async()=>{
+ const s=setup();try{
+ const days=['20260924','20260925','20260928','20260929','20260930'];
+ for(let i=0;i<days.length;i++){
+  const p=sample(90,days[i]);p.stocks.samsung.volume=(i+1)*1000;p.stocks.samsung.tradingValue=p.stocks.samsung.volume*100;
+  await put(s,90,p);
+ }
+ const current=sample(90);current.stocks.samsung.volume=6000;current.stocks.samsung.tradingValue=600000;await put(s,90,current);
+ const f=JSON.parse(s.db.prepare('SELECT features_json FROM market_observations WHERE trading_day=?').get('20261001').features_json);
+ const five=f.sameTimeHistorical.windows['5d'].metrics['samsung.volume'];
+ assert.equal(f.sameTimeHistorical.status,'AVAILABLE');
+ assert.equal(five.status,'VALID');assert.equal(five.sampleCount,5);assert.equal(five.mean,3000);
+ assert.equal(five.median,3000);assert.equal(five.percentile,100);assert.equal(five.ratioToMean,2);
+ assert.equal(f.sameTimeHistorical.windows['10d'].status,'INSUFFICIENT_HISTORY');
+ assert.equal(f.sameTimeHistorical.windows['10d'].metrics['samsung.volume'].value,null);
+ }finally{s.db.close();}
+});
+test('same-time baseline rejects observations unavailable at the cutoff',()=>{
+ const s=setup();try{
+ s.ctx.payload=sample(90);const current=s.run('historyObservation(payload)');
+ s.ctx.payload=sample(90,'20260930');const previous=s.run('historyObservation(payload)');
+ previous.available_at_ms=current.observed_at_ms+1;s.ctx.current=current;s.ctx.sameRows=[previous];
+ const result=s.run('historyFeatures(current,[current],sameRows).sameTimeHistorical');
+ assert.equal(result.status,'INSUFFICIENT_HISTORY');
+ assert.equal(result.windows['5d'].sampleCount,0);
+ }finally{s.db.close();}
+});
+test('same-time SQL never selects a later observation from a prior trading day',async()=>{
+ const s=setup();try{
+ const days=['20260924','20260925','20260928','20260929','20260930'];
+ for(let i=0;i<days.length;i++){
+  const before=sample(88,days[i]);before.stocks.samsung.volume=(i+1)*1000;await put(s,88,before);
+  const after=sample(92,days[i]);after.stocks.samsung.volume=99999;await put(s,92,after);
+ }
+ const current=sample(90);current.stocks.samsung.volume=6000;await put(s,90,current);
+ const f=JSON.parse(s.db.prepare('SELECT features_json FROM market_observations WHERE trading_day=?').get('20261001').features_json);
+ const metric=f.sameTimeHistorical.windows['5d'].metrics['samsung.volume'];
+ assert.equal(metric.status,'VALID');assert.equal(metric.mean,3000);assert.equal(metric.percentile,100);
+ }finally{s.db.close();}
+});
+test('same-time statistics expose stale current input instead of a numeric value',async()=>{
+ const s=setup();try{
+ for(const day of ['20260924','20260925','20260928','20260929','20260930']) await put(s,90,sample(90,day));
+ const current=sample(90);current.dataMeta.program.status='STALE';await put(s,90,current);
+ const f=JSON.parse(s.db.prepare('SELECT features_json FROM market_observations WHERE trading_day=?').get('20261001').features_json);
+ const metric=f.sameTimeHistorical.windows['5d'].metrics['program.totalNet'];
+ assert.equal(metric.status,'STALE_INPUT');assert.equal(metric.value,null);assert.equal(metric.sampleCount,5);
+ }finally{s.db.close();}
+});
 test('counter reset and futures rollover return null',async()=>{
  const s=setup();try{await put(s,10);const p=sample(20);p.stocks.samsung.volume=1;p.futures.kospi200.code='A01703';await put(s,20,p);
  const f=JSON.parse(s.db.prepare('SELECT features_json FROM market_observations ORDER BY slot_ms DESC LIMIT 1').get().features_json);
@@ -84,6 +149,8 @@ test('stock estimates are bucket deltas, never artificial 5m flows',async()=>{
  const earlier=JSON.parse(s.db.prepare('SELECT features_json FROM market_observations WHERE observed_at_ms=?').get(start+46*60000).features_json);
  assert.equal(earlier.windows['5m'].metrics['samsung.foreignFlow'].status,'UNCHANGED_BUCKET');
  assert.equal(earlier.windows['5m'].metrics['samsung.foreignFlow'].value,null);
+ assert.equal(earlier.bucketChanges.samsung.foreignFlow.status,'BUCKET_UNCHANGED');
+ assert.equal(earlier.bucketChanges.samsung.foreignFlow.value,null);
  }finally{s.db.close();}
 });
 test('D1 failure is isolated; GitHub write still executes',async()=>{

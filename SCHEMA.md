@@ -10,4 +10,4 @@ Each metric retains value (null allowed), status, source marketTime, fetchedAt, 
 
 Units: stocks KRW/share; stock volume and estimated flows shares; stock tradingValue and market/program flows KRW; index points use normalizedValue; futures price/basis points; futures investor flows and OI contracts. Window price returns percent; relative return percentage points; volume acceleration shares/minute change.
 
-quality_json retains source error identifiers, dataQuality and futures contract code. features_json describes generatedAt, actual window span, nullable deltas, bucket changes, intraday returns and explicit limitations.
+quality_json retains source error identifiers, dataQuality and futures contract code. Production MVP rows use Feature version 1. Feature Engine 2.0 candidate rows use `features_json.version: 2` and add 2/5/10/30-minute windows, same-time statistics, compact relative-strength locations, descriptive divergence events and explicit limitations. This is an additive JSON evolution; table schema and latest-snapshot schemaVersion remain unchanged.
