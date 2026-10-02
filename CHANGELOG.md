@@ -5,7 +5,7 @@
 - Add 5/10/20-day same-time statistics with strict complete-sample activation and past-only cutoffs.
 - Expand relative strength, descriptive divergence events and evidence-based futures price/OI classification.
 - Preserve schemaVersion 3, history schema 1, bucket semantics, futures rollover checks and D1/GitHub fail-safe isolation.
-- 25 tests pass, including SQLite integration, insufficient/stale/future data and repeated-bucket checks.
+- 26 tests pass, including SQLite integration, insufficient/stale/future data and repeated-bucket checks.
 
 ## D1 History MVP production completion (2026-10-02)
 - Production observations and 5/10/30-minute features verified, including recovery after a synthetic D1 failure.
