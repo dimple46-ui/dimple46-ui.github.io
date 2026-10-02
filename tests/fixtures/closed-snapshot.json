@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 3,
+  "fresh": true,
+  "relayUpdatedAt": "2026-09-30T11:00:06.732Z",
+  "sourceFetchedAt": "2026-09-30T11:00:06.730Z",
+  "sourceAgeSeconds": 0,
+  "koreaDate": "20260930",
+  "stocks": {
+    "samsung": {
+      "code": "005930",
+      "name": "Samsung Electronics",
+      "marketStatus": "CLOSE",
+      "previousClose": 272500,
+      "price": 269500,
+      "change": 3000,
+      "changeRate": 1.1,
+      "open": 274500,
+      "high": 276000,
+      "low": 267500,
+      "volume": 15700594,
+      "tradingValue": 4247657681250,
+      "nxtPrice": "269,500",
+      "nxtChangeRate": "-1.10",
+      "lastTradedAt": "2026-09-30T20:00:00.000000+09:00"
+    },
+    "skHynix": {
+      "code": "000660",
+      "name": "SK hynix",
+      "marketStatus": "CLOSE",
+      "previousClose": 1765000,
+      "price": 1783000,
+      "change": 18000,
+      "changeRate": 1.02,
+      "open": 1789000,
+      "high": 1824000,
+      "low": 1773000,
+      "volume": 2973067,
+      "tradingValue": 5326356219500,
+      "nxtPrice": "1,783,000",
+      "nxtChangeRate": "1.02",
+      "lastTradedAt": "2026-09-30T20:00:00.000000+09:00"
+    }
+  },
+  "indexes": {
+    "kospi": {
+      "code": "KOSPI",
+      "marketStatus": "CLOSE",
+      "value": 683804,
+      "change": -3277,
+      "changeRate": -0.48,
+      "open": 694347,
+      "high": 696564,
+      "low": 681839,
+      "volume": 264237,
+      "tradingValue": 18819541
+    },
+    "kospi200": {
+      "code": "KPI200",
+      "marketStatus": "CLOSE",
+      "value": 108182,
+      "change": -633,
+      "changeRate": -0.58,
+      "open": 110009,
+      "high": 110462,
+      "low": 107850,
+      "volume": 130744,
+      "tradingValue": 16760026
+    }
+  },
+  "kospiInvestors": {
+    "bizdate": "20260930",
+    "time": "200005",
+    "summary": {
+      "foreigner": -2068201000000,
+      "individual": 1202322000000,
+      "institution": -791614000000,
+      "otherCorporation": 1652947000000,
+      "otherForeigner": 4546000000
+    }
+  },
+  "program": {
+    "bizdate": "20260930",
+    "time": "195000",
+    "arbitrageNet": 19493465590,
+    "nonArbitrageNet": -1286417067585,
+    "totalNet": -1266923601995
+  },
+  "stockFlowEstimates": {
+    "samsung": {
+      "source": "KIS_OPEN_API",
+      "isEstimate": true,
+      "stockCode": "005930",
+      "scheduledBucket": "1430",
+      "fetchedAt": "2026-09-30T05:36:18.625Z",
+      "latest": {
+        "bucket": "5",
+        "inputTimeKst": "14:30",
+        "foreignNetBuyQty": -1695000,
+        "institutionNetBuyQty": -773000,
+        "combinedNetBuyQty": -2468000
+      }
+    },
+    "skHynix": {
+      "source": "KIS_OPEN_API",
+      "isEstimate": true,
+      "stockCode": "000660",
+      "scheduledBucket": "1430",
+      "fetchedAt": "2026-09-30T05:36:18.628Z",
+      "latest": {
+        "bucket": "5",
+        "inputTimeKst": "14:30",
+        "foreignNetBuyQty": -35000,
+        "institutionNetBuyQty": -153000,
+        "combinedNetBuyQty": -188000
+      }
+    }
+  },
+  "futures": {
+    "kospi200": {
+      "source": "KIS_OPEN_API",
+      "code": "A01612",
+      "name": "F 202612",
+      "marketStatus": "CLOSED",
+      "fetchedAt": "2026-09-30T06:44:05.672Z",
+      "price": 1090,
+      "previousClose": 1096.1,
+      "change": -6.1,
+      "changeRate": -0.56,
+      "open": 1105.55,
+      "high": 1110.65,
+      "low": 1083.75,
+      "volume": 94907,
+      "tradingValue": 25998867000,
+      "openInterest": 129773,
+      "openInterestChange": -2410,
+      "basis": 6.26,
+      "marketBasis": 8.18,
+      "theoreticalPrice": 1088.08,
+      "disparityRate": 0.18,
+      "lastTradingDate": "20261210",
+      "remainingDays": 72,
+      "underlyingIndex": 1081.82
+    }
+  },
+  "futuresInvestors": {
+    "kospi200": {
+      "source": "KIS_OPEN_API",
+      "market": "KOSPI200_FUTURES",
+      "fetchedAt": "2026-09-30T06:44:05.615Z",
+      "foreign": {
+        "sellVolume": 71540,
+        "buyVolume": 66906,
+        "netBuyQty": -4634,
+        "sellAmount": 19594616,
+        "buyAmount": 18331339,
+        "netBuyAmount": -1263276
+      },
+      "individual": {
+        "sellVolume": 12379,
+        "buyVolume": 13122,
+        "netBuyQty": 743,
+        "sellAmount": 3392676,
+        "buyAmount": 3594788,
+        "netBuyAmount": 202112
+      },
+      "institution": {
+        "sellVolume": 9962,
+        "buyVolume": 13661,
+        "netBuyQty": 3699,
+        "sellAmount": 2730714,
+        "buyAmount": 3739406,
+        "netBuyAmount": 1008692
+      },
+      "detail": {
+        "securitiesNetBuyQty": 4015,
+        "investmentTrustNetBuyQty": -352,
+        "privateFundNetBuyQty": 0,
+        "bankNetBuyQty": 2,
+        "insuranceNetBuyQty": -87,
+        "merchantBankNetBuyQty": 62,
+        "fundNetBuyQty": 59,
+        "otherOrganizationNetBuyQty": 0,
+        "otherCorporationNetBuyQty": 192
+      },
+      "marketStatus": "CLOSED"
+    }
+  },
+  "integrations": {
+    "kis": {
+      "enabled": true,
+      "note": "stockFlowEstimates are intraday estimates; lastConfirmedStockFlow is prior confirmed daily flow"
+    }
+  },
+  "sourceErrors": []
+}

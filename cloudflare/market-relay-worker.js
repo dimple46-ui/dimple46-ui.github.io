@@ -11,6 +11,7 @@ const ESTIMATE_SLOTS = [
   { hour: 14, minute: 30, key: "1430" }
 ];
 
+const QUALITY_VERSION = "2026-10-01.1";
 const memoryCache = new Map();
 
 function utf8ToBase64(str) {
@@ -48,10 +49,11 @@ function kstIsoFromYmdHms(ymd, hms = "000000") {
   const s = String(ymd || "");
   if (!/^\d{8}$/.test(s)) return null;
   const t = String(hms || "").replaceAll(":", "").padEnd(6, "0").slice(0, 6);
-  if (!/^\d{6}$/.test(t)) return null;
+  if (!/^\d{6}$/.test(t) || Number(t.slice(0,2)) > 23 || Number(t.slice(2,4)) > 59 || Number(t.slice(4,6)) > 59) return null;
   const iso = `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}T${t.slice(0,2)}:${t.slice(2,4)}:${t.slice(4,6)}+09:00`;
   const ms = Date.parse(iso);
-  return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+  if (!Number.isFinite(ms) || kstYmd(ms) !== s) return null;
+  return new Date(ms).toISOString();
 }
 
 function ageSeconds(iso, nowMs = Date.now()) {
@@ -82,9 +84,10 @@ function metaRecord({
 
 function continuousStatus(value, marketTime, maxAgeSeconds, nowMs = Date.now()) {
   if (!value) return "MISSING";
-  if (String(value.marketStatus || "").toUpperCase() === "CLOSED") return "CLOSED";
   const age = ageSeconds(marketTime, nowMs);
   if (age == null) return "UNKNOWN";
+  if (age < -60) return "INVALID_TIME";
+  if (["CLOSE", "CLOSED"].includes(String(value.marketStatus || "").toUpperCase())) return "CLOSED";
   return age <= maxAgeSeconds ? "LIVE" : "STALE";
 }
 
@@ -93,16 +96,20 @@ function stockFlowMeta(value, koreaDate, fetchedAt, nowMs = Date.now()) {
     return metaRecord({
       source: "KIS_OPEN_API",
       fetchedAt,
-      status: "MISSING",
+      status: estimateSlot(nowMs) ? "MISSING" : "NOT_DUE",
       timeBasis: "SOURCE_SCHEDULED_BUCKET"
     }, nowMs);
   }
   const inputTime = value.latest.inputTimeKst || null;
-  const marketTime = inputTime ? kstIsoFromYmdHms(koreaDate, inputTime) : null;
+  const fetchedMs = Date.parse(value.fetchedAt);
+  const businessDate = value.businessDate || (Number.isFinite(fetchedMs) ? kstYmd(fetchedMs) : null);
+  const marketTime = inputTime && businessDate ? kstIsoFromYmdHms(businessDate, inputTime) : null;
   const expected = estimateSlot(nowMs);
   const latestKey = inputTime ? inputTime.replace(":", "") : null;
   let status = "CURRENT_BUCKET";
-  if (!expected) status = "NOT_DUE";
+  if (businessDate && String(businessDate) !== kstYmd(nowMs)) status = "HISTORICAL";
+  else if (!marketTime || ageSeconds(marketTime, nowMs) < -60) status = "INVALID_TIME";
+  else if (!expected) status = "NOT_DUE";
   else if (latestKey !== expected.key) status = "STALE_BUCKET";
   return metaRecord({
     source: "KIS_OPEN_API",
@@ -218,9 +225,10 @@ async function getKisToken(env) {
     })
   });
   const text = await res.text();
-  if (!res.ok) throw new Error(`KIS token HTTP ${res.status}: ${text.slice(0, 300)}`);
-  const body = JSON.parse(text);
-  if (!body.access_token) throw new Error(`KIS token missing access_token: ${text.slice(0, 300)}`);
+  if (!res.ok) throw kisHttpError("token", res.status);
+  let body;
+  try { body = JSON.parse(text); } catch { throw new Error("KIS token returned invalid JSON"); }
+  if (!body.access_token) throw new Error("KIS token missing access_token");
 
   const expiresIn = Math.max(600, Number(body.expires_in || 86400));
   const value = {
@@ -229,6 +237,12 @@ async function getKisToken(env) {
   };
   await cachePut(env, "kis:access-token:v1", value, Math.max(600, expiresIn - 120));
   return value.token;
+}
+
+function kisHttpError(operation, status) {
+  const error = new Error(`KIS ${operation} HTTP ${status}`);
+  error.category = status === 429 ? "API_LIMIT" : "SOURCE_ERROR";
+  return error;
 }
 
 async function kisGet(env, token, path, trId, params) {
@@ -248,7 +262,7 @@ async function kisGet(env, token, path, trId, params) {
     }
   });
   const text = await res.text();
-  if (!res.ok) throw new Error(`KIS ${trId} HTTP ${res.status}: ${text.slice(0, 500)}`);
+  if (!res.ok) throw kisHttpError(trId, res.status);
   const body = JSON.parse(text);
   if (body.rt_cd != null && String(body.rt_cd) !== "0") {
     throw new Error(`KIS ${trId} ${body.rt_cd}: ${body.msg1 || body.msg_cd || "unknown error"}`);
@@ -295,7 +309,7 @@ async function getStockFlowEstimate(env, token, code, epochMs = Date.now()) {
   const ymd = kstYmd(epochMs);
   const key = `kis:stock-flow:${ymd}:${code}:${slot.key}`;
   const cached = await cacheGet(env, key);
-  if (cached) return cached;
+  if (cached?.latest?.inputTimeKst?.replace(":", "") === slot.key) return cached;
 
   const body = await kisGet(
     env,
@@ -309,17 +323,21 @@ async function getStockFlowEstimate(env, token, code, epochMs = Date.now()) {
     source: "KIS_OPEN_API",
     isEstimate: true,
     stockCode: code,
+    businessDate: ymd,
     scheduledBucket: slot.key,
     fetchedAt: new Date().toISOString(),
     latest: compact.latest,
     rows: compact.rows
   };
-  await cachePut(env, key, value, 36 * 3600);
+  // Retry delayed or empty buckets on the next relay run.
+  if (compact.latest?.inputTimeKst?.replace(":", "") === slot.key) {
+    await cachePut(env, key, value, 36 * 3600);
+  }
   return value;
 }
 
 
-async async function getKoreaMarketCalendar(env, token, epochMs = Date.now()) {
+async function getKoreaMarketCalendar(env, token, epochMs = Date.now()) {
   const ymd = kstYmd(epochMs);
   const key = `kis:calendar:${ymd}`;
   const cached = await cacheGet(env, key);
@@ -333,8 +351,8 @@ async async function getKoreaMarketCalendar(env, token, epochMs = Date.now()) {
     { BASS_DT: ymd, CTX_AREA_FK: "", CTX_AREA_NK: "" }
   );
   const rows = Array.isArray(body?.output) ? body.output : body?.output ? [body.output] : [];
-  const row = rows.find(x => String(x?.bass_dt || "") === ymd) || rows[0] || null;
-  if (!row) throw new Error("KIS holiday calendar returned no rows");
+  const row = rows.find(x => String(x?.bass_dt || "") === ymd) || null;
+  if (!row) throw new Error("KIS holiday calendar missing requested date");
 
   const value = {
     source: "KIS_OPEN_API",
@@ -592,11 +610,19 @@ async function enrichWithKis(env, epochMs = Date.now()) {
   try {
     token = await getKisToken(env);
   } catch (e) {
-    return { enabled: true, data: {}, errors: [{ source: "KIS_TOKEN", message: String(e) }] };
+    return { enabled: true, data: {}, errors: [{ source: "KIS_TOKEN", category: e?.category || "SOURCE_ERROR", message: String(e) }] };
   }
 
+  let calendar = null;
+  try {
+    calendar = await getKoreaMarketCalendar(env, token, epochMs);
+  } catch (error) {
+    errors.push({ source: "calendar.korea", category: error?.category || "SOURCE_ERROR", message: String(error) });
+  }
+  if (koreaCalendarStatus(calendar, epochMs) === "HOLIDAY") {
+    return { enabled: true, data: { calendar: { korea: calendar } }, errors };
+  }
   const tasks = [
-    ["calendar.korea", () => getKoreaMarketCalendar(env, token, epochMs)],
     ["stockFlowEstimates.samsung", () => getStockFlowEstimate(env, token, "005930", epochMs)],
     ["stockFlowEstimates.skHynix", () => getStockFlowEstimate(env, token, "000660", epochMs)],
     ["futures.kospi200", () => getKospi200Futures(env, token, epochMs)],
@@ -604,11 +630,11 @@ async function enrichWithKis(env, epochMs = Date.now()) {
   ];
 
   const settled = await Promise.allSettled(tasks.map(([, fn]) => fn()));
-  const data = { calendar: {}, stockFlowEstimates: {}, futures: {}, futuresInvestors: {} };
+  const data = { calendar: { korea: calendar }, stockFlowEstimates: {}, futures: {}, futuresInvestors: {} };
   settled.forEach((r, i) => {
     const key = tasks[i][0];
     if (r.status === "rejected") {
-      errors.push({ source: key, message: String(r.reason) });
+      errors.push({ source: key, category: r.reason?.category || "SOURCE_ERROR", message: String(r.reason) });
       return;
     }
     const [group, field] = key.split(".");
@@ -703,9 +729,7 @@ function buildDataMeta(payload, data, kis, nowMs = Date.now()) {
   const investorTime = inv?.bizdate && inv?.time ? kstIsoFromYmdHms(inv.bizdate, inv.time) : null;
   const programTime = prog?.bizdate && prog?.time ? kstIsoFromYmdHms(prog.bizdate, prog.time) : null;
 
-  const calendarStatus = !cal
-    ? "UNKNOWN"
-    : String(cal.openDay || "").toUpperCase() === "Y" ? "TRADING_DAY" : "HOLIDAY";
+  const calendarStatus = koreaCalendarStatus(cal, nowMs);
 
   return {
     generatedAt: new Date(nowMs).toISOString(),
@@ -759,7 +783,7 @@ function buildDataMeta(payload, data, kis, nowMs = Date.now()) {
       source: "NAVER_NPAY",
       marketTime: investorTime,
       fetchedAt: sourceFetchedAt,
-      status: inv ? (ageSeconds(investorTime, nowMs) <= 300 ? "LIVE" : "STALE") : "MISSING",
+      status: continuousStatus(inv, investorTime, 300, nowMs),
       timeBasis: "SOURCE_MARKET_TIME",
       maxAgeSeconds: 300
     }, nowMs),
@@ -767,9 +791,9 @@ function buildDataMeta(payload, data, kis, nowMs = Date.now()) {
       source: "NAVER_NPAY",
       marketTime: programTime,
       fetchedAt: sourceFetchedAt,
-      status: prog ? (ageSeconds(programTime, nowMs) <= 900 ? "LIVE" : "STALE") : "MISSING",
+      status: continuousStatus(prog, programTime, 300, nowMs),
       timeBasis: "SOURCE_MARKET_TIME",
-      maxAgeSeconds: 900
+      maxAgeSeconds: 300
     }, nowMs),
     stockFlowEstimates: {
       samsung: stockFlowMeta(payload.stockFlowEstimates?.samsung, payload.koreaDate, sourceFetchedAt, nowMs),
@@ -818,16 +842,86 @@ function buildDataMeta(payload, data, kis, nowMs = Date.now()) {
   };
 }
 
-function buildPayload(data, ageMs, kis) {
+// Fetch freshness and market freshness are different. Unknown exchange times
+// must remain null; callers can inspect fetchedAt without treating it as a trade.
+function koreaCalendarStatus(calendar, nowMs) {
+  if (!calendar || String(calendar.date) !== kstYmd(nowMs)) return "UNKNOWN";
+  const flag = String(calendar.openDay || "").toUpperCase();
+  return flag === "Y" ? "TRADING_DAY" : flag === "N" ? "HOLIDAY" : "UNKNOWN";
+}
+
+function applyDataQuality(payload, kis, nowMs) {
+  const meta = payload.dataMeta;
+  const calendarStatus = meta.session.status;
+  const closed = v => ["CLOSE", "CLOSED"].includes(String(v?.marketStatus || "").toUpperCase());
+  const records = [
+    ["stocks.samsung", meta.stocks.samsung, payload.stocks.samsung, "price"],
+    ["stocks.skHynix", meta.stocks.skHynix, payload.stocks.skHynix, "price"],
+    ["indexes.kospi", meta.indexes.kospi, payload.indexes.kospi, "value"],
+    ["indexes.kospi200", meta.indexes.kospi200, payload.indexes.kospi200, "value"],
+    ["kospiInvestors", meta.kospiInvestors, payload.kospiInvestors, "summary"],
+    ["program", meta.program, payload.program, "totalNet"],
+    ["stockFlowEstimates.samsung", meta.stockFlowEstimates.samsung, payload.stockFlowEstimates.samsung, "latest"],
+    ["stockFlowEstimates.skHynix", meta.stockFlowEstimates.skHynix, payload.stockFlowEstimates.skHynix, "latest"],
+    ["futures.kospi200", meta.futures.kospi200, payload.futures.kospi200, "price"],
+    ["futuresInvestors.kospi200", meta.futuresInvestors.kospi200, payload.futuresInvestors.kospi200, "foreign"],
+  ];
+  const issues = [];
+  for (const [path, record, value, required] of records) {
+    record.marketAgeSeconds = ageSeconds(record.marketTime, nowMs);
+    record.fetchAgeSeconds = ageSeconds(record.fetchedAt, nowMs);
+    record.hasValue = value?.[required] != null;
+    if (!record.hasValue && record.status !== "NOT_DUE") record.status = "MISSING";
+    if (record.timeBasis === "FETCH_TIME_NO_EXCHANGE_TIMESTAMP") {
+      record.marketTime = null;
+      record.marketAgeSeconds = null;
+      record.sourceAgeSeconds = null;
+      if (record.status === "LIVE") record.status = "RECENT_FETCH";
+    }
+    // Source-close evidence takes precedence over elapsed wall-clock age.
+    if (["kospiInvestors", "program"].includes(path) && record.hasValue &&
+        closed(payload.indexes.kospi) && !["UNKNOWN", "INVALID_TIME"].includes(record.status)) {
+      record.status = "CLOSED";
+    }
+    if (calendarStatus === "HOLIDAY" && record.status !== "INVALID_TIME") record.status = "HOLIDAY";
+    if (record.source === "KIS_OPEN_API" && !kis.enabled) record.status = "DISABLED";
+    const errors = payload.sourceErrors.filter(error => error?.source === path ||
+      (record.source === "KIS_OPEN_API" && error?.source === "KIS_TOKEN"));
+    if (errors.length) {
+      // Only explicit HTTP rate limits are classified here.
+      record.status = errors.some(error => error.category === "API_LIMIT") ? "API_LIMIT" : "SOURCE_ERROR";
+      record.errorSources = errors.map(error => error.source);
+    }
+    if (["MISSING", "UNKNOWN", "STALE", "STALE_BUCKET", "HISTORICAL", "INVALID_TIME", "SOURCE_ERROR", "API_LIMIT", "DISABLED"].includes(record.status)) {
+      issues.push({ path, status: record.status });
+    }
+  }
+  if (calendarStatus === "UNKNOWN") issues.push({ path: "calendar.korea", status: "UNKNOWN" });
+  const sourceAge = ageSeconds(payload.sourceFetchedAt, nowMs);
+  payload.sourceAgeSeconds = sourceAge;
+  payload.fresh = sourceAge != null && sourceAge >= -60 && sourceAge <= 180;
+  if (!payload.fresh) issues.push({ path: "sourceFetchedAt", status: "INVALID_OR_STALE" });
+  payload.qualityVersion = QUALITY_VERSION;
+  payload.dataQuality = {
+    evaluatedAt: new Date(nowMs).toISOString(),
+    issues,
+    unverifiedMarketTimes: records.filter(([, r]) => r.timeBasis === "FETCH_TIME_NO_EXCHANGE_TIMESTAMP").map(([path]) => path),
+    freshnessScope: "INGESTION_ONLY_RECOMPUTE_AT_READ_TIME"
+  };
+  payload.pipelineStatus = payload.sourceErrors.length || issues.length
+    ? "DEGRADED" : calendarStatus === "HOLIDAY" ? "HOLIDAY" : "OK";
+}
+
+function buildPayload(data, ageMs, kis, nowMs = Date.now()) {
   const indexes = Array.isArray(data.indexes) ? data.indexes : [];
   const sourceErrors = Array.isArray(data.errors) ? data.errors : [];
   const payload = {
     schemaVersion: 3,
     fresh: true,
-    relayUpdatedAt: new Date().toISOString(),
+    relayUpdatedAt: new Date(nowMs).toISOString(),
     sourceFetchedAt: data.fetchedAt,
     sourceAgeSeconds: Math.round(ageMs / 1000),
-    koreaDate: data.koreaDate ?? kstYmd(),
+    koreaDate: data.koreaDate ?? kstYmd(nowMs),
     stocks: {
       samsung: compactStock(data.stocks?.samsung),
       skHynix: compactStock(data.stocks?.skHynix)
@@ -868,12 +962,8 @@ function buildPayload(data, ageMs, kis) {
     sourceErrors: [...sourceErrors, ...(kis.errors || [])]
   };
   payload.calendar = { korea: kis.data?.calendar?.korea ?? null };
-  payload.dataMeta = buildDataMeta(payload, data, kis);
-  payload.pipelineStatus = payload.sourceErrors.length
-    ? "DEGRADED"
-    : payload.dataMeta?.session?.status === "HOLIDAY"
-      ? "HOLIDAY"
-      : "OK";
+  payload.dataMeta = buildDataMeta(payload, data, kis, nowMs);
+  applyDataQuality(payload, kis, nowMs);
   return payload;
 }
 async function updateGithubFile(env, payload) {
@@ -904,9 +994,184 @@ function isKoreaMarketRelayWindow(epochMs) {
   return m >= 9 * 60 && m <= 20 * 60;
 }
 
-async function runRelay(env) {
+// D1 history v1: public market metrics only; never serialize env or portfolio.
+const HISTORY_INTERVAL_MS = 120000;
+const HISTORY_VERSION = 1;
+function historyEnabled(env) {
+  return Boolean(env.MARKET_HISTORY) && String(env.HISTORY_ENABLED ?? "true") !== "false";
+}
+function historyMetric(value, meta, availableAt) {
+  return {
+    value: num(value), source: meta?.source ?? null, status: meta?.status ?? "UNKNOWN",
+    marketTime: meta?.marketTime ?? null,
+    fetchedAt: meta?.fetchedAt ?? null,
+    timeBasis: meta?.timeBasis ?? null,
+    availableAt
+  };
+}
+function historyObservation(payload) {
+  const observed = Date.parse(payload.relayUpdatedAt);
+  if (!Number.isFinite(observed)) throw new Error("HISTORY_INVALID_TIMESTAMP");
+  const day = kstYmd(observed);
+  if (day !== payload.koreaDate) throw new Error("HISTORY_DATE_MISMATCH");
+  const metrics = {};
+  const add = (name, value, meta) => { metrics[name] = historyMetric(value, meta, payload.relayUpdatedAt); };
+  for (const name of ["samsung", "skHynix"]) {
+    const stock = payload.stocks?.[name];
+    for (const field of ["price", "previousClose", "open", "high", "low", "volume", "tradingValue"]) {
+      add(`${name}.${field}`, stock?.[field], payload.dataMeta?.stocks?.[name]);
+    }
+    for (const [field, source] of [["foreignFlow", "foreignNetBuyQty"], ["institutionFlow", "institutionNetBuyQty"]]) {
+      add(`${name}.${field}`, payload.stockFlowEstimates?.[name]?.latest?.[source], payload.dataMeta?.stockFlowEstimates?.[name]);
+    }
+  }
+  for (const name of ["kospi", "kospi200"]) add(`${name}.price`, payload.indexes?.[name]?.normalizedValue, payload.dataMeta?.indexes?.[name]);
+  for (const name of ["foreigner", "institution", "individual"]) add(`market.${name}`, payload.kospiInvestors?.summary?.[name], payload.dataMeta?.kospiInvestors);
+  for (const name of ["arbitrageNet", "nonArbitrageNet", "totalNet"]) add(`program.${name}`, payload.program?.[name], payload.dataMeta?.program);
+  for (const name of ["price", "openInterest", "openInterestChange", "basis", "marketBasis"]) add(`futures.${name}`, payload.futures?.kospi200?.[name], payload.dataMeta?.futures?.kospi200);
+  for (const name of ["foreign", "institution", "individual"]) add(`futures.${name}Net`, payload.futuresInvestors?.kospi200?.[name]?.netBuyQty, payload.dataMeta?.futuresInvestors?.kospi200);
+  return {
+    slot_ms: Math.floor(observed / HISTORY_INTERVAL_MS) * HISTORY_INTERVAL_MS,
+    observed_at_ms: observed, available_at_ms: observed, trading_day: day,
+    schema_version: HISTORY_VERSION, quality_version: payload.qualityVersion ?? null,
+    pipeline_status: payload.pipelineStatus ?? "UNKNOWN", metrics,
+    quality: { dataQuality: payload.dataQuality ?? null, sourceErrors: (payload.sourceErrors || []).map(e => ({source:e.source, category:e.category ?? "SOURCE_ERROR"})),
+      futuresCode: payload.futures?.kospi200?.code ?? null }
+  };
+}
+function usableHistoryMetric(metric, atMs) {
+  if (!metric || metric.value == null || !Number.isFinite(metric.value)) return false;
+  const available = Date.parse(metric.availableAt);
+  if (!Number.isFinite(available) || available > atMs) return false;
+  if (!["LIVE", "RECENT_FETCH", "CURRENT_BUCKET"].includes(metric.status)) return false;
+  const timestamp = Date.parse(metric.marketTime || metric.fetchedAt);
+  if (!Number.isFinite(timestamp) || timestamp > atMs + 60000) return false;
+  return metric.status === "CURRENT_BUCKET" || atMs - timestamp <= 300000;
+}
+function decodeHistoryRow(row) {
+  return {...row, metrics: row.metrics ?? JSON.parse(row.metrics_json), quality: row.quality ?? JSON.parse(row.quality_json)};
+}
+function historyFeatures(current, rawRows) {
+  const now = current.observed_at_ms;
+  // The as-of cutoff rejects records collected later, even if backdated.
+  const rows = rawRows.map(decodeHistoryRow).filter(r => r.trading_day === current.trading_day &&
+    r.observed_at_ms <= now && r.available_at_ms <= now).sort((a,b) => a.observed_at_ms-b.observed_at_ms);
+  const windows = {};
+  for (const minutes of [5,10,30]) {
+    const target = now - minutes * 60000;
+    // Use only a sample at/before target; no interpolation or future sample.
+    const candidates = rows.filter(r => r.observed_at_ms <= target && target-r.observed_at_ms <= 150000);
+    const baseline = candidates.at(-1);
+    const window = {status: baseline ? "AVAILABLE" : "INSUFFICIENT_HISTORY", requestedMinutes:minutes,
+      baselineAt:baseline ? new Date(baseline.observed_at_ms).toISOString() : null,
+      actualElapsedSeconds:baseline ? (now-baseline.observed_at_ms)/1000 : null, metrics:{}};
+    for (const [name, metric] of Object.entries(current.metrics)) {
+      const old = baseline?.metrics?.[name];
+      const result = {value:null, status:"INSUFFICIENT_HISTORY"};
+      if (baseline) {
+        result.status = "UNUSABLE_DATA";
+        if (usableHistoryMetric(metric,now) && usableHistoryMetric(old,baseline.observed_at_ms)) {
+          result.status = "OK";
+          const bucket = name.endsWith("Flow");
+          const isFuture = name.startsWith("futures.");
+          if (isFuture && (!current.quality.futuresCode || current.quality.futuresCode !== baseline.quality.futuresCode)) {
+            result.status = "CONTRACT_CHANGED";
+          } else if (bucket) {
+            // Bucket data is stepwise; repeated observations are not fresh zero flows.
+            result.status = metric.marketTime === old.marketTime ? "UNCHANGED_BUCKET" : "BUCKET_CHANGE_ONLY";
+          } else if (name.endsWith(".price")) {
+            result.value = old.value > 0 ? (metric.value/old.value-1)*100 : null;
+            result.status = result.value == null ? "INVALID_BASELINE" : "OK";
+            result.unit = "percent";
+          } else if (!/\.(previousClose|open|high|low)$/.test(name)) {
+            result.value = metric.value-old.value;
+            if (/\.(volume|tradingValue)$/.test(name) && result.value < 0) {
+              result.value=null; result.status="COUNTER_RESET";
+            }
+          } else { result.status="NOT_APPLICABLE"; }
+          result.timeBasis = metric.timeBasis;
+        }
+      }
+      window.metrics[name]=result;
+    }
+    // Acceleration is change in shares/minute across two actual sampled windows.
+    const previousTarget = baseline ? baseline.observed_at_ms-minutes*60000 : null;
+    const earlier = baseline ? rows.filter(r => r.observed_at_ms<=previousTarget && previousTarget-r.observed_at_ms<=150000).at(-1) : null;
+    window.volumeAcceleration = {};
+    for (const name of ["samsung","skHynix"]) {
+      const field=`${name}.volume`, metric=current.metrics[field], old=baseline?.metrics[field], prev=earlier?.metrics[field];
+      const result={value:null,unit:"shares_per_minute_change",status:"INSUFFICIENT_HISTORY"};
+      if (baseline && earlier && usableHistoryMetric(metric,now) && usableHistoryMetric(old,baseline.observed_at_ms) && usableHistoryMetric(prev,earlier.observed_at_ms)) {
+        const d1=metric.value-old.value,d0=old.value-prev.value;
+        if(d1>=0 && d0>=0){result.value=d1/((now-baseline.observed_at_ms)/60000)-d0/((baseline.observed_at_ms-earlier.observed_at_ms)/60000);result.status="OK";}
+        else result.status="COUNTER_RESET";
+      }
+      window.volumeAcceleration[name]=result;
+    }
+    window.relativeStrength={};
+    for(const [a,b] of [["samsung","skHynix"],["samsung","kospi"],["skHynix","kospi"],["samsung","kospi200"],["skHynix","kospi200"]]) {
+      const av=window.metrics[`${a}.price`],bv=window.metrics[`${b}.price`];
+      window.relativeStrength[`${a}_vs_${b}`]={value:av?.value!=null&&bv?.value!=null?av.value-bv.value:null,unit:"percentage_points"};
+    }
+    windows[`${minutes}m`]=window;
+  }
+  const bucketChanges={};
+  for(const name of ["samsung","skHynix"]){
+    bucketChanges[name]={};
+    for(const field of ["foreignFlow","institutionFlow"]){
+      const key=`${name}.${field}`,metric=current.metrics[key];
+      const previous=rows.filter(r=>r.observed_at_ms<now && usableHistoryMetric(r.metrics[key],r.observed_at_ms) && r.metrics[key].marketTime !== metric?.marketTime).at(-1);
+      bucketChanges[name][field]={value:previous && usableHistoryMetric(metric,now)?metric.value-previous.metrics[key].value:null,
+        status:previous && usableHistoryMetric(metric,now)?"BUCKET_DELTA":"INSUFFICIENT_BUCKET_HISTORY",unit:"shares",
+        previousBucketTime:previous?.metrics[key]?.marketTime??null,currentBucketTime:metric?.marketTime??null};
+    }
+  }
+  const intraday={};
+  for(const name of ["samsung","skHynix"]){
+    const m=current.metrics,price=m[`${name}.price`],open=m[`${name}.open`],close=m[`${name}.previousClose`];
+    const valid=usableHistoryMetric(price,now);
+    intraday[name]={fromOpenPct:valid&&usableHistoryMetric(open,now)&&open.value>0?(price.value/open.value-1)*100:null,
+      fromPreviousClosePct:valid&&usableHistoryMetric(close,now)&&close.value>0?(price.value/close.value-1)*100:null};
+  }
+  return {version:1,generatedAt:new Date(now).toISOString(),windows,bucketChanges,intraday,
+    sameTimeHistoricalAverage:{status:"NOT_IMPLEMENTED",value:null},
+    limitations:["2-minute sampling: inspect actualElapsedSeconds", "RECENT_FETCH is not verified trade freshness", "stock flows use bucket deltas, not fabricated 5-minute flows"]};
+}
+async function persistMarketHistory(env,payload) {
+  if(!historyEnabled(env)) return {status:"DISABLED"};
+  if(payload.dataMeta?.session?.status==="HOLIDAY") return {status:"SKIPPED_HOLIDAY"};
+  const current=historyObservation(payload);
+  if(!isKoreaMarketRelayWindow(current.observed_at_ms)) return {status:"OUTSIDE_WINDOW"};
+  const db=env.MARKET_HISTORY;
+  const result=await db.prepare(`INSERT INTO market_observations
+    (slot_ms,observed_at_ms,available_at_ms,trading_day,schema_version,quality_version,pipeline_status,metrics_json,quality_json)
+    VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(slot_ms) DO NOTHING`).bind(
+      current.slot_ms,current.observed_at_ms,current.available_at_ms,current.trading_day,current.schema_version,
+      current.quality_version,current.pipeline_status,JSON.stringify(current.metrics),JSON.stringify(current.quality)).run();
+  if(!result.success) throw new Error("HISTORY_INSERT_FAILED");
+  // On retries use the immutable stored observation, not a later in-memory value.
+  const stored=await db.prepare("SELECT * FROM market_observations WHERE slot_ms = ?").bind(current.slot_ms).first();
+  if(!stored) throw new Error("HISTORY_INSERT_NOT_VISIBLE");
+  const rows=await db.prepare(`SELECT slot_ms, observed_at_ms, available_at_ms, trading_day, metrics_json, quality_json FROM market_observations
+    WHERE trading_day = ? AND slot_ms <= ? ORDER BY slot_ms DESC LIMIT 331`).bind(current.trading_day,current.slot_ms).all();
+  if(!rows.success) throw new Error("HISTORY_READ_FAILED");
+  const features=historyFeatures(decodeHistoryRow(stored),rows.results);
+  const updated=await db.prepare("UPDATE market_observations SET features_json = ? WHERE slot_ms = ? AND features_json IS NULL").bind(JSON.stringify(features),current.slot_ms).run();
+  if(!updated.success) throw new Error("HISTORY_FEATURE_WRITE_FAILED");
+  return {status:"STORED",slotMs:current.slot_ms};
+}
+function scheduleMarketHistory(env,payload,ctx) {
+  if(!historyEnabled(env)) return;
+  // Independent lifetime: database failures cannot block or reject GitHub writes.
+  ctx.waitUntil(persistMarketHistory(env,payload).then(result=>{
+    console.log("Market history",result.status,result.slotMs??null);
+  }).catch(()=>{ console.error("Market history failed; inspect D1 binding and migration"); }));
+}
+
+async function runRelay(env, ctx) {
   const [{ data, ageMs }, kis] = await Promise.all([fetchLiveMarket(env), enrichWithKis(env)]);
   const payload = buildPayload(data, ageMs, kis);
+  scheduleMarketHistory(env, payload, ctx);
   await updateGithubFile(env, payload);
   return payload;
 }
@@ -914,16 +1179,16 @@ async function runRelay(env) {
 export default {
   async scheduled(controller, env, ctx) {
     if (!isKoreaMarketRelayWindow(controller.scheduledTime)) return;
-    ctx.waitUntil(runRelay(env).catch(error => {
+    ctx.waitUntil(runRelay(env, ctx).catch(error => {
       console.error("Relay failed:", error);
       throw error;
     }));
   },
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === "/run") {
       try {
-        const payload = await runRelay(env);
+        const payload = await runRelay(env, ctx);
         return Response.json({ ok: true, schemaVersion: payload.schemaVersion, payload });
       } catch (error) {
         return Response.json({ ok: false, error: String(error) }, { status: 500 });
@@ -933,6 +1198,9 @@ export default {
       ok: true,
       service: "kr-market-github-relay-v3",
       schemaVersion: 3,
+      qualityVersion: QUALITY_VERSION,
+      historyVersion: HISTORY_VERSION,
+      historyEnabled: historyEnabled(env),
       kisEnabled: kisEnabled(env),
       now: new Date().toISOString()
     });
