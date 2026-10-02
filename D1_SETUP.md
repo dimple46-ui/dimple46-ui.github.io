@@ -1,10 +1,8 @@
-# D1 activation — one user action at a time
+# D1 operations
 
-Status: code and migration tested locally; no remote database or binding is verified. Cloudflare dashboard access from the agent browser was blocked by a security challenge.
+Status: `market-history`, migration `0001_market_history.sql`, `MARKET_HISTORY` binding, real observation accumulation, Feature MVP generation, fail-safe behavior and automatic recovery were production-verified before PR #2 merged. Do not recreate, remigrate or clear the database for Feature Engine 2.0.
 
-First user action: Cloudflare dashboard → Storage & databases → D1 SQL Database → Create database. Name: market-history. If that name already exists, inspect it instead of creating a duplicate. No Secret is requested.
-
-Later, separately: execute migrations/0001_market_history.sql in that database's SQL console, then add a D1 binding to the existing market-relay Worker, variable name MARKET_HISTORY, database market-history. Deploy the candidate only after migration/binding verification. No full Wrangler config is supplied because production binding IDs/Cron are not yet known.
+Feature Engine 2.0 changes Worker computation only. It requires no new binding, Secret, table or migration. Deploy it only as a candidate after branch review and local test success, then verify real version-2 rows before deciding whether to update production.
 
 Optional rollback variable: HISTORY_ENABLED=false. No database deletion needed. Existing GitHub JSON must continue updating even if a D1 query fails.
 
@@ -20,6 +18,6 @@ Require at least three distinct increasing slot_ms values; verify quality flags 
 
 ## Capacity estimate
 
-At 331 samples/day, mock full feature rows measured about 18.5 KB JSON each: approximately 6.1 MB/day or 1.53 GB/250 days before SQLite/index overhead. Plan roughly 25 KB/row for initial capacity budgeting (~8.3 MB/day); measure actual D1 storage after activation. Max indexed day query is 331 rows, roughly 55k row visits/day under a full-session growing history, plus PK lookups. Inserts/index maintenance and feature updates are on the order of 1,000 row writes/day, subject to D1 measurement.
+At 331 samples/day, mock Feature Engine 2.0 rows measure roughly 72 KB of JSON each, approximately 24 MB per full relay day before SQLite/index overhead. Actual production payload size, database growth and Worker CPU duration must be measured before rollout. Same-day reads are capped at 331 rows; same-time reads are bounded to the latest 20 stored trading days. Inserts/index maintenance and feature updates remain subject to production measurement.
 
-Free tier: 5M rows read/day, 100k written/day, 5GB account-wide, but only 500MB PER DATABASE. Paid: 10GB/database, usage allowances and overage charges per official docs. Existing account usage is unknown. With this design a free DB requires archive/retention planning well before roughly 60 full trading days; no automatic deletion is implemented. Workers CPU limits and ctx.waitUntil lifetime must be validated in production. R2 archival and daily compaction are future work, not a promised zero-cost unlimited history.
+Cloudflare limits and pricing can change, and the existing account plan/usage is unknown. Check the current account dashboard before relying on any capacity estimate. No automatic deletion is implemented. Worker CPU limits and `ctx.waitUntil` lifetime must be validated in the candidate. R2 archival and daily compaction remain future work, not a promised zero-cost unlimited history.

@@ -1,5 +1,16 @@
 # Changelog
 
+## Feature Engine 2.0 candidate (2026-10-02, not deployed)
+- Add 2-minute, intraday/VWAP, volatility, momentum/volume/flow acceleration and explicit feature-quality metadata.
+- Add 5/10/20-day same-time statistics with strict complete-sample activation and past-only cutoffs.
+- Expand relative strength, descriptive divergence events and evidence-based futures price/OI classification.
+- Preserve schemaVersion 3, history schema 1, bucket semantics, futures rollover checks and D1/GitHub fail-safe isolation.
+- 26 tests pass, including SQLite integration, insufficient/stale/future data and repeated-bucket checks.
+
+## D1 History MVP production completion (2026-10-02)
+- Production observations and 5/10/30-minute features verified, including recovery after a synthetic D1 failure.
+- PR #2 merged to main after production validation.
+
 ## v4 history candidate (2026-10-01, not deployed)
 - Optional MARKET_HISTORY D1 binding; additive SQL migration.
 - Immutable two-minute observations and isolated background persistence.
