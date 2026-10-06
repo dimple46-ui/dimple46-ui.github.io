@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-06 14:58 KST
+Last updated: 2026-10-06 15:28 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -45,8 +45,8 @@ Status: `CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated read-only va
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Deploy the compact-write build to the separate `market-feature-validation` Worker with writes
-  disabled by default; do not replace production `market-relay`.
+- Verify the newly deployed compact-write build on the separate `market-feature-validation`
+  Worker using an authenticated read-only GET. Writes remain disabled by default.
 - Candidate deployment evidence for D1 query duration, rows read/written, actual storage growth and Worker CPU duration.
 - Documentation drift repair through this source-of-truth document.
 
@@ -68,7 +68,7 @@ Status: `CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated read-only va
 | PR #2 | `MERGED_MAIN`, `PRODUCTION_VALIDATED` | Merged 2026-10-02; production validation recorded in PR body. |
 | `feature/feature-engine-v2` | Draft branch | Compact storage/observability changes are being added without changing production `main`. |
 | PR #3 | Draft/Open | Not ready and not mergeable yet; compact candidate must be migrated/deployed/validated first. |
-| `market-feature-validation` | Separate candidate | Corrected hash `73758483...`, authenticated HTTP 200, read-only D1 replay. Does not write GitHub or D1. |
+| `market-feature-validation` | Separate candidate | User reported deployment of the compact build at 15:26 KST; authenticated hash/response verification is pending. Writes remain disabled. |
 | Production `market-relay` | Operational | Continues schema v3 snapshots and D1 observations; v2 not deployed. |
 
 ## Component Maturity Matrix
@@ -186,9 +186,22 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Deploy `cloudflare/feature-validation-worker.js` commit `a8c4330c...` to the separate
-`market-feature-validation` Worker while `FEATURE_V2_WRITE_ENABLED` remains absent/false. Verify
-authenticated GET replay before enabling any write.
+Run an authenticated GET `/` against `market-feature-validation` and require HTTP 200,
+`mode: READ_ONLY_REPLAY`, candidate SHA `39e39bb1...`, compact sizing and D1 query metadata before
+enabling any write.
+
+## Checkpoint — Compact Candidate Deployed, Verification Pending
+
+- timestamp: 2026-10-06 15:28 KST
+- branch: `feature/feature-engine-v2`
+- deployed source: `cloudflare/feature-validation-worker.js` from implementation commit
+  `a8c4330c15c0800c8f28e329a80bc9b09245edd7`
+- completed: user reported successful deployment to the separate `market-feature-validation` Worker
+- write state: `FEATURE_V2_WRITE_ENABLED` absent/false by default; no v2 write is authorized
+- validation: authenticated GET response not yet captured; deployment identity remains unverified
+- blocker: the Work browser cannot access `workers.dev`, so the existing authenticated Dashboard
+  HTTP tester must provide the response evidence
+- next_exact_step: authenticated GET `/` with the existing `VALIDATION_TOKEN`
 
 ## Checkpoint — D1 Compact Schema Verified
 
