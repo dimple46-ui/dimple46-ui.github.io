@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-06 15:28 KST
+Last updated: 2026-10-06 15:32 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -45,8 +45,8 @@ Status: `CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated read-only va
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Verify the newly deployed compact-write build on the separate `market-feature-validation`
-  Worker using an authenticated read-only GET. Writes remain disabled by default.
+- Re-deploy the exact compact candidate from immutable commit `a8c4330c...`; the first reported
+  deployment still served the older read-only hash `73758483...`. Writes remain disabled.
 - Candidate deployment evidence for D1 query duration, rows read/written, actual storage growth and Worker CPU duration.
 - Documentation drift repair through this source-of-truth document.
 
@@ -68,7 +68,7 @@ Status: `CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated read-only va
 | PR #2 | `MERGED_MAIN`, `PRODUCTION_VALIDATED` | Merged 2026-10-02; production validation recorded in PR body. |
 | `feature/feature-engine-v2` | Draft branch | Compact storage/observability changes are being added without changing production `main`. |
 | PR #3 | Draft/Open | Not ready and not mergeable yet; compact candidate must be migrated/deployed/validated first. |
-| `market-feature-validation` | Separate candidate | User reported deployment of the compact build at 15:26 KST; authenticated hash/response verification is pending. Writes remain disabled. |
+| `market-feature-validation` | Separate candidate | Authenticated GET at 15:30 KST proved the older read-only hash `73758483...` was still active. Compact build deployment is not complete; writes remain disabled. |
 | Production `market-relay` | Operational | Continues schema v3 snapshots and D1 observations; v2 not deployed. |
 
 ## Component Maturity Matrix
@@ -186,9 +186,22 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Run an authenticated GET `/` against `market-feature-validation` and require HTTP 200,
+Re-deploy `cloudflare/feature-validation-worker.js` from immutable commit
+`a8c4330c15c0800c8f28e329a80bc9b09245edd7`, then require authenticated GET HTTP 200,
 `mode: READ_ONLY_REPLAY`, candidate SHA `39e39bb1...`, compact sizing and D1 query metadata before
 enabling any write.
+
+## Checkpoint — Candidate Deployment Mismatch
+
+- timestamp: 2026-10-06 15:32 KST
+- expected candidate source SHA: `39e39bb133ed90f6fa950a056948ea03d1928905de4c8dab28434a7631f0567a`
+- actual authenticated response SHA: `73758483c22f7d411f25cbf940f28f7f4dd676062b5e5cd1306086467d2c3a90`
+- actual replay: 195 distinct slots, observation age 18.463 seconds, 63,369 full feature bytes,
+  156 ms wall time, stored feature v1
+- missing evidence: `compactFeaturesBytes`, compact reduction and `queryMeta` were absent
+- conclusion: the old read-only validator remained active; compact deployment is not complete
+- safety: response explicitly stored no v2 row; production Worker was not changed
+- next_exact_step: replace the candidate source using the immutable commit URL and deploy again
 
 ## Checkpoint — Compact Candidate Deployed, Verification Pending
 
