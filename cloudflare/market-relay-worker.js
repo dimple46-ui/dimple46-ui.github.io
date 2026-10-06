@@ -1177,7 +1177,14 @@ function historyFeatures(current, rawRows, rawSameTimeRows=[]) {
             result.status = "CONTRACT_CHANGED";
           } else if (bucket) {
             // Bucket data is stepwise; repeated observations are not fresh zero flows.
-            result.status = metric.marketTime === old.marketTime ? "UNCHANGED_BUCKET" : "BUCKET_CHANGE_ONLY";
+            if (metric.marketTime === old.marketTime) {
+              result.status = "UNCHANGED_BUCKET";
+            } else {
+              result.value = metric.value - old.value;
+              result.status = "BUCKET_CHANGE_ONLY";
+              result.unit = "shares";
+              result.bucketElapsedSeconds = (Date.parse(metric.marketTime) - Date.parse(old.marketTime)) / 1000;
+            }
           } else if (name.endsWith(".price")) {
             result.value = old.value > 0 ? (metric.value/old.value-1)*100 : null;
             result.status = result.value == null ? "INVALID_BASELINE" : "OK";

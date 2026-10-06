@@ -1,0 +1,34 @@
+export default {
+  async fetch(request, env) {
+    if (!env.VALIDATION_TOKEN || request.headers.get('Authorization') !== `Bearer ${env.VALIDATION_TOKEN}`)
+      return Response.json({error:'UNAUTHORIZED'}, {status:401});
+    if (request.method !== 'GET') return Response.json({error:'METHOD_NOT_ALLOWED'}, {status:405});
+    const started = Date.now();
+    try {
+      const db = env.MARKET_HISTORY;
+      const current = await db.prepare('SELECT * FROM market_observations WHERE available_at_ms <= ? ORDER BY slot_ms DESC LIMIT 1').bind(Date.now()).first();
+      if (!current) return Response.json({error:'NO_OBSERVATIONS'}, {status:409});
+      const rows = await db.prepare('SELECT * FROM market_observations WHERE trading_day = ? AND slot_ms <= ? ORDER BY slot_ms DESC LIMIT 331').bind(current.trading_day, current.slot_ms).all();
+      const time = (current.observed_at_ms + KST_OFFSET_MS) % 86400000;
+      const historical = await db.prepare(`WITH recent_days AS (
+        SELECT trading_day FROM market_observations WHERE trading_day < ? GROUP BY trading_day ORDER BY trading_day DESC LIMIT 20
+      ) SELECT * FROM (
+        SELECT observation.*, ROW_NUMBER() OVER (PARTITION BY trading_day ORDER BY observed_at_ms DESC) AS same_time_rank
+        FROM market_observations AS observation INNER JOIN recent_days USING (trading_day)
+        WHERE available_at_ms <= ? AND ((observed_at_ms + ?) % 86400000) BETWEEN ? AND ?
+      ) WHERE same_time_rank = 1 ORDER BY trading_day DESC LIMIT 20`).bind(current.trading_day, current.observed_at_ms, KST_OFFSET_MS, Math.max(0,time-SAME_TIME_TOLERANCE_MS), time).all();
+      if (!rows.success || !historical.success) throw new Error('READ_FAILED');
+      const features = historyFeatures(decodeHistoryRow(current), rows.results, historical.results);
+      const bytes = value => new TextEncoder().encode(value).length;
+      return Response.json({mode:'READ_ONLY_REPLAY',candidateSha256:CANDIDATE_SHA256,
+        storedFeatureVersion:current.features_json ? JSON.parse(current.features_json).version : null,
+        observedAt:new Date(current.observed_at_ms).toISOString(),observationAgeSeconds:(Date.now()-current.observed_at_ms)/1000,
+        distinctSlots:new Set(rows.results.map(r=>r.slot_ms)).size,
+        featuresBytes:bytes(JSON.stringify(features)),hypotheticalRowJsonBytes:bytes(current.metrics_json)+bytes(current.quality_json)+bytes(JSON.stringify(features)),
+        elapsedWallMs:Date.now()-started,measurementNote:'Wall time is not Worker CPU. No v2 row was stored.',features},
+        {headers:{'Cache-Control':'no-store'}});
+    } catch {
+      return Response.json({error:'VALIDATION_READ_FAILED'}, {status:503,headers:{'Cache-Control':'no-store'}});
+    }
+  }
+};

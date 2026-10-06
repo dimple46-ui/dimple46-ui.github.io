@@ -1,0 +1,184 @@
+# Project Status — Real-time Investment Intelligence System v4
+
+Last updated: 2026-10-06 10:03 KST  
+Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## Current Production
+
+- Repository: `dimple46-ui/dimple46-ui.github.io`
+- Latest audited `main` head: `b2314643220e0fbdaddd1056822fa6d1cdcd7413` (snapshot-only commit at 2026-10-06 10:02:48 KST)
+- Latest non-snapshot Worker commit: `c88c8d03c50c5db5927f22b427b436d947691fc6` (`Add D1 history and point-in-time feature MVP (#2)`)
+- Latest snapshot schema: `schemaVersion: 3`
+- Snapshot at 2026-10-06 09:48:45 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: DEGRADED`
+- Degraded reason: program source was `STALE`; index/futures timestamps remained `UNVERIFIED_TIME`/`RECENT_FETCH`.
+- D1: `market-history`, table `market_observations`, production observations continue to accumulate.
+- PR #2: merged and production-validated. D1 failure isolation and automatic recovery were validated before merge.
+
+## Current Milestone
+
+M1 — Feature Engine 2.0 production validation.
+
+Status: `CANDIDATE_DEPLOYED` in a separate authenticated read-only validation Worker, not deployed into the production writer and not merged into `main`.
+
+## Completed
+
+- Production collection and GitHub latest-snapshot publication.
+- Data-quality/freshness metadata with explicit stale, missing and unverified-time states.
+- D1 History v1 migration, binding, two-minute immutable observations and duplicate prevention.
+- Feature Engine 1 point-in-time 5/10/30-minute features and Samsung/SK Hynix relative strength.
+- D1 failure isolation from GitHub publication, rollback and automatic recovery validation.
+- Feature Engine 2.0 implementation and local tests.
+- Authenticated read-only replay deployment using exact PR #3 feature logic.
+- Actual replay at 2026-10-06 09:44:44 KST: 23 current-day slots, observation age 0.797 seconds, 2/5/10/30-minute windows available, relative strength/VWAP/volatility/acceleration calculated.
+- Local suite after adding validator coverage: 28/28 tests passed.
+
+## In Progress
+
+- Correctness audit of Feature Engine 2.0 edge cases.
+- Storage and query-cost redesign before any v2 persistence.
+- Candidate observability for D1 query duration, rows read/written and actual CPU duration.
+- Documentation drift repair through this source-of-truth document.
+
+## Blocked / Not Yet Validated
+
+- Actual stored Feature Engine 2.0 row (`storedFeatureVersion` was null in the replay response).
+- Five/ten/twenty-trading-day same-time statistics: only one prior comparable trading day was available.
+- Actual Worker CPU duration, D1 database size and account plan/usage.
+- Full stock-flow divergence has a local fix and regression coverage, but the corrected candidate is not deployed yet.
+- Production fail-safe under the v2 computation/storage design.
+- Long-running storage/retention and GitHub snapshot migration.
+
+## Branch / PR / Deployment
+
+| Item | State | Evidence / limitation |
+| --- | --- | --- |
+| `main` | Production | Worker source remains at PR #2 code; subsequent commits are snapshots. |
+| PR #2 | `MERGED_MAIN`, `PRODUCTION_VALIDATED` | Merged 2026-10-02; production validation recorded in PR body. |
+| `feature/feature-engine-v2` | Draft branch | Remote head `9023289df15eb1c627e3a4c2f0fafe96cdaf36a2`. |
+| PR #3 | Draft/Open | Two code commits ahead, 632 snapshot commits behind at audit time. Worker source did not change on main after the branch point. |
+| `market-feature-validation` | Separate candidate | Authenticated HTTP 200, read-only D1 replay. Does not write GitHub or D1. |
+| Production `market-relay` | Operational | Continues schema v3 snapshots and D1 observations; v2 not deployed. |
+
+## Component Maturity Matrix
+
+Percentages are audit estimates, not predictive-performance scores.
+
+| Component | Functional | Operational | Status | Main gap |
+| --- | ---: | ---: | --- | --- |
+| Data Collection | 82% | 88% | `OPERATIONALLY_STABLE` | Index/futures exchange timestamps; external tactical sources not started. |
+| Data Quality | 78% | 78% | `PRODUCTION_VALIDATED` | Source reliability tiers and confidence ceilings need formalization. |
+| Latest Snapshot | 95% | 92% | `OPERATIONALLY_STABLE` | GitHub is an inefficient latest-state transport. |
+| History Storage | 88% | 82% | `PRODUCTION_VALIDATED` | Retention, usage metrics and archive policy. |
+| Feature Engine 1 | 92% | 85% | `MERGED_MAIN` | Operational feature delivery remains internal to stored rows. |
+| Feature Engine 2 | 86% | 48% | `CANDIDATE_DEPLOYED` | No stored v2 row; correctness/storage/CPU gates remain. |
+| Same-Time Baseline | 82% | 18% | `CANDIDATE_DEPLOYED` | Needs 5/10/20 complete trading-day samples. |
+| Relative Strength | 92% | 65% | `CANDIDATE_DEPLOYED` | Actual replay passed; v2 persistence/rollout absent. |
+| Divergence | 74% | 42% | `CANDIDATE_DEPLOYED` | Stock bucket delta wiring bug; no predictive validation. |
+| Derivatives Intelligence | 76% | 52% | `CANDIDATE_DEPLOYED` | Timestamp quality and heuristic-only position classification. |
+| Signal Layer | 18% | 0% | `DESIGNED` | Descriptive signal registry not implemented. |
+| Options/VKOSPI | 5% | 0% | `DESIGNED` | Deferred until M1/M2. |
+| US Semiconductor | 5% | 0% | `DESIGNED` | Deferred until signal foundation. |
+| FX | 5% | 0% | `DESIGNED` | Source evaluation not started. |
+| Rates | 5% | 0% | `DESIGNED` | Source evaluation not started. |
+| Market Regime | 12% | 0% | `DESIGNED` | Requires stable descriptive signals. |
+| Tactical Engine | 12% | 0% | `DESIGNED` | Interface defined, engine absent. |
+| Memory/HBM | 8% | 0% | `DESIGNED` | Strategic sources absent. |
+| AI Infrastructure/CAPEX | 8% | 0% | `DESIGNED` | Strategic sources absent. |
+| Company Fundamentals | 8% | 0% | `DESIGNED` | Normalized company schema/source absent. |
+| Earnings Revision | 5% | 0% | `DESIGNED` | Consensus history absent. |
+| Valuation | 5% | 0% | `DESIGNED` | Forward/history percentile data absent. |
+| Event Intelligence | 8% | 0% | `DESIGNED` | Immutable event schema absent. |
+| Thesis Ledger | 10% | 0% | `DESIGNED` | Database and update rules absent. |
+| Strategic Engine | 8% | 0% | `DESIGNED` | Strategic inputs absent. |
+| Scenario Engine | 10% | 0% | `DESIGNED` | Probability ledger/evidence absent. |
+| Portfolio Engine | 8% | 0% | `DESIGNED` | Separate private portfolio schema absent. |
+| Portfolio Risk | 10% | 0% | `DESIGNED` | Concentration/leverage/liquidity model absent. |
+| Stress Test | 10% | 0% | `DESIGNED` | Scenario P/L calculator absent. |
+| Decision Support | 8% | 0% | `DESIGNED` | Product response contract only. |
+| Alert Engine | 5% | 0% | `DESIGNED` | Multi-confirmation alerts absent. |
+| Forecast Ledger | 12% | 0% | `DESIGNED` | Immutable prediction/outcome tables absent. |
+| Outcome Evaluation | 5% | 0% | `DESIGNED` | Evaluation jobs/rules absent. |
+| Signal Performance DB | 5% | 0% | `DESIGNED` | No signal samples yet. |
+| Backtesting | 5% | 0% | `DESIGNED` | History depth and leakage-safe runner absent. |
+| Calibration | 5% | 0% | `DESIGNED` | Forecast samples absent. |
+| Regime-dependent Weights | 0% | 0% | `NOT_STARTED` | Requires calibrated history. |
+
+## Aggregate Completeness
+
+| Area | Functional | Operational |
+| --- | ---: | ---: |
+| Infrastructure | 84% | 81% |
+| Tactical Intelligence | 39% | 21% |
+| Strategic Intelligence | 8% | 0% |
+| Portfolio Intelligence | 9% | 0% |
+| Self-Evaluation | 7% | 0% |
+| Overall | 31% | 20% |
+
+## Known Issues / Technical Debt
+
+1. Main documentation still says D1/history is an undeployed candidate. `README.md`, `D1_SETUP.md`, `CHANGELOG.md`, `AUDIT.md` and `DEPLOYMENT.md` are stale after PR #2.
+2. PR #1 remains open although the later PR #2/main incorporated the relevant quality work.
+3. A two-minute GitHub snapshot commit cadence creates roughly 331 commits per full relay day, or 82,750 commits per 250 trading days.
+4. PR #3 appears 632 commits behind main even though those commits are snapshot-only; this obscures real code divergence.
+5. Candidate v2 response measured 69,270 feature bytes and 77,518 hypothetical total JSON bytes per row.
+6. At 331 rows/day, full v2 rows project to 25.66 MB/day, 513 MB/20 days, 1.54 GB/60 days and 6.41 GB/250 days before SQLite/index overhead.
+7. Current D1 plan and actual database bytes are not verified. Official limits are 500 MB/database on Free and 10 GB/database on Workers Paid.
+8. Candidate replay wall time was 29 ms, but wall time is not Worker CPU duration and D1 query meta was not captured.
+9. Production program data can exceed the five-minute freshness rule; this correctly degrades the pipeline but reduces usable window features.
+10. Index/futures adapters use fetch time because verified exchange timestamps are unavailable.
+11. The integrated PR #3 writer cannot safely prove v2 persistence beside the production v1 writer because immutable two-minute slots and `features_json IS NULL` allow the first writer to win.
+
+## Storage Decision Gate
+
+Do not persist the full 69 KB derived feature object every two minutes.
+
+Preferred direction: retain immutable raw observations in D1 hot storage; compute most derived features at query/validation time; persist only a compact versioned feature summary needed for forecast reproducibility; later add daily aggregates and optional R2 cold archive. Existing v1 rows are retained and never rewritten or deleted during migration.
+
+Required migration design before implementation:
+
+- Separate raw observation identity from versioned feature runs.
+- Key derived output by `(slot_ms, feature_version)` so candidate and production do not race.
+- Record engine git SHA, input cutoff and quality ceiling.
+- Keep rollback additive: disable v2 writes without touching v1 observations.
+- Add query meta/CPU/storage observability before rollout.
+
+## Upgraded Architecture
+
+1. Collection/validation writes one immutable raw observation per two-minute slot.
+2. Latest state moves eventually to a read endpoint or KV while GitHub remains a temporary fallback.
+3. Feature Engine reads past-only raw rows and produces versioned output.
+4. Compact feature runs preserve reproducibility; large derived trees are query-time products, not duplicated in every row.
+5. Daily aggregates and optional R2 archive are introduced only when measured retention requires them.
+6. Signals remain descriptive and inherit the weakest input quality.
+7. Tactical, strategic, portfolio and forecast domains remain separate schemas/layers.
+
+## Milestone Roadmap
+
+1. M1 — Feature Engine 2.0 correctness, compact-storage design and production validation.
+2. M2 — Observability, retention and latest-snapshot architecture stabilization.
+3. M3 — Descriptive Signal Layer and confidence ceilings.
+4. M4 — Options/VKOSPI.
+5. M5 — US semiconductor sources.
+6. M6 — FX/rates.
+7. M7 — Market Regime and Tactical Engine.
+8. M8 — Memory/HBM and AI CAPEX.
+9. M9 — Fundamentals, revisions and valuation.
+10. M10 — Thesis and Event Intelligence.
+11. M11 — Strategic and Scenario engines.
+12. M12 — Portfolio/risk and stress testing.
+13. M13 — Forecast Ledger and immutable outcomes.
+14. M14 — Backtesting and calibration.
+15. M15 — Regime-dependent weights and continuous improvement.
+
+## Next Exact Step
+
+Design and test an additive versioned compact-feature table/validation path that cannot race with the production v1 writer. Re-deploy the read-only validator with the corrected stock-flow logic only after the storage/query observability shape is settled. Do not merge PR #3 and do not replace the production Worker yet.
+
+## Validation Evidence
+
+- Production snapshot audit: GitHub main file, 2026-10-06 09:48:45 KST.
+- GitHub audit: main/branches/PR metadata and Worker blob SHAs, 2026-10-06.
+- Candidate replay response: authenticated read-only HTTP 200, generated 2026-10-06 09:44:44 KST.
+- Candidate source SHA-256: `438a8712d81edbe0a921c8e25d4a58551bf28907ed5ffb268f14c92d230f6bd4`.
+- Corrected local candidate SHA-256: `73758483c22f7d411f25cbf940f28f7f4dd676062b5e5cd1306086467d2c3a90` (not deployed).
+- Tests: 28/28 local pass.

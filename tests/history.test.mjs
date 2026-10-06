@@ -146,6 +146,10 @@ test('stock estimates are bucket deltas, never artificial 5m flows',async()=>{
  p.dataMeta.stockFlowEstimates.samsung={status:'CURRENT_BUCKET',marketTime:`2026-10-01T${bucket}:00+09:00`,fetchedAt:p.relayUpdatedAt};await put(s,m,p);}
  const f=JSON.parse(s.db.prepare('SELECT features_json FROM market_observations ORDER BY slot_ms DESC LIMIT 1').get().features_json);
  assert.equal(f.bucketChanges.samsung.foreignFlow.value,40);
+ assert.equal(f.windows['30m'].metrics['samsung.foreignFlow'].status,'BUCKET_CHANGE_ONLY');
+ assert.equal(f.windows['30m'].metrics['samsung.foreignFlow'].value,40);
+ assert.equal(f.windows['30m'].metrics['samsung.foreignFlow'].bucketElapsedSeconds,1800);
+ assert.equal(f.windows['30m'].divergences.samsungPriceVsForeignFlow.state,'CONFIRMING');
  const earlier=JSON.parse(s.db.prepare('SELECT features_json FROM market_observations WHERE observed_at_ms=?').get(start+46*60000).features_json);
  assert.equal(earlier.windows['5m'].metrics['samsung.foreignFlow'].status,'UNCHANGED_BUCKET');
  assert.equal(earlier.windows['5m'].metrics['samsung.foreignFlow'].value,null);
