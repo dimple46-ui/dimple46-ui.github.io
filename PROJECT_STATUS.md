@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-06 11:50 KST
+Last updated: 2026-10-06 14:45 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -42,7 +42,8 @@ Status: `CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated read-only va
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Review and remote commit of the additive compact-storage candidate before D1 migration.
+- Apply and verify additive migration `0002_feature_runs.sql`. The first Dashboard attempt returned
+  `Requests without any query are not supported`; no D1 schema change is accepted as complete.
 - Candidate deployment evidence for D1 query duration, rows read/written, actual storage growth and Worker CPU duration.
 - Documentation drift repair through this source-of-truth document.
 
@@ -182,7 +183,24 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Commit the reviewed compact-storage candidate to Draft PR #3, then apply `migrations/0002_feature_runs.sql` as the next controlled Cloudflare step. Do not merge PR #3 and do not replace the production Worker.
+Execute `migrations/0002_feature_runs.sql` successfully in the `market-history` D1 console, then
+verify `feature_runs` and `idx_feature_runs_version_day_slot`. Do not deploy the compact-write
+candidate until both objects are verified.
+
+## Recovery Checkpoint
+
+- timestamp: 2026-10-06 14:45 KST
+- branch: `feature/feature-engine-v2`
+- commit: `a8c4330c15c0800c8f28e329a80bc9b09245edd7`
+- completed: additive versioned compact storage, authenticated candidate write path, D1 query/write
+  metadata, structured Worker generation/failure logs, documentation and PR body update
+- tests: 32/32 local pass; not rerun during recovery
+- deployment: existing read-only validator only; compact-write candidate not deployed
+- validation: corrected real replay compacted 69,386 to 14,067 bytes; production snapshot at
+  2026-10-06 14:42 KST remained schema v3, fresh, pipeline OK and sourceErrors empty
+- D1: migration attempt failed with an empty-query/malformed-request response; table/index status
+  remains unknown and no v2 persistence is claimed
+- next_exact_step: execute migration successfully, then verify table and index
 
 ## Validation Evidence
 
