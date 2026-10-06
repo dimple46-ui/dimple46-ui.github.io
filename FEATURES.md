@@ -6,7 +6,10 @@ D1 History MVP stores immutable two-minute observations and computes past-only 5
 
 ## Feature Engine 2.0 candidate
 
-The candidate keeps latest-snapshot `schemaVersion: 3` and history schema version 1. `features_json.version` becomes 2 for new observations; no migration or backfill rewrites existing rows.
+The candidate keeps latest-snapshot `schemaVersion: 3` and raw history schema version 1. Production
+`market_observations.features_json` remains v1. Candidate v2 output is stored only in the additive
+`feature_runs` table after its migration and explicit write opt-in; no backfill rewrites existing
+rows.
 
 - Price: 2/5/10/30-minute and intraday returns, open/previous-close return, high/low position, cumulative intraday VWAP deviation, realized volatility and momentum acceleration.
 - Volume: window delta, rate and acceleration plus 5/10/20-trading-day same-time ratio and percentile.
@@ -21,4 +24,7 @@ Every window records `generatedAt`, `inputCutoff`, `actualElapsedSeconds` and sa
 
 Realized volatility is the root-sum-square of observed log-return percentages within the actual window. It is sampling-dependent and not annualized. Price return over each actual window is the short-term momentum measurement.
 
-Known operational limit: mock Feature Engine 2.0 rows measure roughly 72 KB of JSON at full coverage. D1 storage growth and Worker CPU duration must be measured during candidate validation before production rollout.
+Known operational limit: the corrected real replay measured 69,386 bytes for the full derived
+tree. Compact encoding measured 14,067 bytes (79.73% smaller) while preserving explicit status,
+quality and time-basis states. D1 storage growth and Worker CPU duration still require candidate
+deployment evidence before production rollout. See `FEATURE_STORAGE.md`.

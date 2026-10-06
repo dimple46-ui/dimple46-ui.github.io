@@ -1,12 +1,12 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-06 11:20 KST
+Last updated: 2026-10-06 11:50 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
 
 - Repository: `dimple46-ui/dimple46-ui.github.io`
-- Latest audited `main` head: `b2314643220e0fbdaddd1056822fa6d1cdcd7413` (snapshot-only commit at 2026-10-06 10:02:48 KST)
+- Latest audited `main` head: `083a82d6605d12962efd384984ad31b55a4f8a7f` (snapshot-only; production Worker source remains PR #2)
 - Latest non-snapshot Worker commit: `c88c8d03c50c5db5927f22b427b436d947691fc6` (`Add D1 history and point-in-time feature MVP (#2)`)
 - Latest snapshot schema: `schemaVersion: 3`
 - Snapshot at 2026-10-06 09:48:45 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: DEGRADED`
@@ -34,18 +34,22 @@ Status: `CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated read-only va
 - Corrected replay passed 5/10/30-minute availability, verified Samsung/SK Hynix price returns and relative strength, program deltas where usable, and futures foreign flow/OI/Basis deltas with explicit `UNVERIFIED_TIME` quality.
 - Null/stale safety passed: unchanged stock-flow buckets remained `null` with `UNCHANGED_BUCKET`, the unusable five-minute program input was not converted into a valid value, and no null metric was labeled `OK` or `VALID`.
 - Corrected replay sizes were 69,386 feature bytes and 77,644 hypothetical total JSON bytes; elapsed wall time was 100 ms and is not a Worker CPU measurement.
-- Local suite after adding validator coverage: 28/28 tests passed.
+- Additive `feature_runs` migration and authenticated candidate `POST /feature-runs` path implemented locally; it is version-keyed, immutable, explicit opt-in and never updates `market_observations`.
+- Compact encoding v1 preserves null/status/quality/time-basis semantics and measured 14,067 bytes on the corrected real replay, a 79.73% reduction from the full v2 feature tree.
+- Candidate responses/storage now capture D1 query/write metadata where supplied, and structured success/failure logs distinguish wall time from dashboard-only Worker CPU duration.
+- Local suite after storage/rollback coverage: 32/32 tests passed.
 
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Storage and query-cost redesign before any v2 persistence.
-- Candidate observability for D1 query duration, rows read/written and actual CPU duration.
+- Review and remote commit of the additive compact-storage candidate before D1 migration.
+- Candidate deployment evidence for D1 query duration, rows read/written, actual storage growth and Worker CPU duration.
 - Documentation drift repair through this source-of-truth document.
 
 ## Blocked / Not Yet Validated
 
 - Actual stored Feature Engine 2.0 row (`storedFeatureVersion` remained 1 in the corrected replay; v2 was query-time only).
+- Migration `0002_feature_runs.sql` has not been applied to production D1 and no `feature_runs` row exists yet.
 - Five/ten/twenty-trading-day same-time statistics: only one prior comparable trading day was available.
 - Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB, but per-query D1 meta was not captured.
 - The corrected stock-flow bucket-transition branch has regression coverage and is deployed, but the 11:04 KST real replay contained only `UNCHANGED_BUCKET` windows, so a real changed-bucket divergence remains unexercised.
@@ -58,8 +62,8 @@ Status: `CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated read-only va
 | --- | --- | --- |
 | `main` | Production | Worker source remains at PR #2 code; subsequent commits are snapshots. |
 | PR #2 | `MERGED_MAIN`, `PRODUCTION_VALIDATED` | Merged 2026-10-02; production validation recorded in PR body. |
-| `feature/feature-engine-v2` | Draft branch | Remote head `77142584a4c0d47eb4f676f554bf0bee638af037` before this validation-record update. |
-| PR #3 | Draft/Open | Two code commits ahead, 632 snapshot commits behind at audit time. Worker source did not change on main after the branch point. |
+| `feature/feature-engine-v2` | Draft branch | Compact storage/observability changes are being added without changing production `main`. |
+| PR #3 | Draft/Open | Not ready and not mergeable yet; compact candidate must be migrated/deployed/validated first. |
 | `market-feature-validation` | Separate candidate | Corrected hash `73758483...`, authenticated HTTP 200, read-only D1 replay. Does not write GitHub or D1. |
 | Production `market-relay` | Operational | Continues schema v3 snapshots and D1 observations; v2 not deployed. |
 
@@ -74,7 +78,7 @@ Percentages are audit estimates, not predictive-performance scores.
 | Latest Snapshot | 95% | 92% | `OPERATIONALLY_STABLE` | GitHub is an inefficient latest-state transport. |
 | History Storage | 88% | 82% | `PRODUCTION_VALIDATED` | Retention, usage metrics and archive policy. |
 | Feature Engine 1 | 92% | 85% | `MERGED_MAIN` | Operational feature delivery remains internal to stored rows. |
-| Feature Engine 2 | 88% | 52% | `CANDIDATE_READ_ONLY_VALIDATED` | No stored v2 row; changed stock-flow bucket, storage and CPU gates remain. |
+| Feature Engine 2 | 91% | 52% | `COMPACT_WRITE_PATH_LOCAL` | Migration/deployment absent; no stored v2 row, real changed bucket or CPU evidence. |
 | Same-Time Baseline | 82% | 18% | `CANDIDATE_DEPLOYED` | Needs 5/10/20 complete trading-day samples. |
 | Relative Strength | 94% | 70% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected 5/10/30-minute replay passed; v2 persistence/rollout absent. |
 | Divergence | 78% | 46% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected branch deployed, but a real changed stock-flow bucket and predictive validation remain. |
@@ -124,27 +128,29 @@ Percentages are audit estimates, not predictive-performance scores.
 2. PR #1 remains open although the later PR #2/main incorporated the relevant quality work.
 3. A two-minute GitHub snapshot commit cadence creates roughly 331 commits per full relay day, or 82,750 commits per 250 trading days.
 4. PR #3 appears 632 commits behind main even though those commits are snapshot-only; this obscures real code divergence.
-5. Corrected candidate v2 response measured 69,386 feature bytes and 77,644 hypothetical total JSON bytes per row.
-6. At 331 rows/day, full v2 rows project to 25.66 MB/day, 513 MB/20 days, 1.54 GB/60 days and 6.41 GB/250 days before SQLite/index overhead.
+5. Corrected candidate v2 response measured 69,386 full feature bytes; compact encoding measured 14,067 bytes while retaining explicit invalid/null states.
+6. At 331 rows/day, compact derived JSON projects to 4.66 MB/day, 93.12 MB/20 days, 279.37 MB/60 days and 1.16 GB/250 days before SQLite/index/raw-observation overhead.
 7. D1 dashboard storage was 11.56 MB at the 2026-10-06 audit; the account plan remains unverified. Official limits are 500 MB/database on Free and 10 GB/database on Workers Paid.
 8. Corrected candidate replay wall time was 100 ms, but wall time is not Worker CPU duration and D1 query meta was not captured.
 9. Production program data can exceed the five-minute freshness rule; this correctly degrades the pipeline but reduces usable window features.
 10. Index/futures adapters use fetch time because verified exchange timestamps are unavailable.
 11. The integrated PR #3 writer cannot safely prove v2 persistence beside the production v1 writer because immutable two-minute slots and `features_json IS NULL` allow the first writer to win.
 
-## Storage Decision Gate
+## Storage Decision
 
 Do not persist the full 69 KB derived feature object every two minutes.
 
-Preferred direction: retain immutable raw observations in D1 hot storage; compute most derived features at query/validation time; persist only a compact versioned feature summary needed for forecast reproducibility; later add daily aggregates and optional R2 cold archive. Existing v1 rows are retained and never rewritten or deleted during migration.
+Selected candidate: retain immutable raw observations in D1 hot storage; compute the full derived tree at generation/query time; persist only a compact versioned feature summary needed for reproducibility; later add daily aggregates and optional R2 cold archive only after measured need. Existing v1 rows are retained and never rewritten or deleted during migration.
 
-Required migration design before implementation:
+Implemented locally, not yet migrated/deployed:
 
 - Separate raw observation identity from versioned feature runs.
 - Key derived output by `(slot_ms, feature_version)` so candidate and production do not race.
 - Record engine git SHA, input cutoff and quality ceiling.
 - Keep rollback additive: disable v2 writes without touching v1 observations.
 - Add query meta/CPU/storage observability before rollout.
+
+See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract, rollout and rollback gates.
 
 ## Upgraded Architecture
 
@@ -176,7 +182,7 @@ Required migration design before implementation:
 
 ## Next Exact Step
 
-Design and test an additive versioned compact-feature table/validation path that cannot race with the production v1 writer. Re-deploy the read-only validator with the corrected stock-flow logic only after the storage/query observability shape is settled. Do not merge PR #3 and do not replace the production Worker yet.
+Commit the reviewed compact-storage candidate to Draft PR #3, then apply `migrations/0002_feature_runs.sql` as the next controlled Cloudflare step. Do not merge PR #3 and do not replace the production Worker.
 
 ## Validation Evidence
 
@@ -184,5 +190,6 @@ Design and test an additive versioned compact-feature table/validation path that
 - GitHub audit: main/branches/PR metadata and Worker blob SHAs, 2026-10-06.
 - Candidate replay response: authenticated read-only HTTP 200, generated 2026-10-06 09:44:44 KST.
 - Candidate source SHA-256: `438a8712d81edbe0a921c8e25d4a58551bf28907ed5ffb268f14c92d230f6bd4`.
-- Corrected local candidate SHA-256: `73758483c22f7d411f25cbf940f28f7f4dd676062b5e5cd1306086467d2c3a90` (not deployed).
-- Tests: 28/28 local pass.
+- Compact-storage local candidate SHA-256: `39e39bb133ed90f6fa950a056948ea03d1928905de4c8dab28434a7631f0567a` (not deployed).
+- Real-response compact measurement: 14,067 bytes, 79.73% reduction, quality ceiling `UNVERIFIED_TIME`; all 2/5/10/30-minute windows available; changed stock-flow bucket still not observed.
+- Tests: 32/32 local pass.

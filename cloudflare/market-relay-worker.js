@@ -1349,6 +1349,146 @@ function historyFeatures(current, rawRows, rawSameTimeRows=[]) {
     relativeStrength,sameTimeHistorical,sameTimeHistoricalAverage:{status:"RENAMED",path:"sameTimeHistorical"},
     limitations:["2-minute sampling: inspect actualElapsedSeconds", "RECENT_FETCH has unverified exchange time", "stock flows use bucket deltas, not fabricated continuous flows", "stock-flow/trading-value ratio is unavailable because stock flow is quantity, not value", "same-time statistics require complete trading-day samples", "divergence and futures position states are descriptive, not BUY/SELL signals"]};
 }
+
+// Feature v2 storage is additive. market_observations and legacy features_json are never rewritten here.
+const COMPACT_WINDOW_METRICS = [
+  "samsung.price","skHynix.price","samsung.foreignFlow","samsung.institutionFlow",
+  "skHynix.foreignFlow","skHynix.institutionFlow","market.foreigner","market.institution","market.individual",
+  "program.arbitrageNet","program.nonArbitrageNet","program.totalNet","futures.price","futures.foreignNet",
+  "futures.institutionNet","futures.individualNet","futures.openInterest","futures.openInterestChange",
+  "futures.basis","futures.marketBasis"
+];
+const COMPACT_ACCELERATION_METRICS = [
+  "market.foreigner","market.institution","market.individual","program.arbitrageNet",
+  "program.nonArbitrageNet","program.totalNet","futures.foreignNet","futures.institutionNet",
+  "futures.individualNet","futures.openInterest"
+];
+const COMPACT_STOCKS = ["samsung","skHynix"];
+const COMPACT_RELATIVE_STRENGTH = [
+  "samsung_vs_skHynix","samsung_vs_kospi","skHynix_vs_kospi","samsung_vs_kospi200","skHynix_vs_kospi200"
+];
+const COMPACT_DIVERGENCES = [
+  "cashVsFutures","samsungVsSkHynix","samsungPriceVsForeignFlow","samsungPriceVsInstitutionFlow",
+  "skHynixPriceVsForeignFlow","skHynixPriceVsInstitutionFlow","samsungPriceVsProgram","skHynixPriceVsProgram",
+  "samsungPriceVsFuturesForeign","skHynixPriceVsFuturesForeign","samsungPriceVsOpenInterest","skHynixPriceVsOpenInterest"
+];
+const COMPACT_SAME_TIME_METRICS = [
+  "samsung.volume","skHynix.volume","samsung.foreignFlow","samsung.institutionFlow",
+  "skHynix.foreignFlow","skHynix.institutionFlow","market.foreigner","market.institution","market.individual",
+  "program.arbitrageNet","program.nonArbitrageNet","program.totalNet","futures.foreignNet","futures.institutionNet",
+  "futures.individualNet","futures.openInterest","futures.basis","futures.marketBasis"
+];
+function encodeCompactCode(codes,kind,value) {
+  if(value==null) return null;
+  const normalized=String(value),values=codes[kind];
+  let index=values.indexOf(normalized);
+  if(index<0){ index=values.length;values.push(normalized); }
+  return index;
+}
+function encodeFeatureMetric(metric,codes) {
+  return metric?[metric.value??null,encodeCompactCode(codes,"status",metric.status),
+    encodeCompactCode(codes,"quality",metric.quality),metric.sampleCount??null,
+    encodeCompactCode(codes,"timeBasis",metric.timeBasis),metric.bucketElapsedSeconds??null]:null;
+}
+function encodeFeatureState(state,codes) {
+  return state?[encodeCompactCode(codes,"state",state.state),encodeCompactCode(codes,"status",state.status),
+    encodeCompactCode(codes,"quality",state.quality),state.strength??null,state.confidence??null]:null;
+}
+function compactHistoryFeatures(features) {
+  const codes={status:[],quality:[],timeBasis:[],state:[],direction:[]},windows={};
+  for(const horizon of ["2m","5m","10m","30m"]){
+    const window=features.windows?.[horizon];
+    if(!window) continue;
+    windows[horizon]={meta:[encodeCompactCode(codes,"status",window.status),window.baselineAt,
+        window.actualElapsedSeconds,window.sampleCount],
+      metrics:COMPACT_WINDOW_METRICS.map(name=>encodeFeatureMetric(window.metrics?.[name],codes)),
+      acceleration:COMPACT_ACCELERATION_METRICS.map(name=>encodeFeatureMetric(window.acceleration?.[name],codes)),
+      volumeAcceleration:COMPACT_STOCKS.map(name=>encodeFeatureMetric(window.volumeAcceleration?.[name],codes)),
+      volumeRate:COMPACT_STOCKS.map(name=>encodeFeatureMetric(window.volumeRate?.[name],codes)),
+      realizedVolatility:COMPACT_STOCKS.map(name=>encodeFeatureMetric(window.realizedVolatility?.[name],codes)),
+      momentumAcceleration:COMPACT_STOCKS.map(name=>encodeFeatureMetric(window.momentumAcceleration?.[name],codes)),
+      relativeStrength:COMPACT_RELATIVE_STRENGTH.map(name=>encodeFeatureMetric(window.relativeStrength?.[name],codes)),
+      futuresPosition:encodeFeatureState(window.futuresPosition,codes),
+      divergences:COMPACT_DIVERGENCES.map(name=>encodeFeatureState(window.divergences?.[name],codes))};
+  }
+  const bucketChanges=COMPACT_STOCKS.map(stock=>["foreignFlow","institutionFlow"].map(name=>{
+    const value=features.bucketChanges?.[stock]?.[name];
+    return value?[value.value??null,encodeCompactCode(codes,"status",value.status),
+      encodeCompactCode(codes,"quality",value.quality),encodeCompactCode(codes,"direction",value.direction),
+      value.acceleration??null,encodeCompactCode(codes,"status",value.accelerationStatus),value.shareOfVolumePct??null,
+      value.previousBucketTime??null,value.currentBucketTime??null]:null;
+  }));
+  const intraday={returns:["samsung","skHynix","kospi","kospi200","futures"].map(name=>
+      encodeFeatureMetric(features.intraday?.returns?.[name],codes)),
+    relativeStrength:COMPACT_RELATIVE_STRENGTH.map(name=>encodeFeatureMetric(features.intraday?.relativeStrength?.[name],codes)),
+    stocks:COMPACT_STOCKS.map(stock=>{
+      const value=features.intraday?.[stock];
+      return value?[encodeCompactCode(codes,"status",value.status),encodeCompactCode(codes,"quality",value.quality),
+        ["fromOpenPct","fromPreviousClosePct","highLowPosition","vwapDeviationPct"].map(name=>
+          encodeFeatureMetric(value.metrics?.[name],codes))]:null;
+    })};
+  const sameTime=features.sameTimeHistorical||{},sameTimeWindows={};
+  for(const [horizon,window] of Object.entries(sameTime.windows||{})){
+    sameTimeWindows[horizon]={meta:[encodeCompactCode(codes,"status",window.status),window.requestedTradingDays,window.sampleCount],
+      metrics:COMPACT_SAME_TIME_METRICS.map(name=>{
+        const metric=window.metrics?.[name];
+        return metric?[metric.value??null,encodeCompactCode(codes,"status",metric.status),
+          encodeCompactCode(codes,"quality",metric.quality),metric.sampleCount??null,metric.requiredSampleCount??null,
+          metric.mean,metric.median,metric.standardDeviation,metric.percentile,metric.zScore,metric.ratioToMean]:null;
+      })};
+  }
+  return {encodingVersion:1,featureVersion:features.version,
+    codes,order:{windowMetrics:COMPACT_WINDOW_METRICS,accelerationMetrics:COMPACT_ACCELERATION_METRICS,stocks:COMPACT_STOCKS,
+      relativeStrength:COMPACT_RELATIVE_STRENGTH,divergences:COMPACT_DIVERGENCES,sameTimeMetrics:COMPACT_SAME_TIME_METRICS,
+      metricTuple:["value","statusCode","qualityCode","sampleCount","timeBasisCode","bucketElapsedSeconds"],
+      stateTuple:["stateCode","statusCode","qualityCode","strength","confidence"]},
+    windows,bucketChanges,intraday,
+    sameTimeHistorical:{meta:[encodeCompactCode(codes,"status",sameTime.status),sameTime.availableTradingDays],
+      windows:sameTimeWindows}};
+}
+function jsonByteLength(value) { return new TextEncoder().encode(JSON.stringify(value)).length; }
+function normalizedD1Meta(result) {
+  const meta=result?.meta||{};
+  const finite=value=>value==null||value===""?null:(Number.isFinite(Number(value))?Number(value):null);
+  return {durationMs:finite(meta.duration),rowsRead:finite(meta.rows_read),rowsWritten:finite(meta.rows_written),
+    changes:finite(meta.changes),servedBy:meta.served_by??null};
+}
+function featureValidationSummary(features, compactFeatures, queryMeta={}) {
+  const statusCounts={},qualityCounts={};
+  let metricLeaves=0,nullLeaves=0,numericLeaves=0;
+  const visit=value=>{
+    if(!value||typeof value!=="object") return;
+    if(Object.prototype.hasOwnProperty.call(value,"status")&&Object.prototype.hasOwnProperty.call(value,"value")){
+      metricLeaves++;
+      const status=String(value.status??"UNKNOWN"),quality=String(value.quality??"UNKNOWN");
+      statusCounts[status]=(statusCounts[status]||0)+1;qualityCounts[quality]=(qualityCounts[quality]||0)+1;
+      if(value.value==null) nullLeaves++; else if(typeof value.value==="number"&&Number.isFinite(value.value)) numericLeaves++;
+    }
+    for(const child of Object.values(value)) visit(child);
+  };
+  visit(features);
+  const qualityOrder=["VERIFIED","UNKNOWN","UNVERIFIED_TIME","STALE_INPUT","UNUSABLE_INPUT","MISSING_INPUT"];
+  let qualityRank=0;
+  for(const quality of Object.keys(qualityCounts)) qualityRank=Math.max(qualityRank,
+    qualityOrder.indexOf(quality)<0?qualityOrder.indexOf("UNKNOWN"):qualityOrder.indexOf(quality));
+  const qualityCeiling=qualityOrder[qualityRank];
+  const fullFeatureBytes=jsonByteLength(features),compactFeatureBytes=jsonByteLength(compactFeatures);
+  const windowsAvailable=["2m","5m","10m","30m"].filter(horizon=>features.windows?.[horizon]?.status==="AVAILABLE");
+  const changedBucketObserved=Object.values(features.bucketChanges||{}).some(flows=>
+    Object.values(flows||{}).some(metric=>metric?.status==="BUCKET_DELTA"));
+  return {featureVersion:features.version,windowsAvailable,metricLeaves,numericLeaves,nullLeaves,
+    nullRatio:metricLeaves?nullLeaves/metricLeaves:null,statusCounts,qualityCounts,qualityCeiling,
+    changedBucketObserved,fullFeatureBytes,compactFeatureBytes,
+    reductionPct:fullFeatureBytes?100-compactFeatureBytes/fullFeatureBytes*100:null,queryMeta};
+}
+function buildCompactFeatureRun(current,features,{engineGitSha,engineSourceSha256,queryMeta={},generatedAtMs=Date.now()}={}) {
+  const compactFeatures=compactHistoryFeatures(features);
+  const validation=featureValidationSummary(features,compactFeatures,queryMeta);
+  const generationStatus=validation.windowsAvailable.length===4?"SUCCESS":"PARTIAL";
+  return {slotMs:current.slot_ms,featureVersion:features.version,observedAtMs:current.observed_at_ms,
+    tradingDay:current.trading_day,engineGitSha,engineSourceSha256,generatedAtMs,inputCutoffMs:current.observed_at_ms,
+    qualityCeiling:validation.qualityCeiling,generationStatus,compactFeatures,validation};
+}
 async function persistMarketHistory(env,payload) {
   if(!historyEnabled(env)) return {status:"DISABLED"};
   if(payload.dataMeta?.session?.status==="HOLIDAY") return {status:"SKIPPED_HOLIDAY"};

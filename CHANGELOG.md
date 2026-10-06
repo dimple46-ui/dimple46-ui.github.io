@@ -1,5 +1,12 @@
 # Changelog
 
+## Compact versioned Feature Engine storage candidate (2026-10-06, not deployed)
+- Add immutable `feature_runs` rows keyed by observation slot and feature version; retain every v1 observation.
+- Add authenticated, explicit-opt-in candidate writes that cannot race with the production v1 writer.
+- Add compact tuple/codebook encoding, engine revision/cutoff/quality metadata and D1 query/write observability.
+- Corrected real replay compacted 69,386 feature bytes to 14,067 bytes (79.73% reduction).
+- Add migration and SQLite integration coverage; 32/32 tests pass. Migration is not yet applied.
+
 ## Feature Engine 2.0 candidate (2026-10-02, not deployed)
 - Add 2-minute, intraday/VWAP, volatility, momentum/volume/flow acceleration and explicit feature-quality metadata.
 - Add 5/10/20-day same-time statistics with strict complete-sample activation and past-only cutoffs.

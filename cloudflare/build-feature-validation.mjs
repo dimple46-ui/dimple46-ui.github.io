@@ -9,4 +9,4 @@ const hash = createHash('sha256').update(source).digest('hex');
 const handler = readFileSync(new URL('./feature-validation-handler.txt', import.meta.url), 'utf8');
 const output = `// Generated from PR candidate; do not edit.\nconst CANDIDATE_SHA256 = "${hash}";\nconst FEATURE_VERSION = 2;\nconst SAME_TIME_TOLERANCE_MS = 150000;\nconst KST_OFFSET_MS = 32400000;\n${core}\n${handler}`;
 writeFileSync(new URL('./feature-validation-worker.js', import.meta.url), output);
-console.log('Generated read-only validation Worker', hash);
+console.log('Generated candidate validation Worker', hash);

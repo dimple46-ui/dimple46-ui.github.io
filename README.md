@@ -9,4 +9,6 @@ node --input-type=module --check < cloudflare/market-relay-worker.js
 node --test tests/*.test.mjs
 ```
 
-Node 24 built-in SQLite is used for integration tests. No package install is required. See `ARCHITECTURE.md`, `SCHEMA.md`, `FEATURES.md` and `D1_SETUP.md`. No automatic trading or BUY/SELL engine is enabled.
+Node 24 built-in SQLite is used for integration tests. No package install is required. See
+`ARCHITECTURE.md`, `SCHEMA.md`, `FEATURES.md`, `FEATURE_STORAGE.md` and `D1_SETUP.md`. No automatic
+trading or BUY/SELL engine is enabled.
