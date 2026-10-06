@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-06 10:03 KST  
+Last updated: 2026-10-06 11:20 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -11,14 +11,14 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 - Latest snapshot schema: `schemaVersion: 3`
 - Snapshot at 2026-10-06 09:48:45 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: DEGRADED`
 - Degraded reason: program source was `STALE`; index/futures timestamps remained `UNVERIFIED_TIME`/`RECENT_FETCH`.
-- D1: `market-history`, table `market_observations`, production observations continue to accumulate.
+- D1: `market-history`, table `market_observations`, production observations continue to accumulate. Read-only audit at 10:34 KST found 550 rows across three trading days, all 550 stored feature rows at v1, 0 v2 rows, 20,219.3 average JSON bytes and 21,625 maximum JSON bytes. Dashboard storage was 11.56 MB.
 - PR #2: merged and production-validated. D1 failure isolation and automatic recovery were validated before merge.
 
 ## Current Milestone
 
 M1 — Feature Engine 2.0 production validation.
 
-Status: `CANDIDATE_DEPLOYED` in a separate authenticated read-only validation Worker, not deployed into the production writer and not merged into `main`.
+Status: `CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated read-only validation Worker, not deployed into the production writer and not merged into `main`.
 
 ## Completed
 
@@ -29,7 +29,11 @@ Status: `CANDIDATE_DEPLOYED` in a separate authenticated read-only validation Wo
 - D1 failure isolation from GitHub publication, rollback and automatic recovery validation.
 - Feature Engine 2.0 implementation and local tests.
 - Authenticated read-only replay deployment using exact PR #3 feature logic.
-- Actual replay at 2026-10-06 09:44:44 KST: 23 current-day slots, observation age 0.797 seconds, 2/5/10/30-minute windows available, relative strength/VWAP/volatility/acceleration calculated.
+- Corrected candidate `73758483c22f7d411f25cbf940f28f7f4dd676062b5e5cd1306086467d2c3a90` deployed to the authenticated read-only validator.
+- Actual corrected replay at 2026-10-06 11:04:44 KST: 63 current-day slots, observation age 94.872 seconds, Feature Engine v2 calculated against a stored v1 row without writing v2 data.
+- Corrected replay passed 5/10/30-minute availability, verified Samsung/SK Hynix price returns and relative strength, program deltas where usable, and futures foreign flow/OI/Basis deltas with explicit `UNVERIFIED_TIME` quality.
+- Null/stale safety passed: unchanged stock-flow buckets remained `null` with `UNCHANGED_BUCKET`, the unusable five-minute program input was not converted into a valid value, and no null metric was labeled `OK` or `VALID`.
+- Corrected replay sizes were 69,386 feature bytes and 77,644 hypothetical total JSON bytes; elapsed wall time was 100 ms and is not a Worker CPU measurement.
 - Local suite after adding validator coverage: 28/28 tests passed.
 
 ## In Progress
@@ -41,10 +45,10 @@ Status: `CANDIDATE_DEPLOYED` in a separate authenticated read-only validation Wo
 
 ## Blocked / Not Yet Validated
 
-- Actual stored Feature Engine 2.0 row (`storedFeatureVersion` was null in the replay response).
+- Actual stored Feature Engine 2.0 row (`storedFeatureVersion` remained 1 in the corrected replay; v2 was query-time only).
 - Five/ten/twenty-trading-day same-time statistics: only one prior comparable trading day was available.
-- Actual Worker CPU duration, D1 database size and account plan/usage.
-- Full stock-flow divergence has a local fix and regression coverage, but the corrected candidate is not deployed yet.
+- Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB, but per-query D1 meta was not captured.
+- The corrected stock-flow bucket-transition branch has regression coverage and is deployed, but the 11:04 KST real replay contained only `UNCHANGED_BUCKET` windows, so a real changed-bucket divergence remains unexercised.
 - Production fail-safe under the v2 computation/storage design.
 - Long-running storage/retention and GitHub snapshot migration.
 
@@ -54,9 +58,9 @@ Status: `CANDIDATE_DEPLOYED` in a separate authenticated read-only validation Wo
 | --- | --- | --- |
 | `main` | Production | Worker source remains at PR #2 code; subsequent commits are snapshots. |
 | PR #2 | `MERGED_MAIN`, `PRODUCTION_VALIDATED` | Merged 2026-10-02; production validation recorded in PR body. |
-| `feature/feature-engine-v2` | Draft branch | Remote head `9023289df15eb1c627e3a4c2f0fafe96cdaf36a2`. |
+| `feature/feature-engine-v2` | Draft branch | Remote head `77142584a4c0d47eb4f676f554bf0bee638af037` before this validation-record update. |
 | PR #3 | Draft/Open | Two code commits ahead, 632 snapshot commits behind at audit time. Worker source did not change on main after the branch point. |
-| `market-feature-validation` | Separate candidate | Authenticated HTTP 200, read-only D1 replay. Does not write GitHub or D1. |
+| `market-feature-validation` | Separate candidate | Corrected hash `73758483...`, authenticated HTTP 200, read-only D1 replay. Does not write GitHub or D1. |
 | Production `market-relay` | Operational | Continues schema v3 snapshots and D1 observations; v2 not deployed. |
 
 ## Component Maturity Matrix
@@ -70,10 +74,10 @@ Percentages are audit estimates, not predictive-performance scores.
 | Latest Snapshot | 95% | 92% | `OPERATIONALLY_STABLE` | GitHub is an inefficient latest-state transport. |
 | History Storage | 88% | 82% | `PRODUCTION_VALIDATED` | Retention, usage metrics and archive policy. |
 | Feature Engine 1 | 92% | 85% | `MERGED_MAIN` | Operational feature delivery remains internal to stored rows. |
-| Feature Engine 2 | 86% | 48% | `CANDIDATE_DEPLOYED` | No stored v2 row; correctness/storage/CPU gates remain. |
+| Feature Engine 2 | 88% | 52% | `CANDIDATE_READ_ONLY_VALIDATED` | No stored v2 row; changed stock-flow bucket, storage and CPU gates remain. |
 | Same-Time Baseline | 82% | 18% | `CANDIDATE_DEPLOYED` | Needs 5/10/20 complete trading-day samples. |
-| Relative Strength | 92% | 65% | `CANDIDATE_DEPLOYED` | Actual replay passed; v2 persistence/rollout absent. |
-| Divergence | 74% | 42% | `CANDIDATE_DEPLOYED` | Stock bucket delta wiring bug; no predictive validation. |
+| Relative Strength | 94% | 70% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected 5/10/30-minute replay passed; v2 persistence/rollout absent. |
+| Divergence | 78% | 46% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected branch deployed, but a real changed stock-flow bucket and predictive validation remain. |
 | Derivatives Intelligence | 76% | 52% | `CANDIDATE_DEPLOYED` | Timestamp quality and heuristic-only position classification. |
 | Signal Layer | 18% | 0% | `DESIGNED` | Descriptive signal registry not implemented. |
 | Options/VKOSPI | 5% | 0% | `DESIGNED` | Deferred until M1/M2. |
@@ -120,10 +124,10 @@ Percentages are audit estimates, not predictive-performance scores.
 2. PR #1 remains open although the later PR #2/main incorporated the relevant quality work.
 3. A two-minute GitHub snapshot commit cadence creates roughly 331 commits per full relay day, or 82,750 commits per 250 trading days.
 4. PR #3 appears 632 commits behind main even though those commits are snapshot-only; this obscures real code divergence.
-5. Candidate v2 response measured 69,270 feature bytes and 77,518 hypothetical total JSON bytes per row.
+5. Corrected candidate v2 response measured 69,386 feature bytes and 77,644 hypothetical total JSON bytes per row.
 6. At 331 rows/day, full v2 rows project to 25.66 MB/day, 513 MB/20 days, 1.54 GB/60 days and 6.41 GB/250 days before SQLite/index overhead.
-7. Current D1 plan and actual database bytes are not verified. Official limits are 500 MB/database on Free and 10 GB/database on Workers Paid.
-8. Candidate replay wall time was 29 ms, but wall time is not Worker CPU duration and D1 query meta was not captured.
+7. D1 dashboard storage was 11.56 MB at the 2026-10-06 audit; the account plan remains unverified. Official limits are 500 MB/database on Free and 10 GB/database on Workers Paid.
+8. Corrected candidate replay wall time was 100 ms, but wall time is not Worker CPU duration and D1 query meta was not captured.
 9. Production program data can exceed the five-minute freshness rule; this correctly degrades the pipeline but reduces usable window features.
 10. Index/futures adapters use fetch time because verified exchange timestamps are unavailable.
 11. The integrated PR #3 writer cannot safely prove v2 persistence beside the production v1 writer because immutable two-minute slots and `features_json IS NULL` allow the first writer to win.
