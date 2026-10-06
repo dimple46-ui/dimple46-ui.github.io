@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-06 14:45 KST
+Last updated: 2026-10-06 14:58 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -38,19 +38,22 @@ Status: `CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated read-only va
 - Compact encoding v1 preserves null/status/quality/time-basis semantics and measured 14,067 bytes on the corrected real replay, a 79.73% reduction from the full v2 feature tree.
 - Candidate responses/storage now capture D1 query/write metadata where supplied, and structured success/failure logs distinguish wall time from dashboard-only Worker CPU duration.
 - Local suite after storage/rollback coverage: 32/32 tests passed.
+- D1 migration `0002_feature_runs.sql` executed successfully in `market-history`; Dashboard SQL
+  verification returned `feature_runs` as a table and `idx_feature_runs_version_day_slot` as an
+  index at 2026-10-06 14:56 KST.
 
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Apply and verify additive migration `0002_feature_runs.sql`. The first Dashboard attempt returned
-  `Requests without any query are not supported`; no D1 schema change is accepted as complete.
+- Deploy the compact-write build to the separate `market-feature-validation` Worker with writes
+  disabled by default; do not replace production `market-relay`.
 - Candidate deployment evidence for D1 query duration, rows read/written, actual storage growth and Worker CPU duration.
 - Documentation drift repair through this source-of-truth document.
 
 ## Blocked / Not Yet Validated
 
 - Actual stored Feature Engine 2.0 row (`storedFeatureVersion` remained 1 in the corrected replay; v2 was query-time only).
-- Migration `0002_feature_runs.sql` has not been applied to production D1 and no `feature_runs` row exists yet.
+- No actual `feature_runs` v2 row exists yet; table/index creation alone is not persistence evidence.
 - Five/ten/twenty-trading-day same-time statistics: only one prior comparable trading day was available.
 - Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB, but per-query D1 meta was not captured.
 - The corrected stock-flow bucket-transition branch has regression coverage and is deployed, but the 11:04 KST real replay contained only `UNCHANGED_BUCKET` windows, so a real changed-bucket divergence remains unexercised.
@@ -183,9 +186,22 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Execute `migrations/0002_feature_runs.sql` successfully in the `market-history` D1 console, then
-verify `feature_runs` and `idx_feature_runs_version_day_slot`. Do not deploy the compact-write
-candidate until both objects are verified.
+Deploy `cloudflare/feature-validation-worker.js` commit `a8c4330c...` to the separate
+`market-feature-validation` Worker while `FEATURE_V2_WRITE_ENABLED` remains absent/false. Verify
+authenticated GET replay before enabling any write.
+
+## Checkpoint — D1 Compact Schema Verified
+
+- timestamp: 2026-10-06 14:58 KST
+- branch: `feature/feature-engine-v2`
+- implementation commit: `a8c4330c15c0800c8f28e329a80bc9b09245edd7`
+- checkpoint commit before this update: `6b06689a995442645f1a54f6f203b09796257517`
+- completed: additive migration executed; `feature_runs` table and
+  `idx_feature_runs_version_day_slot` index verified in the real `market-history` D1 database
+- tests: 32/32 local pass; not rerun because code did not change
+- deployment: compact-write candidate not yet deployed
+- validation: schema objects only; v2 row count remains unverified
+- next_exact_step: deploy the separate candidate with writes disabled, then validate authenticated GET
 
 ## Recovery Checkpoint
 
