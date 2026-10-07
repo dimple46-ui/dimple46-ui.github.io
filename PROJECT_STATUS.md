@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 14:33 KST
+Last updated: 2026-10-07 14:38 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -18,12 +18,14 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 
 ## Current Milestone
 
-M1 — Feature Engine 2.0 production validation.
+M2 — Operational / Storage Architecture Stabilization.
 
-Status: `M1_FINAL_PR_SAFETY_FIX_READY` in a separate authenticated validation Worker.
-Feature correctness, real changed-bucket direction/acceleration, three-slot compact persistence, rollback,
-CPU evidence, D1 fail-closed behavior, production isolation and binding recovery are validated.
-PR #3 is not merged into `main`.
+Status: `M2_NOT_STARTED`.
+
+M1 — Feature Engine 2.0 production validation is `COMPLETE`: correctness, real changed-bucket
+semantics, three-slot compact persistence, rollback, provider CPU evidence, D1 failure isolation,
+production isolation, documentation and merge-readiness review all passed. PR #3 is technically
+mergeable but remains Draft/Open and is not merged into `main`.
 
 ## Completed
 
@@ -89,8 +91,9 @@ PR #3 is not merged into `main`.
 
 ## In Progress
 
-- Commit and push the production-v1-default safety guard.
-- Re-run the PR diff/checks/mergeability audit without merging.
+- M2 read-only audit planning: GitHub two-minute snapshot transport, D1 retention, operational
+  observability and archive policy.
+- PR #3 remains Draft/Open pending an explicit merge decision; no production deployment is implied.
 
 ## Blocked / Not Yet Validated
 
@@ -98,9 +101,9 @@ PR #3 is not merged into `main`.
   the one controlled persistence call.
 - Five/ten/twenty-trading-day same-time statistics: only one prior comparable trading day was available.
 - Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB; per-query D1 meta is now captured, including 1,686 rows read by the same-time query.
-- Production fail-safe under the integrated v2 computation/storage design remains a rollout gate;
-  candidate D1 failure isolation and unchanged production publication are already validated.
-- Long-running storage/retention and GitHub snapshot migration.
+- Per-request Worker CPU is not exposed by the captured dashboard percentile view.
+- Long-running storage/retention and GitHub snapshot transport redesign belong to M2.
+- No GitHub CI workflow/status checks are configured; local tests are the current automated gate.
 
 ## Branch / PR / Deployment
 
@@ -109,7 +112,7 @@ PR #3 is not merged into `main`.
 | `main` | Production | Worker source remains at PR #2 code; subsequent commits are snapshots. |
 | PR #2 | `MERGED_MAIN`, `PRODUCTION_VALIDATED` | Merged 2026-10-02; production validation recorded in PR body. |
 | `feature/feature-engine-v2` | Draft branch | Compact storage/observability changes are being added without changing production `main`. |
-| PR #3 | Draft/Open | Not ready and not mergeable yet; compact candidate must be migrated/deployed/validated first. |
+| PR #3 | Draft/Open, mergeable | M1 evidence complete; head `f75cffb`; intentionally not merged or marked Ready automatically. |
 | `market-feature-validation` | Separate candidate | Authenticated GET at 09:44 KST on 2026-10-07 verified compact source hash `39e39bb1...`, D1 query metadata and no write. Writes remain disabled. |
 | Production `market-relay` | Operational | Continues schema v3 snapshots and D1 observations; v2 not deployed. |
 
@@ -124,7 +127,7 @@ Percentages are audit estimates, not predictive-performance scores.
 | Latest Snapshot | 95% | 92% | `OPERATIONALLY_STABLE` | GitHub is an inefficient latest-state transport. |
 | History Storage | 88% | 82% | `PRODUCTION_VALIDATED` | Retention, usage metrics and archive policy. |
 | Feature Engine 1 | 92% | 85% | `MERGED_MAIN` | Operational feature delivery remains internal to stored rows. |
-| Feature Engine 2 | 96% | 92% | `CANDIDATE_V2_PERSISTENCE_VALIDATED` | Supporting docs and final PR diff/mergeability review remain. |
+| Feature Engine 2 | 98% | 95% | `M1_COMPLETE_MERGE_READY_CANDIDATE` | Production rollout remains a separate explicit decision. |
 | Same-Time Baseline | 82% | 18% | `CANDIDATE_DEPLOYED` | Needs 5/10/20 complete trading-day samples. |
 | Relative Strength | 94% | 70% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected 5/10/30-minute replay passed; v2 persistence/rollout absent. |
 | Divergence | 78% | 46% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected branch deployed, but a real changed stock-flow bucket and predictive validation remain. |
@@ -228,8 +231,26 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Commit and push the production-v1-default safety guard, then re-check PR #3 head, tests, diff and
-mergeability without auto-merging.
+Begin M2 with a read-only audit of GitHub snapshot commit volume, latest-state consumers, D1 growth
+and retention requirements. Keep PR #3 Draft/Open until an explicit merge decision.
+
+## Checkpoint — M1 Complete / PR #3 Merge-ready Candidate
+
+- timestamp: 2026-10-07 14:38 KST
+- branch head: `f75cffb417ecdc2cf6724a144947a919fcdbb6b7`
+- PR #3: Open, Draft, unmerged, GitHub `mergeable=true`
+- tests: 36/36 local pass; GitHub has no configured CI statuses or workflow runs
+- merge audit: current feature branch is behind the continuously moving snapshot base, but local
+  `git merge-tree --write-tree` completed without conflicts and GitHub reports mergeable
+- production safety: Feature v1 persistence is the default; no production variable or Worker was changed
+- D1 evidence: exactly three Feature v2 rows at three distinct slots; all `SUCCESS`; compact sizes
+  14,044, 13,936 and 13,884 characters; candidate writes disabled after verification
+- production evidence: 2026-10-07 14:36:45 KST snapshot remained schema v3, fresh and
+  `sourceErrors: []`; stocks/KOSPI investors live; pipeline `DEGRADED` only because program input
+  was explicitly stale
+- conclusion: M1 is COMPLETE; PR #3 is technically merge-ready but remains Draft/Open and unmerged
+  pending explicit direction
+- next_exact_step: begin M2 read-only operational/storage architecture audit without changing production
 
 ## Checkpoint — Final PR Production Safety Guard Tested
 
