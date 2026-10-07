@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 10:36 KST
+Last updated: 2026-10-07 11:02 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -20,11 +20,9 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 
 M1 — Feature Engine 2.0 production validation.
 
-Status: `COMPACT_CANDIDATE_PERSISTENCE_AND_ROLLBACK_VALIDATED` in a separate authenticated
-validation Worker; one controlled v2 row was inserted and verified directly in D1, and candidate
-writes were disabled again with the post-write rollback gate passing. The post-rollback D1 count
-remained exactly one row/one slot. Cloudflare CPU metrics are captured. PR #3 is not merged into
-`main`.
+Status: `COMPACT_CANDIDATE_PERSISTENCE_ROLLBACK_FAILURE_RECOVERY_VALIDATED` in a separate
+authenticated validation Worker. Persistence, rollback, CPU evidence, D1 fail-closed behavior,
+production isolation and binding recovery are validated. PR #3 is not merged into `main`.
 
 ## Completed
 
@@ -76,20 +74,27 @@ remained exactly one row/one slot. Cloudflare CPU metrics are captured. PR #3 is
 - Cloudflare Worker metrics over the audited 24-hour window reported 72 invocations, zero errors,
   zero CPU-limit exceedances, CPU P50/P90/P99 of 0.52/3.97/8.28 ms, actual-time P50/P90/P99 of
   0.85/24.33/61.73 ms, and memory P50/P90/P99 of 1.57/2.51/3.48 MB.
+- Candidate D1 failure injection passed: removing only its `MARKET_HISTORY` binding caused
+  authenticated GET to return HTTP 503 `FEATURE_VALIDATION_FAILED`, while production at
+  2026-10-07 10:44:44 KST remained schema v3, fresh, pipeline OK, sourceErrors empty and both stocks
+  live.
+- Candidate recovery passed after restoring `MARKET_HISTORY -> market-history`: authenticated GET
+  returned `READ_ONLY_REPLAY` for the exact candidate hash with a 16.518-second-old observation,
+  61 distinct slots, all 2/5/10/30-minute windows, and zero query writes.
 
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Complete controlled candidate D1 failure-injection isolation evidence.
 - Wait for a real changed stock-flow bucket transition; do not synthesize or convert unchanged/null
   data into a change.
+- Finalize PR #3 merge-readiness documentation after the changed-bucket gate is satisfied.
 - Candidate evidence for actual storage growth and Worker CPU duration.
 - Documentation drift repair through this source-of-truth document.
 
 ## Blocked / Not Yet Validated
 
 - The metrics page provides deployment-level CPU percentiles, not an exact per-request CPU value for
-  the one controlled persistence call. Explicit candidate D1 failure-injection isolation remains.
+  the one controlled persistence call.
 - Five/ten/twenty-trading-day same-time statistics: only one prior comparable trading day was available.
 - Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB; per-query D1 meta is now captured, including 1,686 rows read by the same-time query.
 - The corrected stock-flow bucket-transition branch has regression coverage and is deployed, but the 11:04 KST real replay contained only `UNCHANGED_BUCKET` windows, so a real changed-bucket divergence remains unexercised.
@@ -118,7 +123,7 @@ Percentages are audit estimates, not predictive-performance scores.
 | Latest Snapshot | 95% | 92% | `OPERATIONALLY_STABLE` | GitHub is an inefficient latest-state transport. |
 | History Storage | 88% | 82% | `PRODUCTION_VALIDATED` | Retention, usage metrics and archive policy. |
 | Feature Engine 1 | 92% | 85% | `MERGED_MAIN` | Operational feature delivery remains internal to stored rows. |
-| Feature Engine 2 | 91% | 80% | `CANDIDATE_V2_PERSISTENCE_ROLLBACK_CPU_VALIDATED` | D1 failure injection and real changed bucket remain. |
+| Feature Engine 2 | 91% | 86% | `CANDIDATE_V2_FAILURE_RECOVERY_VALIDATED` | A real changed stock-flow bucket and final merge-readiness review remain. |
 | Same-Time Baseline | 82% | 18% | `CANDIDATE_DEPLOYED` | Needs 5/10/20 complete trading-day samples. |
 | Relative Strength | 94% | 70% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected 5/10/30-minute replay passed; v2 persistence/rollout absent. |
 | Divergence | 78% | 46% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected branch deployed, but a real changed stock-flow bucket and predictive validation remain. |
@@ -222,8 +227,29 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Temporarily break only the separate candidate's D1 binding while writes remain disabled, require the
-candidate to fail closed, verify production stays healthy, and then restore the binding immediately.
+After the next real stock-flow source bucket arrives, run one authenticated read-only replay and
+require a non-null bucket delta, direction and correctly qualified acceleration status. Do not
+synthesize a bucket change.
+
+## Checkpoint — Candidate D1 Failure Isolation and Recovery Validated
+
+- timestamp: 2026-10-07 11:02 KST
+- injection: removed only candidate `MARKET_HISTORY` binding; writes already disabled
+- candidate failure result: authenticated GET HTTP 503 `FEATURE_VALIDATION_FAILED`
+- production during failure: generated 2026-10-07 10:44:44 KST; schema v3; fresh; pipeline OK;
+  sourceErrors empty; Samsung/SK Hynix live
+- recovery: restored `MARKET_HISTORY -> market-history`
+- candidate recovery result: authenticated HTTP 200 `READ_ONLY_REPLAY`
+- recovered observation: 2026-10-07 11:00:56 KST; age 16.518 seconds; 61 distinct slots
+- recovered validation: 2/5/10/30-minute windows available; 176 numeric and 128 null leaves;
+  null ratio 42.11%; quality ceiling `UNVERIFIED_TIME`
+- recovered storage: 68,881 full bytes; 13,823 compact bytes; 79.93% reduction
+- recovered query meta: current 1/0, intraday 62/0, same-time 1,680/0 rows read/written
+- recovered wall time: 74 ms; not Worker CPU duration
+- write state: `FEATURE_V2_WRITE_ENABLED=false`; GET stored no v2 row
+- stock-flow correctness: real changed bucket still not observed; four bucket metrics remained null
+  with `BUCKET_UNCHANGED`, direction null and acceleration null
+- next_exact_step: wait for the next actual source bucket and re-run authenticated GET
 
 ## Checkpoint — Cloudflare Worker CPU Evidence Captured
 
