@@ -1,18 +1,17 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 19:38 KST
+Last updated: 2026-10-07 20:55 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
 
 - Repository: `dimple46-ui/dimple46-ui.github.io`
-- Latest audited `main` head: `a80869dafaacc9cf798d627e374a2c2f8a81b549` (snapshot-only; production Worker source remains PR #2)
+- Latest audited `main` head: `e856a4b963df6be56c6d07256beb73f8854cdd68` (snapshot-only; production Worker source remains PR #2)
 - Latest non-snapshot Worker commit: `c88c8d03c50c5db5927f22b427b436d947691fc6` (`Add D1 history and point-in-time feature MVP (#2)`)
 - Latest snapshot schema: `schemaVersion: 3`
-- Snapshot at 2026-10-07 19:36:45 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: OK`.
-- Samsung/SK Hynix remained `LIVE` in the after-hours NXT window. Program and futures were correctly
-  marked `CLOSED`; index/futures timestamps remain explicitly unverified where no exchange timestamp
-  is available. The relay was still creating snapshot commits, so the branch base was not yet stable.
+- Final snapshot at 2026-10-07 20:01:17 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: OK`.
+- Samsung/SK Hynix source time was 20:00:00 KST and both were correctly marked `CLOSED`. Program and
+  futures were also closed. The relay stopped after the final snapshot, leaving a stable main head.
 - D1: `market-history`, table `market_observations`, production observations continue to accumulate. The additive `feature_runs` table now contains exactly three Feature v2 rows across three distinct slots; production v1 observations were not updated. Earlier storage audit measured 11.56 MB.
 - PR #2: merged and production-validated. D1 failure isolation and automatic recovery were validated before merge.
 
@@ -20,12 +19,16 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 
 M2 — Operational / Storage Architecture Stabilization.
 
-Status: `M2_READ_ONLY_AUDIT_COMPLETE`.
+Status: `M2_READ_ONLY_API_CODE_COMPLETE_NOT_DEPLOYED`.
 
 M1 — Feature Engine 2.0 production validation is `COMPLETE`: correctness, real changed-bucket
 semantics, three-slot compact persistence, rollback, provider CPU evidence, D1 failure isolation,
 production isolation and documentation all passed. PR #3 is Ready/Open and unmerged; the local
 content merge-tree is clean, while GitHub mergeability changes as the two-minute snapshot base advances.
+
+M3 — Descriptive Signal Layer is `PURE_FUNCTION_CANDIDATE`: deterministic signal generation,
+quality confidence ceilings and synthetic correctness tests are implemented, but no production endpoint,
+alert or investment action consumes the signals.
 
 ## Completed
 
@@ -88,12 +91,24 @@ content merge-tree is clean, while GitHub mergeability changes as the two-minute
   full Feature v2 tree after a later Worker deployment. Production persistence now defaults to the
   unchanged Feature v1 contract; Feature v2 requires an explicit, controlled opt-in and the separate
   validator remains the compact-write path. A new regression test raises the local suite to 36/36.
+- Off-market M1 hardening now rejects feature-version mismatch, invalid source SHA/input cutoff,
+  compact serialization failure and compact payloads above 64 KiB before D1 persistence. D1 read/write
+  failure, corrupt stored JSON, out-of-order rows, cross-day contamination and GitHub-write isolation
+  regression tests raise the suite from 36 to 41 tests.
+- M2 bounded read-only intelligence API candidate implemented with authenticated fixed routes
+  `/health`, `/state`, `/features` and `/history`; all SQL is fixed and parameter-bound. Cutoffs, a
+  12-hour history range, 120-row limit, 900 KB response limit, stored-feature integrity and generic
+  failure responses are enforced. No candidate deployment, binding or Secret was created.
+- M3 pure descriptive Signal Layer candidate implemented for stock-flow acceleration/reversal,
+  program acceleration, futures/OI classification, relative momentum, divergence and abnormal volume.
+  Confidence is categorical, never a probability, and cannot exceed input quality. Full suite: 53/53.
 
 ## In Progress
 
-- M2 implementation is paused until the after-hours PR #3 synchronization/merge decision.
-- Proposed next design: optional dedicated latest-state transport with GitHub as a reduced-frequency
-  fallback, while D1 remains the immutable raw-history source. No code or production binding changed.
+- Synchronize PR #3 with the now-stable final snapshot head, then rerun the full suite and merge-tree.
+- The read-only intelligence API remains local/branch-only until a separate candidate Worker,
+  read-only D1 binding, authentication Secret and provider-level rate limit are explicitly approved.
+- M3 signals remain pure-function outputs pending historical replay and next-session live behavior validation.
 
 ## Blocked / Not Yet Validated
 
@@ -104,6 +119,9 @@ content merge-tree is clean, while GitHub mergeability changes as the two-minute
 - Per-request Worker CPU is not exposed by the captured dashboard percentile view.
 - Long-running storage/retention and GitHub snapshot transport redesign belong to M2.
 - No GitHub CI workflow/status checks are configured; local tests are the current automated gate.
+- Secure intelligence API deployment requires a new `INTELLIGENCE_READ_TOKEN`; it has not been
+  created or requested. The built-in limiter is per-isolate and is not a substitute for a provider-level rule.
+- Signal tests are development correctness evidence, not predictive accuracy or live production validation.
 
 ## Branch / PR / Deployment
 
@@ -111,8 +129,8 @@ content merge-tree is clean, while GitHub mergeability changes as the two-minute
 | --- | --- | --- |
 | `main` | Production | Worker source remains at PR #2 code; subsequent commits are snapshots. |
 | PR #2 | `MERGED_MAIN`, `PRODUCTION_VALIDATED` | Merged 2026-10-02; production validation recorded in PR body. |
-| `feature/feature-engine-v2` | Ready branch | Candidate validation is complete without changing production `main`. |
-| PR #3 | Ready/Open, unmerged | M1 evidence complete; content merge-tree is clean, but the moving snapshot base makes GitHub mergeability transient. |
+| `feature/feature-engine-v2` | Ready branch | M1 hardening, M2 read API and M3 pure signal candidate are branch-only. |
+| PR #3 | Ready/Open, unmerged | M1 evidence complete; stable-main synchronization remains before an explicit merge decision. |
 | `market-feature-validation` | Separate candidate | Authenticated GET at 09:44 KST on 2026-10-07 verified compact source hash `39e39bb1...`, D1 query metadata and no write. Writes remain disabled. |
 | Production `market-relay` | Operational | Continues schema v3 snapshots and D1 observations; v2 not deployed. |
 
@@ -132,7 +150,7 @@ Percentages are audit estimates, not predictive-performance scores.
 | Relative Strength | 94% | 70% | `M1_VALIDATED` | Real-D1 2/5/10/30-minute replay and three-slot compact v2 persistence passed; production rollout remains separate. |
 | Divergence | 78% | 46% | `M1_VALIDATED` | Real changed stock-flow bucket semantics passed; predictive validation remains future work. |
 | Derivatives Intelligence | 76% | 52% | `CANDIDATE_DEPLOYED` | Timestamp quality and heuristic-only position classification. |
-| Signal Layer | 18% | 0% | `DESIGNED` | Descriptive signal registry not implemented. |
+| Signal Layer | 42% | 0% | `PURE_FUNCTION_CANDIDATE` | Historical/live replay integration and endpoint delivery remain. |
 | Options/VKOSPI | 5% | 0% | `DESIGNED` | Deferred until M1/M2. |
 | US Semiconductor | 5% | 0% | `DESIGNED` | Deferred until signal foundation. |
 | FX | 5% | 0% | `DESIGNED` | Source evaluation not started. |
@@ -164,12 +182,12 @@ Percentages are audit estimates, not predictive-performance scores.
 
 | Area | Functional | Operational |
 | --- | ---: | ---: |
-| Infrastructure | 84% | 81% |
-| Tactical Intelligence | 39% | 21% |
+| Infrastructure | 86% | 81% |
+| Tactical Intelligence | 42% | 21% |
 | Strategic Intelligence | 8% | 0% |
 | Portfolio Intelligence | 9% | 0% |
 | Self-Evaluation | 7% | 0% |
-| Overall | 31% | 20% |
+| Overall | 32% | 20% |
 
 ## Known Issues / Technical Debt
 
@@ -231,8 +249,8 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-After the relay window ends, re-check production, synchronize PR #3 with the stable `main` head and
-request explicit approval before merge. No production Worker deployment is implied.
+Synchronize PR #3 with stable main `e856a4b...`, rerun all tests and the merge-tree, then request
+explicit approval before any main merge. No production Worker deployment is implied.
 
 ## NEXT LIVE MARKET VALIDATION
 
@@ -250,9 +268,28 @@ M1 candidate gates and must not trigger new feature development before live evid
 | Relative strength/divergence | Both stocks plus KOSPI/KOSPI200 and flows | Inspect 2/5/10/30m candidate output | Direction and magnitude match raw returns/flows; contrary evidence is retained | One stock omitted, null coerced to zero, or sign mismatch |
 | Compact Feature v2 | Candidate generation; production rollout only after explicit approval | Read-only generation by default; query `feature_runs` only if an approved write/rollout occurs | Version/SHA/cutoff/quality/status are complete and immutable; production v1 remains isolated | Write occurs while disabled, metadata missing, or v1 row is rewritten |
 | Rollback/fail-safe | Candidate write flag disabled and production publication active | Confirm blocked POST behavior only when needed; observe production independently | Disabled path rejects writes and production continues | Candidate/D1 failure interrupts GitHub publication |
+| Descriptive signals | Live Feature v2 flow/program/futures/relative-strength/divergence inputs | Run the pure Signal Layer against the authenticated live replay | Signal types, evidence, invalidation and confidence ceiling match inputs; no BUY/SELL or probability | Null/stale becomes active, quality ceiling is exceeded, sign/evidence mismatch, or an actionable signal appears |
 
 Same-time 5/10/20-day baselines remain `INSUFFICIENT_HISTORY` until enough real trading days exist.
 No synthetic sample may be used to pass this gate.
+
+## Checkpoint — Off-market M1/M2/M3 Development
+
+- timestamp: 2026-10-07 20:55 KST
+- branch: `feature/feature-engine-v2`
+- commits: `f64d5601903f9411f842cd8f40692b6b7f27d125` M1 hardening;
+  `1318dee546f2d9f3accc728f43ad47f9b2fbf5ae` M2 read API;
+  `3eac555fe4c64ba8662f2a11bcb6a9d3d20107c1` M3 pure signals
+- milestone: M1 remains complete; M2 code candidate and M3 pure-function candidate added independently
+- completed: payload integrity/size guards, failure tests, authenticated bounded read API, machine-readable
+  health, storage/query metadata, descriptive Signal schema and quality confidence ceilings
+- tests: 53/53 local pass; no GitHub CI is configured
+- validation: synthetic/SQLite correctness only for new M2/M3 code; prior real-D1 M1 evidence unchanged
+- production impact: none; no main merge, Worker deployment, D1 write, binding, Secret or Cron change
+- waiting_for_live: 2026-10-08 live Feature/Signal behavior checklist above
+- remaining: stable-main synchronization, post-sync tests/merge-tree, explicit approval before main merge;
+  separate approval and new Secret before any intelligence API deployment
+- next_exact_step: synchronize the Ready PR branch with stable main, rerun tests and verify PR mergeability
 
 ## Checkpoint — 2026-10-07 After-hours Recovery
 

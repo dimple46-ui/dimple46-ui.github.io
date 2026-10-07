@@ -119,8 +119,9 @@ actual candidate metadata is accepted as production evidence.
 8. **Passed:** write rollback returned `FEATURE_WRITE_DISABLED`; production at 14:24:47 KST remained
    schema v3, fresh, pipeline OK and `sourceErrors: []`.
 
-PR #3 remains Draft/Open while supporting documentation and the final diff/checks/mergeability are
-reviewed. Merging and production deployment are separate decisions; neither is automatic.
+PR #3 is Ready/Open and unmerged. Merging and production deployment are separate decisions; neither
+is automatic. Off-market payload integrity and failure-injection regressions bring the full local suite
+to 53/53 after the additive read API and pure Signal Layer candidates.
 The relay's production persistence remains Feature v1 by default. The separate validator is the
 only validated compact Feature v2 writer; do not enable the relay's experimental full-tree v2 flag
 as a substitute for compact integration.

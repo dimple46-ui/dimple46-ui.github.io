@@ -17,3 +17,19 @@ v1 writer. Query/write D1 metadata and structured generation/failure events prov
 observability; Worker dashboard CPU duration remains a deployment-time evidence gate.
 
 Rollback: set HISTORY_ENABLED=false or remove only MARKET_HISTORY binding; retain the database. Existing LIVE_SOURCE, KIS_CACHE and secrets are untouched.
+
+## Additive latest-state target
+
+- GitHub remains code, documentation, release history and an emergency/compatibility snapshot fallback.
+- D1 remains immutable raw observations plus compact versioned feature runs.
+- `cloudflare/intelligence-read-worker.mjs` is a separate, read-only candidate for current state,
+  bounded history, compact features and machine-readable health.
+- R2 is deferred until measured retention pressure justifies cold archive. No deletion or archive
+  migration is authorized.
+
+The candidate does not remove or slow the two-minute GitHub publication path. Migration is staged:
+deploy separately, validate authenticated reads and provider rate limiting, opt consumers in, reduce
+GitHub cadence only after compatibility evidence, and roll back by disabling only the read candidate.
+
+Feature, Signal, Regime and Tactical layers remain separate. `signal-engine.mjs` is a pure descriptive
+transform over Feature v2 and has no database, publication, alert or portfolio side effects.

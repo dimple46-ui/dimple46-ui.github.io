@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-07 — Off-market hardening and intelligence candidates
+
+- Reject Feature v2 version/cutoff/SHA/serialization/oversize failures before compact persistence.
+- Add D1 read/write, corrupt JSON, out-of-order, cross-day and GitHub failure-isolation regressions.
+- Add a bounded authenticated read-only intelligence API candidate; production is unchanged.
+- Add a pure descriptive Signal Layer with input-quality confidence ceilings and no BUY/SELL output.
+- Full local suite: 53/53 passed.
+
 ## Compact versioned Feature Engine storage candidate (2026-10-07, candidate-validated)
 - Add immutable `feature_runs` rows keyed by observation slot and feature version; retain every v1 observation.
 - Add authenticated, explicit-opt-in candidate writes that cannot race with the production v1 writer.
