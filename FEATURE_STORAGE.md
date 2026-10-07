@@ -1,6 +1,6 @@
 # Feature Engine 2 compact storage
 
-Status: `IMPLEMENTED_LOCALLY_NOT_MIGRATED` as of 2026-10-06 11:43 KST.
+Status: `CANDIDATE_PERSISTENCE_VALIDATED_WRITES_DISABLED` as of 2026-10-07 14:26 KST.
 
 This design is additive. It does not rewrite or delete `market_observations`, does not change
 `market-live.json`, and does not enable Feature Engine 2 writes in the production relay. The
@@ -16,7 +16,7 @@ aggregates or cold archive.
 | --- | --- | ---: | ---: | --- |
 | A | Full v2 JSON in `market_observations.features_json` | 69,386 | 22.97 MB | Reject: v1/v2 writer race and coupled rollback |
 | B | Full v2 JSON in separate versioned rows | 69,386 | 22.97 MB | Reject: version-safe but unnecessarily large |
-| C | Compact v2 JSON in `feature_runs` | 14,067 | 4.66 MB | Selected for candidate validation |
+| C | Compact v2 JSON in `feature_runs` | 14,067 | 4.66 MB | Selected and candidate-validated |
 | D | C plus daily aggregates/R2 archive | 14,067 hot-row input plus aggregate/archive cost | To measure | Deferred; no retention deletion yet |
 
 Measurements use the corrected real replay captured at 2026-10-06 11:04 KST. The compact
@@ -32,8 +32,9 @@ Compact-derived retention projection before database overhead:
 | 60 | 1,378.01 MB | 279.37 MB |
 | 250 | 5,741.69 MB | 1,164.04 MB |
 
-These are sizing projections, not a retention promise. Actual D1 storage growth must be
-measured after candidate writes begin.
+These are sizing projections, not a retention promise. Three controlled real rows measured
+14,044, 13,936 and 13,884 compact JSON characters. This proves row-level reduction but is not
+enough to establish long-running page/index growth; M2 must measure retention growth.
 
 ## Schema and immutability
 
@@ -86,9 +87,10 @@ response and stored `validation_json` expose duration, rows read, rows written, 
 serving location.
 
 The Worker emits structured `FEATURE_RUN_WRITE` and `FEATURE_RUN_FAILURE` log events without
-credentials. Responses include end-to-end `elapsedWallMs`; this is not Worker CPU time. Actual
-CPU duration, invocation failures, and database/storage growth must be collected from the
-Cloudflare Worker and D1 dashboards after candidate deployment.
+credentials. Responses include end-to-end `elapsedWallMs`; this is not Worker CPU time. Cloudflare dashboard evidence over the audited 24-hour window recorded 72 invocations, zero
+errors, zero CPU-limit exceedances, CPU P50/P90/P99 of 0.52/3.97/8.28 ms, and memory
+P50/P90/P99 of 1.57/2.51/3.48 MB. These are deployment-level percentiles, not the CPU time of one
+specific write. Long-running database growth remains an M2 measurement.
 
 Expected bounded query shape per candidate generation:
 
@@ -100,16 +102,22 @@ Expected bounded query shape per candidate generation:
 The D1-reported `rows_read` can exceed returned row counts depending on the query plan, so only
 actual candidate metadata is accepted as production evidence.
 
-## Gates before production integration
+## Candidate gate results
 
-1. Apply migration `0002_feature_runs.sql` and verify the table/index without modifying v1 rows.
-2. Deploy the separate candidate with the write flag initially disabled.
-3. Enable candidate writes and verify at least three distinct `(slot_ms, feature_version=2)` rows.
-4. Verify 5/10/30-minute features and Samsung/SK Hynix relative strength from real stored data.
-5. Capture D1 query/write metadata, Worker wall time, dashboard CPU duration, failure rate, and
-   storage growth.
-6. Observe at least one real changed stock-flow bucket; unchanged buckets must remain null and
-   explicit.
-7. Prove candidate D1 failure has no effect on the production GitHub pipeline.
-8. Only then decide whether and how to integrate the compact writer into production. PR #3 must
-   remain Draft/Open until these gates pass.
+1. **Passed:** migration `0002_feature_runs.sql`, table and index verified without modifying v1 rows.
+2. **Passed:** separate authenticated candidate deployed with writes disabled by default.
+3. **Passed:** exactly three distinct Feature v2 slots persisted and directly verified in D1:
+   `1791335520000`, `1791350040000`, and `1791350280000`.
+4. **Passed:** real 2/5/10/30-minute features, VWAP, realized volatility, acceleration, relative
+   strength, divergence, futures/OI/Basis and explicit null/stale/unverified-time handling.
+5. **Passed with stated limitation:** D1 read/write metadata, wall time and dashboard CPU/error/memory
+   percentiles captured. Long-running page/index storage growth moves to M2.
+6. **Passed:** a real changed stock-flow bucket preserved actual delta, direction and acceleration;
+   unchanged buckets remained null.
+7. **Passed:** candidate D1 binding failure returned a controlled 503 while production GitHub
+   publication continued normally; binding recovery also passed.
+8. **Passed:** write rollback returned `FEATURE_WRITE_DISABLED`; production at 14:24:47 KST remained
+   schema v3, fresh, pipeline OK and `sourceErrors: []`.
+
+PR #3 remains Draft/Open while supporting documentation and the final diff/checks/mergeability are
+reviewed. Merging and production deployment are separate decisions; neither is automatic.
