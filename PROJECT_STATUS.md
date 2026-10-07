@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 11:02 KST
+Last updated: 2026-10-07 11:36 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -20,9 +20,9 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 
 M1 — Feature Engine 2.0 production validation.
 
-Status: `COMPACT_CANDIDATE_PERSISTENCE_ROLLBACK_FAILURE_RECOVERY_VALIDATED` in a separate
-authenticated validation Worker. Persistence, rollback, CPU evidence, D1 fail-closed behavior,
-production isolation and binding recovery are validated. PR #3 is not merged into `main`.
+Status: `REAL_BUCKET_DELTA_OBSERVED_CUTOFF_REPLAY_PENDING` in a separate authenticated
+validation Worker. Persistence, rollback, CPU evidence, D1 fail-closed behavior, production
+isolation and binding recovery are validated. PR #3 is not merged into `main`.
 
 ## Completed
 
@@ -85,8 +85,8 @@ production isolation and binding recovery are validated. PR #3 is not merged int
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Wait for a real changed stock-flow bucket transition; do not synthesize or convert unchanged/null
-  data into a change.
+- Deploy the candidate-only historical cutoff replay and re-run the first real 11:20 bucket observation
+  so delta, direction and acceleration are captured without synthesizing data.
 - Finalize PR #3 merge-readiness documentation after the changed-bucket gate is satisfied.
 - Candidate evidence for actual storage growth and Worker CPU duration.
 - Documentation drift repair through this source-of-truth document.
@@ -97,7 +97,9 @@ production isolation and binding recovery are validated. PR #3 is not merged int
   the one controlled persistence call.
 - Five/ten/twenty-trading-day same-time statistics: only one prior comparable trading day was available.
 - Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB; per-query D1 meta is now captured, including 1,686 rows read by the same-time query.
-- The corrected stock-flow bucket-transition branch has regression coverage and is deployed, but the 11:04 KST real replay contained only `UNCHANGED_BUCKET` windows, so a real changed-bucket divergence remains unexercised.
+- A real 10:00 to 11:20 source bucket transition is now present. Window metrics computed the four
+  real deltas, but the latest-row `bucketChanges` event had already returned to `BUCKET_UNCHANGED`;
+  exact historical cutoff replay is implemented and locally tested but not yet redeployed.
 - Production fail-safe under the v2 computation/storage design.
 - Long-running storage/retention and GitHub snapshot migration.
 
@@ -227,9 +229,31 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-After the next real stock-flow source bucket arrives, run one authenticated read-only replay and
-require a non-null bucket delta, direction and correctly qualified acceleration status. Do not
-synthesize a bucket change.
+Redeploy `cloudflare/feature-validation-worker.js` from branch head with writes still disabled, then
+run one authenticated GET using cutoff `1791340050000` to replay the first stored 11:20 bucket
+observation and verify non-null delta, direction and acceleration.
+
+## Checkpoint — Real Bucket Transition Observed; Cutoff Replay Implemented
+
+- timestamp: 2026-10-07 11:36 KST
+- branch: `feature/feature-engine-v2`
+- code commits: `80be8ecdb24a41b1b89b9c6f40b3ee2888a131d7`,
+  `911ff28d4677b8b360030412ab15ce73bbf5440c`, `37473857bdeaeb176fbfcba06b70eec9eeb45cee`
+- actual source transition: 10:00 to 11:20 KST, captured by production D1 observations
+- actual window deltas: Samsung foreign +145,000 and institution +116,000 shares;
+  SK Hynix foreign -52,000 and institution -10,000 shares
+- window evidence: the same real deltas appeared as `BUCKET_CHANGE_ONLY` in 5/10/30-minute
+  Feature v2 metrics and fed the descriptive divergence layer
+- observation safety: a later 11:31 replay correctly returned the event-only `bucketChanges` fields
+  to `BUCKET_UNCHANGED` with null values; no repeated delta or artificial zero was emitted
+- identified validation gap: latest-only GET can miss the first two-minute observation of a new bucket,
+  so it cannot always expose the event's direction and acceleration after the fact
+- fix: authenticated GET now accepts a validated past-only `cutoffMs`; invalid/future cutoffs return
+  HTTP 400 before D1 access; POST always uses the latest observation
+- tests: 33/33 local pass
+- deployment: cutoff-enabled candidate not yet deployed; production Worker and D1 rows unchanged
+- next_exact_step: redeploy the generated candidate Worker with writes disabled, then GET
+  `/?cutoffMs=1791340050000`
 
 ## Checkpoint — Candidate D1 Failure Isolation and Recovery Validated
 
