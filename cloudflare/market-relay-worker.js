@@ -1054,6 +1054,93 @@ function usableHistoryMetric(metric, atMs) {
 function decodeHistoryRow(row) {
   return {...row, metrics: row.metrics ?? JSON.parse(row.metrics_json), quality: row.quality ?? JSON.parse(row.quality_json)};
 }
+// Keep the production persistence contract on Feature v1 unless a controlled rollout explicitly opts in.
+// Feature v2 is validated by the separate candidate Worker and must not silently replace v1 rows.
+function featureEngineV2Enabled(env) {
+  return String(env.FEATURE_ENGINE_V2_ENABLED ?? "false") === "true";
+}
+function historyFeaturesV1(current, rawRows) {
+  const now = current.observed_at_ms;
+  const rows = rawRows.map(decodeHistoryRow).filter(r => r.trading_day === current.trading_day &&
+    r.observed_at_ms <= now && r.available_at_ms <= now).sort((a,b) => a.observed_at_ms-b.observed_at_ms);
+  const windows = {};
+  for (const minutes of [5,10,30]) {
+    const target = now - minutes * 60000;
+    const candidates = rows.filter(r => r.observed_at_ms <= target && target-r.observed_at_ms <= 150000);
+    const baseline = candidates.at(-1);
+    const window = {status: baseline ? "AVAILABLE" : "INSUFFICIENT_HISTORY", requestedMinutes:minutes,
+      baselineAt:baseline ? new Date(baseline.observed_at_ms).toISOString() : null,
+      actualElapsedSeconds:baseline ? (now-baseline.observed_at_ms)/1000 : null, metrics:{}};
+    for (const [name, metric] of Object.entries(current.metrics)) {
+      const old = baseline?.metrics?.[name];
+      const result = {value:null, status:"INSUFFICIENT_HISTORY"};
+      if (baseline) {
+        result.status = "UNUSABLE_DATA";
+        if (usableHistoryMetric(metric,now) && usableHistoryMetric(old,baseline.observed_at_ms)) {
+          result.status = "OK";
+          const bucket = name.endsWith("Flow");
+          const isFuture = name.startsWith("futures.");
+          if (isFuture && (!current.quality.futuresCode || current.quality.futuresCode !== baseline.quality.futuresCode)) {
+            result.status = "CONTRACT_CHANGED";
+          } else if (bucket) {
+            result.status = metric.marketTime === old.marketTime ? "UNCHANGED_BUCKET" : "BUCKET_CHANGE_ONLY";
+          } else if (name.endsWith(".price")) {
+            result.value = old.value > 0 ? (metric.value/old.value-1)*100 : null;
+            result.status = result.value == null ? "INVALID_BASELINE" : "OK";
+            result.unit = "percent";
+          } else if (!/\.(previousClose|open|high|low)$/.test(name)) {
+            result.value = metric.value-old.value;
+            if (/\.(volume|tradingValue)$/.test(name) && result.value < 0) {
+              result.value=null; result.status="COUNTER_RESET";
+            }
+          } else { result.status="NOT_APPLICABLE"; }
+          result.timeBasis = metric.timeBasis;
+        }
+      }
+      window.metrics[name]=result;
+    }
+    const previousTarget = baseline ? baseline.observed_at_ms-minutes*60000 : null;
+    const earlier = baseline ? rows.filter(r => r.observed_at_ms<=previousTarget && previousTarget-r.observed_at_ms<=150000).at(-1) : null;
+    window.volumeAcceleration = {};
+    for (const name of ["samsung","skHynix"]) {
+      const field=`${name}.volume`, metric=current.metrics[field], old=baseline?.metrics[field], prev=earlier?.metrics[field];
+      const result={value:null,unit:"shares_per_minute_change",status:"INSUFFICIENT_HISTORY"};
+      if (baseline && earlier && usableHistoryMetric(metric,now) && usableHistoryMetric(old,baseline.observed_at_ms) && usableHistoryMetric(prev,earlier.observed_at_ms)) {
+        const d1=metric.value-old.value,d0=old.value-prev.value;
+        if(d1>=0 && d0>=0){result.value=d1/((now-baseline.observed_at_ms)/60000)-d0/((baseline.observed_at_ms-earlier.observed_at_ms)/60000);result.status="OK";}
+        else result.status="COUNTER_RESET";
+      }
+      window.volumeAcceleration[name]=result;
+    }
+    window.relativeStrength={};
+    for(const [a,b] of [["samsung","skHynix"],["samsung","kospi"],["skHynix","kospi"],["samsung","kospi200"],["skHynix","kospi200"]]) {
+      const av=window.metrics[`${a}.price`],bv=window.metrics[`${b}.price`];
+      window.relativeStrength[`${a}_vs_${b}`]={value:av?.value!=null&&bv?.value!=null?av.value-bv.value:null,unit:"percentage_points"};
+    }
+    windows[`${minutes}m`]=window;
+  }
+  const bucketChanges={};
+  for(const name of ["samsung","skHynix"]){
+    bucketChanges[name]={};
+    for(const field of ["foreignFlow","institutionFlow"]){
+      const key=`${name}.${field}`,metric=current.metrics[key];
+      const previous=rows.filter(r=>r.observed_at_ms<now && usableHistoryMetric(r.metrics[key],r.observed_at_ms) && r.metrics[key].marketTime !== metric?.marketTime).at(-1);
+      bucketChanges[name][field]={value:previous && usableHistoryMetric(metric,now)?metric.value-previous.metrics[key].value:null,
+        status:previous && usableHistoryMetric(metric,now)?"BUCKET_DELTA":"INSUFFICIENT_BUCKET_HISTORY",unit:"shares",
+        previousBucketTime:previous?.metrics[key]?.marketTime??null,currentBucketTime:metric?.marketTime??null};
+    }
+  }
+  const intraday={};
+  for(const name of ["samsung","skHynix"]){
+    const m=current.metrics,price=m[`${name}.price`],open=m[`${name}.open`],close=m[`${name}.previousClose`];
+    const valid=usableHistoryMetric(price,now);
+    intraday[name]={fromOpenPct:valid&&usableHistoryMetric(open,now)&&open.value>0?(price.value/open.value-1)*100:null,
+      fromPreviousClosePct:valid&&usableHistoryMetric(close,now)&&close.value>0?(price.value/close.value-1)*100:null};
+  }
+  return {version:1,generatedAt:new Date(now).toISOString(),windows,bucketChanges,intraday,
+    sameTimeHistoricalAverage:{status:"NOT_IMPLEMENTED",value:null},
+    limitations:["2-minute sampling: inspect actualElapsedSeconds", "RECENT_FETCH is not verified trade freshness", "stock flows use bucket deltas, not fabricated 5-minute flows"]};
+}
 function featureMetricQuality(metric) {
   if (!metric || metric.value == null || !Number.isFinite(metric.value)) return "MISSING_INPUT";
   if (["STALE", "STALE_BUCKET"].includes(metric.status)) return "STALE_INPUT";
@@ -1507,19 +1594,24 @@ async function persistMarketHistory(env,payload) {
   const rows=await db.prepare(`SELECT slot_ms, observed_at_ms, available_at_ms, trading_day, metrics_json, quality_json FROM market_observations
     WHERE trading_day = ? AND slot_ms <= ? ORDER BY slot_ms DESC LIMIT 331`).bind(current.trading_day,current.slot_ms).all();
   if(!rows.success) throw new Error("HISTORY_READ_FAILED");
-  const sameTimeOfDayMs=(current.observed_at_ms+KST_OFFSET_MS)%86400000;
-  const sameTimeRows=await db.prepare(`WITH recent_days AS (
-      SELECT trading_day FROM market_observations WHERE trading_day < ? GROUP BY trading_day ORDER BY trading_day DESC LIMIT 20
-    ) SELECT slot_ms, observed_at_ms, available_at_ms, trading_day, metrics_json, quality_json FROM (
-      SELECT observation.slot_ms, observation.observed_at_ms, observation.available_at_ms, observation.trading_day,
-        observation.metrics_json, observation.quality_json,
-        ROW_NUMBER() OVER (PARTITION BY trading_day ORDER BY observed_at_ms DESC) AS same_time_rank
-      FROM market_observations AS observation INNER JOIN recent_days USING (trading_day)
-      WHERE available_at_ms <= ? AND ((observed_at_ms + ?) % 86400000) BETWEEN ? AND ?
-    ) WHERE same_time_rank = 1 ORDER BY trading_day DESC LIMIT 20`).bind(current.trading_day,current.observed_at_ms,KST_OFFSET_MS,
-      Math.max(0,sameTimeOfDayMs-SAME_TIME_TOLERANCE_MS),sameTimeOfDayMs).all();
-  if(!sameTimeRows.success) throw new Error("HISTORY_SAME_TIME_READ_FAILED");
-  const features=historyFeatures(decodeHistoryRow(stored),rows.results,sameTimeRows.results);
+  const useV2=featureEngineV2Enabled(env);
+  let sameTimeRows={success:true,results:[]};
+  if(useV2){
+    const sameTimeOfDayMs=(current.observed_at_ms+KST_OFFSET_MS)%86400000;
+    sameTimeRows=await db.prepare(`WITH recent_days AS (
+        SELECT trading_day FROM market_observations WHERE trading_day < ? GROUP BY trading_day ORDER BY trading_day DESC LIMIT 20
+      ) SELECT slot_ms, observed_at_ms, available_at_ms, trading_day, metrics_json, quality_json FROM (
+        SELECT observation.slot_ms, observation.observed_at_ms, observation.available_at_ms, observation.trading_day,
+          observation.metrics_json, observation.quality_json,
+          ROW_NUMBER() OVER (PARTITION BY trading_day ORDER BY observed_at_ms DESC) AS same_time_rank
+        FROM market_observations AS observation INNER JOIN recent_days USING (trading_day)
+        WHERE available_at_ms <= ? AND ((observed_at_ms + ?) % 86400000) BETWEEN ? AND ?
+      ) WHERE same_time_rank = 1 ORDER BY trading_day DESC LIMIT 20`).bind(current.trading_day,current.observed_at_ms,KST_OFFSET_MS,
+        Math.max(0,sameTimeOfDayMs-SAME_TIME_TOLERANCE_MS),sameTimeOfDayMs).all();
+    if(!sameTimeRows.success) throw new Error("HISTORY_SAME_TIME_READ_FAILED");
+  }
+  const features=useV2?historyFeatures(decodeHistoryRow(stored),rows.results,sameTimeRows.results):
+    historyFeaturesV1(decodeHistoryRow(stored),rows.results);
   const updated=await db.prepare("UPDATE market_observations SET features_json = ? WHERE slot_ms = ? AND features_json IS NULL").bind(JSON.stringify(features),current.slot_ms).run();
   if(!updated.success) throw new Error("HISTORY_FEATURE_WRITE_FAILED");
   return {status:"STORED",slotMs:current.slot_ms};

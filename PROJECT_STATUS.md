@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 14:26 KST
+Last updated: 2026-10-07 14:33 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -20,7 +20,7 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 
 M1 — Feature Engine 2.0 production validation.
 
-Status: `M1_FINAL_DOCUMENTATION_AND_DIFF_REVIEW` in a separate authenticated validation Worker.
+Status: `M1_FINAL_PR_SAFETY_FIX_READY` in a separate authenticated validation Worker.
 Feature correctness, real changed-bucket direction/acceleration, three-slot compact persistence, rollback,
 CPU evidence, D1 fail-closed behavior, production isolation and binding recovery are validated.
 PR #3 is not merged into `main`.
@@ -82,13 +82,15 @@ PR #3 is not merged into `main`.
 - Candidate recovery passed after restoring `MARKET_HISTORY -> market-history`: authenticated GET
   returned `READ_ONLY_REPLAY` for the exact candidate hash with a 16.518-second-old observation,
   61 distinct slots, all 2/5/10/30-minute windows, and zero query writes.
+- Final PR safety review found that the candidate branch could otherwise make production persist the
+  full Feature v2 tree after a later Worker deployment. Production persistence now defaults to the
+  unchanged Feature v1 contract; Feature v2 requires an explicit, controlled opt-in and the separate
+  validator remains the compact-write path. A new regression test raises the local suite to 36/36.
 
 ## In Progress
 
-- Finalize supporting documentation with the completed three-slot persistence and rollback evidence.
-- Inspect PR #3 final diff, checks and mergeability without merging.
-- Decide whether the remaining production rollout/fail-safe requirement belongs to M1 merge readiness
-  or the post-merge controlled deployment gate.
+- Commit and push the production-v1-default safety guard.
+- Re-run the PR diff/checks/mergeability audit without merging.
 
 ## Blocked / Not Yet Validated
 
@@ -226,8 +228,24 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Update stale supporting documentation with the completed persistence evidence, inspect PR #3's final
-diff/checks/mergeability, and assess merge readiness without auto-merging.
+Commit and push the production-v1-default safety guard, then re-check PR #3 head, tests, diff and
+mergeability without auto-merging.
+
+## Checkpoint — Final PR Production Safety Guard Tested
+
+- timestamp: 2026-10-07 14:33 KST
+- branch: `feature/feature-engine-v2`
+- audit finding: the candidate relay source could store the full Feature v2 tree in
+  `market_observations.features_json` if deployed after merge, contrary to the compact-storage
+  decision and the production-v1 preservation requirement
+- fix: production persistence defaults to Feature v1; Feature v2 full-tree persistence requires the
+  explicit `FEATURE_ENGINE_V2_ENABLED=true` experimental opt-in and is not part of the rollout plan
+- candidate: the separate authenticated validator continues to calculate Feature v2 and write only
+  compact/versioned `feature_runs` rows under its independent write flag
+- tests: 36/36 local pass, including a new regression proving the absent/false production flag stores
+  Feature v1
+- deployment: none; production Worker and variables are unchanged
+- next_exact_step: commit/push the guard and repeat final PR metadata/merge review
 
 ## Checkpoint — Three-slot Feature v2 Persistence Gate Passed
 
@@ -550,4 +568,4 @@ diff/checks/mergeability, and assess merge readiness without auto-merging.
 - Candidate source SHA-256: `438a8712d81edbe0a921c8e25d4a58551bf28907ed5ffb268f14c92d230f6bd4`.
 - Compact-storage candidate SHA-256: `39e39bb133ed90f6fa950a056948ea03d1928905de4c8dab28434a7631f0567a` (deployed and authenticated GET validated).
 - Real-response compact measurement: 14,067 bytes, 79.73% reduction, quality ceiling `UNVERIFIED_TIME`; all 2/5/10/30-minute windows available; changed stock-flow bucket still not observed.
-- Tests: 35/35 local pass.
+- Tests: 36/36 local pass.

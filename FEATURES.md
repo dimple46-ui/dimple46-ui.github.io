@@ -10,6 +10,9 @@ The candidate keeps latest-snapshot `schemaVersion: 3` and raw history schema ve
 `market_observations.features_json` remains v1. Candidate v2 output uses the additive `feature_runs` table after explicit write opt-in; no backfill
 rewrites existing rows. Three distinct real rows were persisted and verified, then the candidate
 write flag was disabled again. Production still stores Feature v1 in `market_observations`.
+The relay keeps that v1 behavior by default even if this candidate code is merged; the experimental
+full-tree v2 path requires explicit `FEATURE_ENGINE_V2_ENABLED=true` and is not the compact rollout
+target.
 
 - Price: 2/5/10/30-minute and intraday returns, open/previous-close return, high/low position, cumulative intraday VWAP deviation, realized volatility and momentum acceleration.
 - Volume: window delta, rate and acceleration plus 5/10/20-trading-day same-time ratio and percentile.

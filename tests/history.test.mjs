@@ -14,7 +14,7 @@ function setup(){
  };}};}};
  const ctx=vm.createContext({console,Date,URL,TextEncoder});
  vm.runInContext(source.replace('export default {','const worker = {'),ctx);
- ctx.env={MARKET_HISTORY:binding};
+ ctx.env={MARKET_HISTORY:binding,FEATURE_ENGINE_V2_ENABLED:'true'};
  return {db,ctx,run:s=>vm.runInContext(s,ctx)};
 }
 const start=Date.parse('2026-10-01T09:00:00+09:00');
@@ -32,6 +32,14 @@ function sample(minute,ymd='20261001'){
    kospiInvestors:meta,program:meta,futures:{kospi200:meta},futuresInvestors:{kospi200:meta},stockFlowEstimates:{samsung:{status:'NOT_DUE'},skHynix:{status:'NOT_DUE'}}},sourceErrors:[]};
 }
 async function put(s,minute,p=sample(minute)){s.ctx.payload=p;return s.run('persistMarketHistory(env,payload)');}
+test('production default preserves stored Feature v1 unless v2 is explicitly enabled',async()=>{
+ const s=setup();try{
+  s.ctx.env.FEATURE_ENGINE_V2_ENABLED='false';
+  for(let m=0;m<=10;m+=2) await put(s,m);
+  const stored=s.db.prepare('SELECT features_json FROM market_observations ORDER BY slot_ms DESC LIMIT 1').get();
+  assert.equal(JSON.parse(stored.features_json).version,1);
+ }finally{s.db.close();}
+});
 test('real SQLite migration and 21 distinct observations produce past-only features',async()=>{
  const s=setup();try{
  for(let m=0;m<=40;m+=2) await put(s,m);

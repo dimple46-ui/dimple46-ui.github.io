@@ -121,3 +121,6 @@ actual candidate metadata is accepted as production evidence.
 
 PR #3 remains Draft/Open while supporting documentation and the final diff/checks/mergeability are
 reviewed. Merging and production deployment are separate decisions; neither is automatic.
+The relay's production persistence remains Feature v1 by default. The separate validator is the
+only validated compact Feature v2 writer; do not enable the relay's experimental full-tree v2 flag
+as a substitute for compact integration.
