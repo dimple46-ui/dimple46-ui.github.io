@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-06 15:32 KST
+Last updated: 2026-10-07 09:46 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -18,7 +18,7 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 
 M1 — Feature Engine 2.0 production validation.
 
-Status: `CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated read-only validation Worker, not deployed into the production writer and not merged into `main`.
+Status: `COMPACT_CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated validation Worker; writes remain disabled, no v2 row has been persisted, and PR #3 is not merged into `main`.
 
 ## Completed
 
@@ -41,13 +41,19 @@ Status: `CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated read-only va
 - D1 migration `0002_feature_runs.sql` executed successfully in `market-history`; Dashboard SQL
   verification returned `feature_runs` as a table and `idx_feature_runs_version_day_slot` as an
   index at 2026-10-06 14:56 KST.
+- Exact compact candidate deployed and authenticated GET validated at 2026-10-07 09:44 KST:
+  source SHA-256 `39e39bb133ed90f6fa950a056948ea03d1928905de4c8dab28434a7631f0567a`,
+  68,728 full bytes, 13,666 compact bytes, 80.12% reduction, and 44 ms wall time.
+- The real replay exposed D1 metadata: current query 1 row read/0 written, intraday query 24/0,
+  same-time query 1,686/0. All 2/5/10/30-minute windows were available; quality ceiling was
+  `UNVERIFIED_TIME`, null ratio was 44.74%, and no v2 data was stored.
 
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Re-deploy the exact compact candidate from immutable commit `a8c4330c...`; the first reported
-  deployment still served the older read-only hash `73758483...`. Writes remain disabled.
-- Candidate deployment evidence for D1 query duration, rows read/written, actual storage growth and Worker CPU duration.
+- Configure the candidate engine SHA while writes remain disabled, then validate the disabled
+  POST rollback gate before explicitly opting in to one controlled v2 persistence test.
+- Candidate evidence for actual storage growth and Worker CPU duration.
 - Documentation drift repair through this source-of-truth document.
 
 ## Blocked / Not Yet Validated
@@ -55,7 +61,7 @@ Status: `CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated read-only va
 - Actual stored Feature Engine 2.0 row (`storedFeatureVersion` remained 1 in the corrected replay; v2 was query-time only).
 - No actual `feature_runs` v2 row exists yet; table/index creation alone is not persistence evidence.
 - Five/ten/twenty-trading-day same-time statistics: only one prior comparable trading day was available.
-- Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB, but per-query D1 meta was not captured.
+- Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB; per-query D1 meta is now captured, including 1,686 rows read by the same-time query.
 - The corrected stock-flow bucket-transition branch has regression coverage and is deployed, but the 11:04 KST real replay contained only `UNCHANGED_BUCKET` windows, so a real changed-bucket divergence remains unexercised.
 - Production fail-safe under the v2 computation/storage design.
 - Long-running storage/retention and GitHub snapshot migration.
@@ -68,7 +74,7 @@ Status: `CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated read-only va
 | PR #2 | `MERGED_MAIN`, `PRODUCTION_VALIDATED` | Merged 2026-10-02; production validation recorded in PR body. |
 | `feature/feature-engine-v2` | Draft branch | Compact storage/observability changes are being added without changing production `main`. |
 | PR #3 | Draft/Open | Not ready and not mergeable yet; compact candidate must be migrated/deployed/validated first. |
-| `market-feature-validation` | Separate candidate | Authenticated GET at 15:30 KST proved the older read-only hash `73758483...` was still active. Compact build deployment is not complete; writes remain disabled. |
+| `market-feature-validation` | Separate candidate | Authenticated GET at 09:44 KST on 2026-10-07 verified compact source hash `39e39bb1...`, D1 query metadata and no write. Writes remain disabled. |
 | Production `market-relay` | Operational | Continues schema v3 snapshots and D1 observations; v2 not deployed. |
 
 ## Component Maturity Matrix
@@ -82,7 +88,7 @@ Percentages are audit estimates, not predictive-performance scores.
 | Latest Snapshot | 95% | 92% | `OPERATIONALLY_STABLE` | GitHub is an inefficient latest-state transport. |
 | History Storage | 88% | 82% | `PRODUCTION_VALIDATED` | Retention, usage metrics and archive policy. |
 | Feature Engine 1 | 92% | 85% | `MERGED_MAIN` | Operational feature delivery remains internal to stored rows. |
-| Feature Engine 2 | 91% | 52% | `COMPACT_WRITE_PATH_LOCAL` | Migration/deployment absent; no stored v2 row, real changed bucket or CPU evidence. |
+| Feature Engine 2 | 91% | 60% | `COMPACT_CANDIDATE_READ_ONLY_VALIDATED` | No stored v2 row, real changed bucket or CPU evidence. |
 | Same-Time Baseline | 82% | 18% | `CANDIDATE_DEPLOYED` | Needs 5/10/20 complete trading-day samples. |
 | Relative Strength | 94% | 70% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected 5/10/30-minute replay passed; v2 persistence/rollout absent. |
 | Divergence | 78% | 46% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected branch deployed, but a real changed stock-flow bucket and predictive validation remain. |
@@ -135,7 +141,7 @@ Percentages are audit estimates, not predictive-performance scores.
 5. Corrected candidate v2 response measured 69,386 full feature bytes; compact encoding measured 14,067 bytes while retaining explicit invalid/null states.
 6. At 331 rows/day, compact derived JSON projects to 4.66 MB/day, 93.12 MB/20 days, 279.37 MB/60 days and 1.16 GB/250 days before SQLite/index/raw-observation overhead.
 7. D1 dashboard storage was 11.56 MB at the 2026-10-06 audit; the account plan remains unverified. Official limits are 500 MB/database on Free and 10 GB/database on Workers Paid.
-8. Corrected candidate replay wall time was 100 ms, but wall time is not Worker CPU duration and D1 query meta was not captured.
+8. Compact candidate replay wall time was 44 ms, but wall time is not Worker CPU duration. D1 query meta was captured; the same-time query read 1,686 rows and needs cost monitoring/optimization.
 9. Production program data can exceed the five-minute freshness rule; this correctly degrades the pipeline but reduces usable window features.
 10. Index/futures adapters use fetch time because verified exchange timestamps are unavailable.
 11. The integrated PR #3 writer cannot safely prove v2 persistence beside the production v1 writer because immutable two-minute slots and `features_json IS NULL` allow the first writer to win.
@@ -146,7 +152,7 @@ Do not persist the full 69 KB derived feature object every two minutes.
 
 Selected candidate: retain immutable raw observations in D1 hot storage; compute the full derived tree at generation/query time; persist only a compact versioned feature summary needed for reproducibility; later add daily aggregates and optional R2 cold archive only after measured need. Existing v1 rows are retained and never rewritten or deleted during migration.
 
-Implemented locally, not yet migrated/deployed:
+Implemented, migrated and deployed to the separate candidate with writes still disabled:
 
 - Separate raw observation identity from versioned feature runs.
 - Key derived output by `(slot_ms, feature_version)` so candidate and production do not race.
@@ -186,10 +192,27 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Re-deploy `cloudflare/feature-validation-worker.js` from immutable commit
-`a8c4330c15c0800c8f28e329a80bc9b09245edd7`, then require authenticated GET HTTP 200,
-`mode: READ_ONLY_REPLAY`, candidate SHA `39e39bb1...`, compact sizing and D1 query metadata before
-enabling any write.
+Set candidate plain-text variable `FEATURE_ENGINE_GIT_SHA` to
+`a8c4330c15c0800c8f28e329a80bc9b09245edd7` while `FEATURE_V2_WRITE_ENABLED` remains absent/false;
+then validate that authenticated `POST /feature-runs` returns `FEATURE_WRITE_DISABLED` before any write opt-in.
+
+## Checkpoint — Exact Compact Candidate Read-only Validated
+
+- timestamp: 2026-10-07 09:46 KST
+- branch: `feature/feature-engine-v2`
+- implementation commit: `a8c4330c15c0800c8f28e329a80bc9b09245edd7`
+- deployed source SHA-256: `39e39bb133ed90f6fa950a056948ea03d1928905de4c8dab28434a7631f0567a`
+- completed: authenticated HTTP 200 `READ_ONLY_REPLAY`; exact compact candidate identity verified
+- replay: 23 distinct current-day slots; observation at 09:44:45 KST; age 42.689 seconds
+- storage measurement: 68,728 full bytes; 13,666 compact bytes; 80.12% reduction
+- D1 query meta: current 1/0, intraday 24/0, same-time 1,686/0 rows read/written
+- feature validation: 2/5/10/30-minute windows available; 304 leaves, 168 numeric, 136 null;
+  null ratio 44.74%; quality ceiling `UNVERIFIED_TIME`
+- unchanged-bucket safety: `UNCHANGED_BUCKET` remained explicit; a real changed stock-flow bucket
+  was not observed (`changedBucketObserved: false`)
+- persistence: no v2 row written; stored production feature version remained v1
+- timing: 44 ms wall time; this is not Worker CPU duration
+- next_exact_step: set `FEATURE_ENGINE_GIT_SHA` while writes stay disabled, then test the disabled POST gate
 
 ## Checkpoint — Candidate Deployment Mismatch
 
@@ -250,6 +273,6 @@ enabling any write.
 - GitHub audit: main/branches/PR metadata and Worker blob SHAs, 2026-10-06.
 - Candidate replay response: authenticated read-only HTTP 200, generated 2026-10-06 09:44:44 KST.
 - Candidate source SHA-256: `438a8712d81edbe0a921c8e25d4a58551bf28907ed5ffb268f14c92d230f6bd4`.
-- Compact-storage local candidate SHA-256: `39e39bb133ed90f6fa950a056948ea03d1928905de4c8dab28434a7631f0567a` (not deployed).
+- Compact-storage candidate SHA-256: `39e39bb133ed90f6fa950a056948ea03d1928905de4c8dab28434a7631f0567a` (deployed and authenticated GET validated).
 - Real-response compact measurement: 14,067 bytes, 79.73% reduction, quality ceiling `UNVERIFIED_TIME`; all 2/5/10/30-minute windows available; changed stock-flow bucket still not observed.
 - Tests: 32/32 local pass.
