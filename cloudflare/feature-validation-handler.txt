@@ -2,6 +2,13 @@ function featureWriteEnabled(env) {
   return String(env.FEATURE_V2_WRITE_ENABLED??"false")==="true";
 }
 function validEngineGitSha(value) { return /^[0-9a-f]{7,64}$/i.test(String(value||"")); }
+function replayCutoff(url,now=Date.now()) {
+  const raw=url.searchParams.get('cutoffMs');
+  if(raw==null) return now;
+  if(!/^\d+$/.test(raw)) return null;
+  const value=Number(raw);
+  return Number.isSafeInteger(value)&&value>0&&value<=now?value:null;
+}
 async function loadFeatureReplay(db,cutoffMs=Date.now()) {
   const currentResult=await db.prepare(
     'SELECT * FROM market_observations WHERE available_at_ms <= ? ORDER BY slot_ms DESC LIMIT 1'
@@ -27,9 +34,10 @@ async function loadFeatureReplay(db,cutoffMs=Date.now()) {
   const run=buildCompactFeatureRun(current,features,{engineGitSha:null,engineSourceSha256:CANDIDATE_SHA256,queryMeta});
   return {current,rows,historical,features,queryMeta,run};
 }
-function replayResponse(replay,started) {
+function replayResponse(replay,started,cutoffMs) {
   const {current,rows,features,queryMeta,run}=replay;
   return {mode:'READ_ONLY_REPLAY',candidateSha256:CANDIDATE_SHA256,
+    replayCutoffMs:cutoffMs,
     storedFeatureVersion:current.features_json?JSON.parse(current.features_json).version:null,
     observedAt:new Date(current.observed_at_ms).toISOString(),observationAgeSeconds:(Date.now()-current.observed_at_ms)/1000,
     distinctSlots:new Set(rows.results.map(row=>row.slot_ms)).size,
@@ -54,9 +62,11 @@ export default {
         return Response.json({error:'FEATURE_WRITE_DISABLED'},{status:403});
       if(request.method==='POST'&&!validEngineGitSha(env.FEATURE_ENGINE_GIT_SHA))
         return Response.json({error:'INVALID_FEATURE_ENGINE_GIT_SHA'},{status:503});
-      const replay=await loadFeatureReplay(env.MARKET_HISTORY);
+      const cutoffMs=request.method==='GET'?replayCutoff(url):Date.now();
+      if(cutoffMs==null) return Response.json({error:'INVALID_REPLAY_CUTOFF'},{status:400});
+      const replay=await loadFeatureReplay(env.MARKET_HISTORY,cutoffMs);
       if(!replay) return Response.json({error:'NO_OBSERVATIONS'},{status:409});
-      if(request.method==='GET') return Response.json(replayResponse(replay,started),{headers:{'Cache-Control':'no-store'}});
+      if(request.method==='GET') return Response.json(replayResponse(replay,started,cutoffMs),{headers:{'Cache-Control':'no-store'}});
       const run=buildCompactFeatureRun(replay.current,replay.features,{engineGitSha:String(env.FEATURE_ENGINE_GIT_SHA),
         engineSourceSha256:CANDIDATE_SHA256,queryMeta:replay.queryMeta,generatedAtMs:Date.now()});
       const write=await env.MARKET_HISTORY.prepare(`INSERT INTO feature_runs
