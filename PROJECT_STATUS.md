@@ -6,8 +6,9 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 ## Current Production
 
 - Repository: `dimple46-ui/dimple46-ui.github.io`
-- Latest audited `main` head: `2b188d15f9b2d2888ff656f3aa8ea03f842c87ae` (PR #3 merge commit)
-- Latest non-snapshot Worker commit: `c88c8d03c50c5db5927f22b427b436d947691fc6` (`Add D1 history and point-in-time feature MVP (#2)`)
+- PR #3 merge commit: `2b188d15f9b2d2888ff656f3aa8ea03f842c87ae`; subsequent main changes are docs-only checkpoints.
+- Deployed production Worker baseline remains PR #2 commit `c88c8d03c50c5db5927f22b427b436d947691fc6`.
+  GitHub main now contains PR #3 code, but no Cloudflare Worker deployment was performed.
 - Latest snapshot schema: `schemaVersion: 3`
 - Final snapshot at 2026-10-07 20:01:17 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: OK`.
 - Samsung/SK Hynix source time was 20:00:00 KST and both were correctly marked `CLOSED`. Program and
