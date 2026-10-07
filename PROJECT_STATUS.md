@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 13:59 KST
+Last updated: 2026-10-07 14:06 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -9,8 +9,8 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 - Latest audited `main` head: `083a82d6605d12962efd384984ad31b55a4f8a7f` (snapshot-only; production Worker source remains PR #2)
 - Latest non-snapshot Worker commit: `c88c8d03c50c5db5927f22b427b436d947691fc6` (`Add D1 history and point-in-time feature MVP (#2)`)
 - Latest snapshot schema: `schemaVersion: 3`
-- Snapshot at 2026-10-07 10:24:45 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: OK`.
-- Samsung/SK Hynix and KOSPI investor data were live; program age was 286 seconds and still live.
+- Snapshot at 2026-10-07 14:04:44 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: OK`.
+- Samsung/SK Hynix and KOSPI investor data were live; program age was 285 seconds and still live.
   Index/futures timestamps remained explicitly `RECENT_FETCH`/unverified rather than being treated as
   verified exchange times.
 - D1: `market-history`, table `market_observations`, production observations continue to accumulate. Read-only audit at 10:34 KST found 550 rows across three trading days, all 550 stored feature rows at v1, 0 v2 rows, 20,219.3 average JSON bytes and 21,625 maximum JSON bytes. Dashboard storage was 11.56 MB.
@@ -20,9 +20,10 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 
 M1 — Feature Engine 2.0 production validation.
 
-Status: `REAL_BUCKET_DELTA_OBSERVED_CUTOFF_REPLAY_PENDING` in a separate authenticated
-validation Worker. Persistence, rollback, CPU evidence, D1 fail-closed behavior, production
-isolation and binding recovery are validated. PR #3 is not merged into `main`.
+Status: `M1_FINAL_PERSISTENCE_GATE_PENDING` in a separate authenticated validation Worker.
+Feature correctness, real changed-bucket direction/acceleration, compact persistence, rollback,
+CPU evidence, D1 fail-closed behavior, production isolation and binding recovery are validated.
+PR #3 is not merged into `main`.
 
 ## Completed
 
@@ -85,8 +86,8 @@ isolation and binding recovery are validated. PR #3 is not merged into `main`.
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Redeploy the candidate rollback that restores latest-by-default GET, then verify the temporary
-  fixed cutoff is no longer active.
+- Obtain two additional distinct controlled Feature v2 slots, then disable writes and verify the
+  three-slot persistence gate without modifying `market_observations`.
 - Finalize PR #3 merge-readiness documentation now that the real changed-bucket gate passed.
 - Candidate evidence for actual storage growth and Worker CPU duration.
 - Documentation drift repair through this source-of-truth document.
@@ -97,8 +98,8 @@ isolation and binding recovery are validated. PR #3 is not merged into `main`.
   the one controlled persistence call.
 - Five/ten/twenty-trading-day same-time statistics: only one prior comparable trading day was available.
 - Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB; per-query D1 meta is now captured, including 1,686 rows read by the same-time query.
-- Real 10:00-to-11:20 stock-flow direction and acceleration passed against the first stored 11:20
-  observation. The temporary fixed cutoff has been reverted in GitHub and awaits candidate redeploy.
+- The existing controlled Feature v2 persistence evidence contains one distinct slot; two more
+  distinct slots are required by the documented three-slot gate.
 - Production fail-safe under the v2 computation/storage design.
 - Long-running storage/retention and GitHub snapshot migration.
 
@@ -228,9 +229,24 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Redeploy the rolled-back `cloudflare/feature-validation-worker.js` with writes still disabled, then
-run one authenticated GET `/` and require a current request-time `replayCutoffMs`. After rollback
-verification, complete the PR #3/M1 merge-readiness audit without merging automatically.
+Temporarily set candidate-only `FEATURE_V2_WRITE_ENABLED=true` and deploy. Then perform controlled
+POSTs in two distinct later two-minute slots, immediately disable writes, verify exactly three v2
+slots, re-check production, finalize docs/PR diff, and assess merge readiness without auto-merging.
+
+## Checkpoint — Fixed Cutoff Rollback Verified
+
+- timestamp: 2026-10-07 14:06 KST
+- candidate: `market-feature-validation`
+- authenticated GET `/`: `replayCutoffMs=1791349487432`, matching request time rather than the
+  temporary historical cutoff
+- selected observation: 2026-10-07 14:04:44.645 KST; age 2.875 seconds; 153 distinct slots
+- D1 query writes: current/intraday/same-time all zero
+- production snapshot: 2026-10-07 14:04:44.645 KST, schema v3, fresh, pipeline OK,
+  sourceErrors empty; both stocks and KOSPI investor feed live
+- conclusion: temporary cutoff is removed; candidate is latest-by-default and read-only again
+- M1 audit: all correctness gates now pass; documented three-slot Feature v2 persistence gate still
+  has one slot and requires two additional distinct controlled slots
+- next_exact_step: enable candidate-only Feature v2 writes for the next controlled slot
 
 ## Checkpoint — Real Changed-Bucket Correctness Gate Passed
 
