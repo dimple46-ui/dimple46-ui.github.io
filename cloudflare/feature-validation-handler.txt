@@ -2,8 +2,8 @@ function featureWriteEnabled(env) {
   return String(env.FEATURE_V2_WRITE_ENABLED??"false")==="true";
 }
 function validEngineGitSha(value) { return /^[0-9a-f]{7,64}$/i.test(String(value||"")); }
-function replayCutoff(url,now=Date.now()) {
-  const raw=url.searchParams.get('cutoffMs');
+function replayCutoff(request,url,now=Date.now()) {
+  const raw=url.searchParams.get('cutoffMs')??request.headers.get('X-Replay-Cutoff-Ms');
   if(raw==null) return now;
   if(!/^\d+$/.test(raw)) return null;
   const value=Number(raw);
@@ -62,7 +62,7 @@ export default {
         return Response.json({error:'FEATURE_WRITE_DISABLED'},{status:403});
       if(request.method==='POST'&&!validEngineGitSha(env.FEATURE_ENGINE_GIT_SHA))
         return Response.json({error:'INVALID_FEATURE_ENGINE_GIT_SHA'},{status:503});
-      const cutoffMs=request.method==='GET'?replayCutoff(url):Date.now();
+      const cutoffMs=request.method==='GET'?replayCutoff(request,url):Date.now();
       if(cutoffMs==null) return Response.json({error:'INVALID_REPLAY_CUTOFF'},{status:400});
       const replay=await loadFeatureReplay(env.MARKET_HISTORY,cutoffMs);
       if(!replay) return Response.json({error:'NO_OBSERVATIONS'},{status:409});
