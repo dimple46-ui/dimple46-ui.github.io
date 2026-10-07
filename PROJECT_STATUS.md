@@ -44,13 +44,13 @@ alert or investment action consumes the signals.
   equivalent local hardening commit `d362324cc4ea9bb0d999824d8b1d5f86cea2997a`
 - last_completed_test: local `58/58 PASS`; remote GitHub Actions run `37692539198` passed at
   `11e6d3f9...`
-- last_completed_deployment: separate Feature validator only; the read-only intelligence candidate has
-  not been deployed and the production Worker remains the PR #2 baseline
+- last_completed_deployment: separate Feature validator only; no read-only intelligence candidate
+  deployment evidence is available and the production Worker remains the PR #2 baseline
 - last_completed_validation: Feature v2 has three immutable D1 rows in three distinct slots; rollback,
   changed-bucket semantics, failure isolation and production continuity were already validated
 - intelligence_candidate_status: `PARTIAL` — isolated Worker routes, mandatory provider limiter,
-  ticker/range/version/cutoff bounds, timeout, metadata, tests and Wrangler dry-run are complete; Worker,
-  Secret and bindings do not yet exist
+  ticker/range/version/cutoff bounds, timeout, metadata, tests and Wrangler dry-run are complete;
+  Cloudflare Worker/Secret/binding existence is `UNKNOWN_NOT_EVIDENCED` until Dashboard verification
 - M1_status: core Feature Engine validation remains complete; the separate 2026-10-08 live operational
   revalidation below remains `WAITING_FOR_LIVE_MARKET_VALIDATION`
 - waiting_for_live: actual 2026-10-08 state/Feature/flow/program/futures/OI/basis/relative-strength/
@@ -83,10 +83,13 @@ alert or investment action consumes the signals.
 
 ### BLOCKED_BY_USER_ACTION
 
-- Candidate deployment needs the existing `market-history` Database ID. The repository contains only an
-  intentional zero-UUID placeholder and no Secret value.
-- After the Database ID is supplied and the candidate is deployed, the user must enter the new
-  `INTELLIGENCE_READ_TOKEN` directly as a Cloudflare Secret. Its value must never be returned or recorded.
+- Cloudflare Dashboard verification is required first to confirm that
+  `market-intelligence-read-candidate` does not already exist; the Work cloud browser is blocked by a
+  persistent sign-in-page verification error.
+- If no existing candidate is found, deployment needs the existing `market-history` Database ID. The
+  repository contains only an intentional zero-UUID placeholder and no Secret value.
+- Secret existence also remains unknown until the Worker is confirmed. If a new token is required, it
+  must be entered directly as a Cloudflare Secret and never returned or recorded.
 
 ## CHECKPOINT — Intelligence Candidate Hardened / PR #4 CI Passed
 
@@ -96,13 +99,14 @@ alert or investment action consumes the signals.
 - completed: mandatory provider limiter, fixed-SELECT guard, ticker/range/version/cutoff bounds, query
   deadline, response metadata, isolated Wrangler template and recovery documentation
 - tests: local `58/58 PASS`; GitHub Actions run `37692539198` `SUCCESS`
-- deployment: not deployed; Worker/Secret/D1/rate-limit bindings do not yet exist
+- deployment: not evidenced; Worker/Secret/D1/rate-limit binding state is
+  `UNKNOWN_NOT_EVIDENCED` pending Dashboard verification
 - validation: Wrangler 4.148 dry-run `PASS`; 19.76 KiB bundle; required candidate bindings detected
 - production_impact: none — production Worker, bindings, Secrets, routes, Cron, D1 rows and GitHub
   publication remain unchanged
 - waiting_for_live: all 2026-10-08 items in `NEXT LIVE MARKET VALIDATION`
-- next_exact_step: obtain the existing `market-history` Database ID and prepare the deployable candidate
-  configuration without exposing or recreating any Secret
+- next_exact_step: verify whether `market-intelligence-read-candidate` already exists; only if absent,
+  obtain the existing `market-history` Database ID and prepare the deployable configuration
 
 ## Completed
 
