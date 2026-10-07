@@ -19,7 +19,7 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 
 M2 — Operational / Storage Architecture Stabilization.
 
-Status: `M2_READ_ONLY_API_CODE_COMPLETE_NOT_DEPLOYED`.
+Status: `M2_POLICY_AND_READ_API_CODE_COMPLETE_NOT_DEPLOYED`.
 
 M1 — Feature Engine 2.0 production validation is `COMPLETE`: correctness, real changed-bucket
 semantics, three-slot compact persistence, rollback, provider CPU evidence, D1 failure isolation,
@@ -132,6 +132,7 @@ alert or investment action consumes the signals.
 | `feature/feature-engine-v2` | Merged branch | Merged to main through PR #3. |
 | PR #3 | `MERGED_MAIN` | Merge commit `2b188d15f9b2d2888ff656f3aa8ea03f842c87ae`; no production deployment implied. |
 | `feature/m2-operational-storage` | Development branch | Additive M2 policy/observability/CI work; not deployed. |
+| PR #4 | Draft/Open | M2 commit `82851309548a6d0a8e7d64aaef6696219624ab0a`; 56/56 local and GitHub Actions passed. |
 | `market-feature-validation` | Separate candidate | Authenticated GET at 09:44 KST on 2026-10-07 verified compact source hash `39e39bb1...`, D1 query metadata and no write. Writes remain disabled. |
 | Production `market-relay` | Operational | Continues schema v3 snapshots and D1 observations; v2 not deployed. |
 
@@ -284,15 +285,16 @@ No synthetic sample may be used to pass this gate.
 - milestone: M1 complete; M2 operational/storage stabilization in progress
 - completed: PR/main verification, additive storage-growth policy, honest JSON-only projections,
   release metadata, non-destructive retention gates, CI workflow and operational migration/rollback plan
-- tests: 56/56 local pass after M2 additions; GitHub workflow pending branch push/PR execution
+- remote commit: `82851309548a6d0a8e7d64aaef6696219624ab0a`; Draft PR #4
+- tests: 56/56 local pass; GitHub Actions `Tests` run `37622209013` completed successfully
 - deployment: none; production Worker, bindings, Secrets, Cron, D1 rows and publication cadence unchanged
 - production validation: final `market-live.json` remains schema v3, fresh, pipeline OK and sourceErrors empty
 - waiting_for_live: 2026-10-08 live Feature/Signal checklist remains mandatory; no synthetic M2 test
   changes its status
-- remaining: push M2 checkpoint, observe CI, measure at least 20 trading days of provider storage growth;
-  separate approval is required before a read-only candidate deployment or any production change
-- next_exact_step: commit/push the M2 branch and open a draft PR; then inspect CI and stop before the
-  first production approval gate
+- remaining: measure at least 20 trading days of provider storage growth; separate approval is required
+  before a read-only candidate deployment or any production change
+- next_exact_step: request approval only if deploying the separate read-only candidate; otherwise keep
+  PR #4 Draft and begin the 2026-10-08 live validation checklist at regular-market open
 
 ## Checkpoint — Stable-main Synchronization Complete
 
