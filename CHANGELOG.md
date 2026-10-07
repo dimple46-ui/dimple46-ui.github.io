@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-08 — Isolated intelligence candidate hardening
+
+- Require a provider-level Cloudflare rate-limit binding and fail closed before D1 when unavailable.
+- Restrict ticker input to Samsung Electronics (`005930`) and SK Hynix (`000660`), with ticker-required
+  bounded history and stock-specific metric filtering.
+- Add a 5-second application query deadline, fixed-SELECT guard and consistent schema/feature/cutoff/
+  freshness/quality/pipeline metadata.
+- Add an isolated Wrangler deployment template with no token value, production route or scheduled trigger.
+- Preserve all 2026-10-08 live-market items as `WAITING_FOR_LIVE_MARKET_VALIDATION`.
+
 ## 2026-10-07 — M2 operational/storage candidate
 
 - Merged validated Feature Engine 2.0 through PR #3 without changing the deployed production Worker.

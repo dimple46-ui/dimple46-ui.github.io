@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 21:31 KST
+Last updated: 2026-10-08 06:53 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -30,6 +30,62 @@ production isolation and documentation all passed. PR #3 merged to main as `2b18
 M3 — Descriptive Signal Layer is `PURE_FUNCTION_CANDIDATE`: deterministic signal generation,
 quality confidence ceilings and synthetic correctness tests are implemented, but no production endpoint,
 alert or investment action consumes the signals.
+
+## RECOVERY_CHECKPOINT — 2026-10-08 06:53 KST
+
+- timestamp: `2026-10-08 06:53 KST`
+- market_state: `PRE_MARKET`
+- branch: local `m2-operational-storage-local`; remote `feature/m2-operational-storage`
+- HEAD: local `ab53b4147066490961632511ecc15f9d81980609` plus the recovered candidate work described below
+- main_HEAD: `5c6acef4f38baf8c3bebb64f929fadc41c8a4976`
+- PR_3_status: `MERGED`; merge commit `2b188d15f9b2d2888ff656f3aa8ea03f842c87ae`
+- last_completed_commit: remote PR #4 head `4f6a0fe4cdaaaec5e47853eb5408a61db29c4333`;
+  recovered local documentation checkpoint `ab53b4147066490961632511ecc15f9d81980609`
+- last_completed_test: recovered hardening plus current additions pass `58/58`; prior remote PR #4 GitHub
+  Actions run `37622785642` passed at `4f6a0fe4...`
+- last_completed_deployment: separate Feature validator only; the read-only intelligence candidate has
+  not been deployed and the production Worker remains the PR #2 baseline
+- last_completed_validation: Feature v2 has three immutable D1 rows in three distinct slots; rollback,
+  changed-bucket semantics, failure isolation and production continuity were already validated
+- intelligence_candidate_status: `PARTIAL` — isolated Worker routes, mandatory provider limiter,
+  ticker/range/version/cutoff bounds, timeout, metadata, tests and Wrangler dry-run are complete; Worker,
+  Secret and bindings do not yet exist
+- M1_status: core Feature Engine validation remains complete; the separate 2026-10-08 live operational
+  revalidation below remains `WAITING_FOR_LIVE_MARKET_VALIDATION`
+- waiting_for_live: actual 2026-10-08 state/Feature/flow/program/futures/OI/basis/relative-strength/
+  divergence/acceleration/quality and Signal behavior
+- next_exact_step: obtain the existing `market-history` D1 Database ID, replace the zero UUID in the
+  candidate-only Wrangler configuration, commit/push the recovered candidate checkpoint, then deploy
+  the separate Worker without changing production
+
+## 2026-10-08 Work Classification
+
+### COMPLETED_OFF_MARKET
+
+- Recovered the exact local/remote/main/PR state without recreating PR #3, D1 History, Feature Engine or
+  `feature_runs`.
+- Hardened the intelligence candidate to accept only `005930`, `000660` or an explicit combined scope;
+  ticker-specific history is mandatory and bounded to 12 hours/120 rows.
+- Made the Cloudflare provider rate-limit binding mandatory and fail-closed before D1; retained the
+  secondary per-isolate limit as defense-in-depth.
+- Added a fixed-SELECT guard, 5-second query deadline, stable response metadata and stock-specific
+  history filtering without coercing null/stale data.
+- Added a candidate-only Wrangler template with no Secret value, production route, Cron or production
+  binding. Wrangler 4.148 dry-run bundled 19.76 KiB and identified only the candidate D1, rate-limit,
+  version-metadata and non-secret variable bindings.
+- Local regression suite: `58/58 PASS`.
+
+### WAITING_FOR_LIVE_MARKET_VALIDATION
+
+- Keep every item in `NEXT LIVE MARKET VALIDATION` below open until actual 2026-10-08 regular-session
+  evidence exists. Synthetic tests, off-market snapshots and historical replay cannot close these gates.
+
+### BLOCKED_BY_USER_ACTION
+
+- Candidate deployment needs the existing `market-history` Database ID. The repository contains only an
+  intentional zero-UUID placeholder and no Secret value.
+- After the Database ID is supplied and the candidate is deployed, the user must enter the new
+  `INTELLIGENCE_READ_TOKEN` directly as a Cloudflare Secret. Its value must never be returned or recorded.
 
 ## Completed
 
@@ -107,8 +163,9 @@ alert or investment action consumes the signals.
 ## In Progress
 
 - M2 work continues on `feature/m2-operational-storage`; production remains unchanged.
-- The read-only intelligence API remains local/branch-only until a separate candidate Worker,
-  read-only D1 binding, authentication Secret and provider-level rate limit are explicitly approved.
+- The read-only intelligence API is approved for an isolated candidate and its local code/configuration
+  gates pass. Deployment is pending the existing D1 Database ID and direct Secret entry; production
+  routing, bindings and Worker remain outside the approval scope.
 - M3 signals remain pure-function outputs pending historical replay and next-session live behavior validation.
 
 ## Blocked / Not Yet Validated
@@ -120,8 +177,8 @@ alert or investment action consumes the signals.
 - Per-request Worker CPU is not exposed by the captured dashboard percentile view.
 - Long-running storage/retention and GitHub snapshot transport redesign belong to M2.
 - No GitHub CI workflow/status checks are configured; local tests are the current automated gate.
-- Secure intelligence API deployment requires a new `INTELLIGENCE_READ_TOKEN`; it has not been
-  created or requested. The built-in limiter is per-isolate and is not a substitute for a provider-level rule.
+- Secure intelligence API deployment requires a new `INTELLIGENCE_READ_TOKEN`; it has not been created.
+  The provider-level rate-limit binding is now mandatory in code/configuration but not yet deployed.
 - Signal tests are development correctness evidence, not predictive accuracy or live production validation.
 
 ## Branch / PR / Deployment
@@ -252,8 +309,9 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Complete the M2 branch tests and draft PR. Deployment of the read-only intelligence API remains a
-separate approval gate because it requires a new Secret, D1 binding and provider-level rate limit.
+Get the existing `market-history` D1 Database ID, replace the intentional zero UUID in the isolated
+candidate Wrangler configuration, commit/push the 58-test checkpoint to Draft PR #4, then deploy the
+separate candidate. Do not modify the production Worker, route, bindings or Secrets.
 
 ## NEXT LIVE MARKET VALIDATION
 
