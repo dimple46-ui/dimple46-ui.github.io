@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 13:44 KST
+Last updated: 2026-10-07 13:51 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -85,8 +85,8 @@ isolation and binding recovery are validated. PR #3 is not merged into `main`.
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Deploy the candidate-only cutoff-path fallback and re-run the first real 11:20 bucket observation
-  so delta, direction and acceleration are captured without synthesizing data.
+- Deploy the temporary candidate-only fixed read-only cutoff and re-run the first real 11:20 bucket
+  observation so delta, direction and acceleration are captured without synthesizing data.
 - Finalize PR #3 merge-readiness documentation after the changed-bucket gate is satisfied.
 - Candidate evidence for actual storage growth and Worker CPU duration.
 - Documentation drift repair through this source-of-truth document.
@@ -99,8 +99,9 @@ isolation and binding recovery are validated. PR #3 is not merged into `main`.
 - Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB; per-query D1 meta is now captured, including 1,686 rows read by the same-time query.
 - A real 10:00 to 11:20 source bucket transition is present. Window metrics computed the four real
   deltas, but the latest-row `bucketChanges` event had already returned to `BUCKET_UNCHANGED`. The
-  URL cutoff and header fallback deployed successfully, but the Dashboard HTTP tester stripped both;
-  an authenticated candidate-only path fallback is committed and awaits deployment.
+  URL, header and path cutoff attempts all returned the request time because the Dashboard HTTP
+  tester did not forward those inputs. A temporary candidate-only default cutoff is committed and
+  awaits deployment; it will be reverted immediately after read-only evidence is captured.
 - Production fail-safe under the v2 computation/storage design.
 - Long-running storage/retention and GitHub snapshot migration.
 
@@ -231,8 +232,25 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 ## Next Exact Step
 
 Redeploy `cloudflare/feature-validation-worker.js` from branch head with writes still disabled, then
-run one authenticated GET path `/replay/1791340050000` to replay the first stored 11:20 bucket
-observation and verify non-null delta, direction and acceleration.
+run one authenticated GET `/`. Require validator build `forced-read-only-cutoff-20261007` and
+`replayCutoffMs=1791340050000`, then verify non-null delta, direction and acceleration.
+
+## Checkpoint — Temporary Fixed Read-only Cutoff Ready
+
+- timestamp: 2026-10-07 13:51 KST
+- branch: `feature/feature-engine-v2`
+- commits: handler `47b66d47514da4cb231c71d98690c0fd0928377b`, generated Worker
+  `56a2289fb3ea2c923a9ba4146a80bd7dc1021591`, test `b2dbf99ce38ffb48153114f6982609dd144c628a`
+- latest path attempt: replay returned request-time cutoff `1791348463446`, observation at
+  13:46:45 KST and zero query writes; requested historical cutoff was not applied
+- temporary fix: authenticated GET `/` defaults to `1791340050000` and exposes validator build
+  `forced-read-only-cutoff-20261007`; URL/header/path overrides remain supported
+- scope: separate candidate only, GET read-only, POST continues to use latest observation, v2 writes
+  remain disabled, Production Worker and D1 rows are unchanged
+- rollback: restore the default GET cutoff to `Date.now()` and redeploy immediately after evidence
+- tests: 35/35 local pass
+- deployment: fixed-cutoff candidate not yet deployed
+- next_exact_step: deploy generated candidate Worker, then authenticated GET `/`
 
 ## Checkpoint — Cloudflare Tester Cutoff Path Fallback Ready
 
