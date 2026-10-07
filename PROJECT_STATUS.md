@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 10:19 KST
+Last updated: 2026-10-07 10:25 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -9,8 +9,10 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 - Latest audited `main` head: `083a82d6605d12962efd384984ad31b55a4f8a7f` (snapshot-only; production Worker source remains PR #2)
 - Latest non-snapshot Worker commit: `c88c8d03c50c5db5927f22b427b436d947691fc6` (`Add D1 history and point-in-time feature MVP (#2)`)
 - Latest snapshot schema: `schemaVersion: 3`
-- Snapshot at 2026-10-06 09:48:45 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: DEGRADED`
-- Degraded reason: program source was `STALE`; index/futures timestamps remained `UNVERIFIED_TIME`/`RECENT_FETCH`.
+- Snapshot at 2026-10-07 10:24:45 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: OK`.
+- Samsung/SK Hynix and KOSPI investor data were live; program age was 286 seconds and still live.
+  Index/futures timestamps remained explicitly `RECENT_FETCH`/unverified rather than being treated as
+  verified exchange times.
 - D1: `market-history`, table `market_observations`, production observations continue to accumulate. Read-only audit at 10:34 KST found 550 rows across three trading days, all 550 stored feature rows at v1, 0 v2 rows, 20,219.3 average JSON bytes and 21,625 maximum JSON bytes. Dashboard storage was 11.56 MB.
 - PR #2: merged and production-validated. D1 failure isolation and automatic recovery were validated before merge.
 
@@ -18,9 +20,9 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 
 M1 — Feature Engine 2.0 production validation.
 
-Status: `COMPACT_CANDIDATE_PERSISTENCE_VALIDATED_ROLLBACK_PENDING` in a separate authenticated
-validation Worker; one controlled v2 row was inserted and verified directly in D1. Candidate writes
-must now be disabled again, and PR #3 is not merged into `main`.
+Status: `COMPACT_CANDIDATE_PERSISTENCE_AND_ROLLBACK_VALIDATED` in a separate authenticated
+validation Worker; one controlled v2 row was inserted and verified directly in D1, and candidate
+writes were disabled again with the post-write rollback gate passing. PR #3 is not merged into `main`.
 
 ## Completed
 
@@ -62,18 +64,23 @@ must now be disabled again, and PR #3 is not merged into `main`.
 - Direct D1 console verification at 2026-10-07 10:19 KST returned the exact row: slot
   `1791335520000`, Feature v2, engine commit `a8c4330c...`, `UNVERIFIED_TIME`, `SUCCESS`, and 14,044
   compact JSON characters. Generated/input-cutoff timestamps were also populated.
+- Post-write rollback validated at 2026-10-07 10:25 KST: after setting
+  `FEATURE_V2_WRITE_ENABLED=false`, authenticated `POST /feature-runs` again returned
+  `FEATURE_WRITE_DISABLED`. The candidate is no longer write-enabled.
+- Production snapshot generated at 2026-10-07 10:24:45 KST remained schema v3, fresh, pipeline OK,
+  and `sourceErrors: []` during the candidate persistence/rollback validation.
 
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Return the candidate write flag to disabled, then verify post-write rollback with an authenticated
-  POST returning `FEATURE_WRITE_DISABLED`.
+- Confirm the v2 row count remains exactly one after the blocked POST, then complete remaining
+  isolation/observability evidence.
 - Candidate evidence for actual storage growth and Worker CPU duration.
 - Documentation drift repair through this source-of-truth document.
 
 ## Blocked / Not Yet Validated
 
-- Post-write rollback still must be verified after returning `FEATURE_V2_WRITE_ENABLED` to false.
+- D1 count-after-rollback and explicit failure-injection isolation evidence remain to be recorded.
 - Five/ten/twenty-trading-day same-time statistics: only one prior comparable trading day was available.
 - Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB; per-query D1 meta is now captured, including 1,686 rows read by the same-time query.
 - The corrected stock-flow bucket-transition branch has regression coverage and is deployed, but the 11:04 KST real replay contained only `UNCHANGED_BUCKET` windows, so a real changed-bucket divergence remains unexercised.
@@ -102,7 +109,7 @@ Percentages are audit estimates, not predictive-performance scores.
 | Latest Snapshot | 95% | 92% | `OPERATIONALLY_STABLE` | GitHub is an inefficient latest-state transport. |
 | History Storage | 88% | 82% | `PRODUCTION_VALIDATED` | Retention, usage metrics and archive policy. |
 | Feature Engine 1 | 92% | 85% | `MERGED_MAIN` | Operational feature delivery remains internal to stored rows. |
-| Feature Engine 2 | 91% | 72% | `CANDIDATE_V2_PERSISTENCE_VALIDATED` | Rollback-after-write, real changed bucket and CPU evidence remain. |
+| Feature Engine 2 | 91% | 76% | `CANDIDATE_V2_PERSISTENCE_ROLLBACK_VALIDATED` | Count-after-rollback, real changed bucket and CPU evidence remain. |
 | Same-Time Baseline | 82% | 18% | `CANDIDATE_DEPLOYED` | Needs 5/10/20 complete trading-day samples. |
 | Relative Strength | 94% | 70% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected 5/10/30-minute replay passed; v2 persistence/rollout absent. |
 | Divergence | 78% | 46% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected branch deployed, but a real changed stock-flow bucket and predictive validation remain. |
@@ -206,8 +213,19 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Set the candidate `FEATURE_V2_WRITE_ENABLED` value back to `false`, save/deploy, then verify an
-authenticated POST is blocked without changing the stored row.
+Query the D1 Feature v2 row count after the blocked post and require exactly one; then record current
+production snapshot/isolation evidence.
+
+## Checkpoint — Post-write Rollback Gate Validated
+
+- timestamp: 2026-10-07 10:25 KST
+- candidate: `market-feature-validation`
+- configuration: `FEATURE_V2_WRITE_ENABLED=false`
+- request: authenticated `POST /feature-runs`
+- result: `{"error":"FEATURE_WRITE_DISABLED"}` (HTTP 403 expected from the verified code path)
+- conclusion: candidate write opt-in was successfully rolled back after real persistence
+- safety: no new replay or D1 write path was entered by the blocked request
+- next_exact_step: confirm the D1 Feature v2 row count remains exactly one
 
 ## Checkpoint — Direct D1 Feature v2 Row Verified
 
