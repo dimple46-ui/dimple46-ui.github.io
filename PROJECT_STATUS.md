@@ -36,13 +36,14 @@ alert or investment action consumes the signals.
 - timestamp: `2026-10-08 06:53 KST`
 - market_state: `PRE_MARKET`
 - branch: local `m2-operational-storage-local`; remote `feature/m2-operational-storage`
-- HEAD: local `ab53b4147066490961632511ecc15f9d81980609` plus the recovered candidate work described below
+- HEAD: local candidate hardening commit `d362324cc4ea9bb0d999824d8b1d5f86cea2997a`;
+  remote PR #4 hardening commit `11e6d3f9c59aaa38deaeafd6180cafb0fc074be4`
 - main_HEAD: `5c6acef4f38baf8c3bebb64f929fadc41c8a4976`
 - PR_3_status: `MERGED`; merge commit `2b188d15f9b2d2888ff656f3aa8ea03f842c87ae`
-- last_completed_commit: remote PR #4 head `4f6a0fe4cdaaaec5e47853eb5408a61db29c4333`;
-  recovered local documentation checkpoint `ab53b4147066490961632511ecc15f9d81980609`
-- last_completed_test: recovered hardening plus current additions pass `58/58`; prior remote PR #4 GitHub
-  Actions run `37622785642` passed at `4f6a0fe4...`
+- last_completed_commit: remote PR #4 head `11e6d3f9c59aaa38deaeafd6180cafb0fc074be4`;
+  equivalent local hardening commit `d362324cc4ea9bb0d999824d8b1d5f86cea2997a`
+- last_completed_test: local `58/58 PASS`; remote GitHub Actions run `37692539198` passed at
+  `11e6d3f9...`
 - last_completed_deployment: separate Feature validator only; the read-only intelligence candidate has
   not been deployed and the production Worker remains the PR #2 baseline
 - last_completed_validation: Feature v2 has three immutable D1 rows in three distinct slots; rollback,
@@ -86,6 +87,22 @@ alert or investment action consumes the signals.
   intentional zero-UUID placeholder and no Secret value.
 - After the Database ID is supplied and the candidate is deployed, the user must enter the new
   `INTELLIGENCE_READ_TOKEN` directly as a Cloudflare Secret. Its value must never be returned or recorded.
+
+## CHECKPOINT — Intelligence Candidate Hardened / PR #4 CI Passed
+
+- timestamp: `2026-10-08 06:55 KST`
+- branch: `feature/m2-operational-storage`
+- commit: `11e6d3f9c59aaa38deaeafd6180cafb0fc074be4`
+- completed: mandatory provider limiter, fixed-SELECT guard, ticker/range/version/cutoff bounds, query
+  deadline, response metadata, isolated Wrangler template and recovery documentation
+- tests: local `58/58 PASS`; GitHub Actions run `37692539198` `SUCCESS`
+- deployment: not deployed; Worker/Secret/D1/rate-limit bindings do not yet exist
+- validation: Wrangler 4.148 dry-run `PASS`; 19.76 KiB bundle; required candidate bindings detected
+- production_impact: none — production Worker, bindings, Secrets, routes, Cron, D1 rows and GitHub
+  publication remain unchanged
+- waiting_for_live: all 2026-10-08 items in `NEXT LIVE MARKET VALIDATION`
+- next_exact_step: obtain the existing `market-history` Database ID and prepare the deployable candidate
+  configuration without exposing or recreating any Secret
 
 ## Completed
 
