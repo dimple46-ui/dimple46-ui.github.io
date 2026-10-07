@@ -7,9 +7,9 @@ D1 History MVP stores immutable two-minute observations and computes past-only 5
 ## Feature Engine 2.0 candidate
 
 The candidate keeps latest-snapshot `schemaVersion: 3` and raw history schema version 1. Production
-`market_observations.features_json` remains v1. Candidate v2 output is stored only in the additive
-`feature_runs` table after its migration and explicit write opt-in; no backfill rewrites existing
-rows.
+`market_observations.features_json` remains v1. Candidate v2 output uses the additive `feature_runs` table after explicit write opt-in; no backfill
+rewrites existing rows. Three distinct real rows were persisted and verified, then the candidate
+write flag was disabled again. Production still stores Feature v1 in `market_observations`.
 
 - Price: 2/5/10/30-minute and intraday returns, open/previous-close return, high/low position, cumulative intraday VWAP deviation, realized volatility and momentum acceleration.
 - Volume: window delta, rate and acceleration plus 5/10/20-trading-day same-time ratio and percentile.
@@ -24,7 +24,9 @@ Every window records `generatedAt`, `inputCutoff`, `actualElapsedSeconds` and sa
 
 Realized volatility is the root-sum-square of observed log-return percentages within the actual window. It is sampling-dependent and not annualized. Price return over each actual window is the short-term momentum measurement.
 
-Known operational limit: the corrected real replay measured 69,386 bytes for the full derived
-tree. Compact encoding measured 14,067 bytes (79.73% smaller) while preserving explicit status,
-quality and time-basis states. D1 storage growth and Worker CPU duration still require candidate
-deployment evidence before production rollout. See `FEATURE_STORAGE.md`.
+Candidate validation used actual D1 history. Real changed stock-flow buckets preserved delta,
+direction and acceleration, while repeated buckets stayed null. The three persisted compact rows
+measured 14,044, 13,936 and 13,884 characters; controlled responses showed roughly 79.8–80.0%
+reduction from the full derived tree. D1 metadata, rollback, binding-failure isolation and
+Cloudflare deployment-level CPU/error/memory percentiles were captured. Long-running storage growth
+and the controlled production rollout remain separate operational gates. See `FEATURE_STORAGE.md`.
