@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 14:41 KST
+Last updated: 2026-10-07 14:49 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -24,8 +24,8 @@ Status: `M2_READ_ONLY_AUDIT_COMPLETE`.
 
 M1 — Feature Engine 2.0 production validation is `COMPLETE`: correctness, real changed-bucket
 semantics, three-slot compact persistence, rollback, provider CPU evidence, D1 failure isolation,
-production isolation, documentation and merge-readiness review all passed. PR #3 is technically
-mergeable but remains Draft/Open and is not merged into `main`.
+production isolation and documentation all passed. PR #3 is Ready/Open and unmerged; the local
+content merge-tree is clean, while GitHub mergeability changes as the two-minute snapshot base advances.
 
 ## Completed
 
@@ -91,7 +91,7 @@ mergeable but remains Draft/Open and is not merged into `main`.
 
 ## In Progress
 
-- M2 implementation is paused at the branch boundary until the explicit PR #3 merge/hold decision.
+- M2 implementation is paused until the after-hours PR #3 synchronization/merge decision.
 - Proposed next design: optional dedicated latest-state transport with GitHub as a reduced-frequency
   fallback, while D1 remains the immutable raw-history source. No code or production binding changed.
 
@@ -111,8 +111,8 @@ mergeable but remains Draft/Open and is not merged into `main`.
 | --- | --- | --- |
 | `main` | Production | Worker source remains at PR #2 code; subsequent commits are snapshots. |
 | PR #2 | `MERGED_MAIN`, `PRODUCTION_VALIDATED` | Merged 2026-10-02; production validation recorded in PR body. |
-| `feature/feature-engine-v2` | Draft branch | Compact storage/observability changes are being added without changing production `main`. |
-| PR #3 | Draft/Open, mergeable | M1 evidence complete; head `f75cffb`; intentionally not merged or marked Ready automatically. |
+| `feature/feature-engine-v2` | Ready branch | Candidate validation is complete without changing production `main`. |
+| PR #3 | Ready/Open, unmerged | M1 evidence complete; content merge-tree is clean, but the moving snapshot base makes GitHub mergeability transient. |
 | `market-feature-validation` | Separate candidate | Authenticated GET at 09:44 KST on 2026-10-07 verified compact source hash `39e39bb1...`, D1 query metadata and no write. Writes remain disabled. |
 | Production `market-relay` | Operational | Continues schema v3 snapshots and D1 observations; v2 not deployed. |
 
@@ -231,8 +231,8 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Decide whether to merge technically ready PR #3 into `main` or keep it Draft/Open. Do not begin
-stacked M2 implementation until that branch decision; no production Worker deployment is implied.
+After the relay window ends, re-check production, synchronize PR #3 with the stable `main` head and
+request explicit approval before merge. No production Worker deployment is implied.
 
 ## Checkpoint — M2 Read-only Operational/Storage Audit
 
@@ -252,14 +252,14 @@ stacked M2 implementation until that branch decision; no production Worker deplo
   GitHub as a compatibility fallback/checkpoint at reduced frequency, and define measured D1
   retention/archive gates before deletion is considered
 - safety: audit only; no production code, Worker, binding, Secret, Cron, D1 row or GitHub main file changed
-- blocker: M2 branch base must be chosen after the explicit PR #3 merge/hold decision
-- next_exact_step: decide PR #3 merge versus hold; merging code is separate from Cloudflare deployment
+- blocker: M2 implementation branch must wait for the after-hours PR #3 synchronization/merge decision
+- next_exact_step: after the relay window, stabilize the branch base; merging code remains separate from Cloudflare deployment
 
 ## Checkpoint — M1 Complete / PR #3 Merge-ready Candidate
 
 - timestamp: 2026-10-07 14:38 KST
 - branch head: `f75cffb417ecdc2cf6724a144947a919fcdbb6b7`
-- PR #3: Open, Draft, unmerged, GitHub `mergeable=true`
+- PR #3: Ready/Open, unmerged; GitHub mergeability is transient while `main` receives snapshots
 - tests: 36/36 local pass; GitHub has no configured CI statuses or workflow runs
 - merge audit: current feature branch is behind the continuously moving snapshot base, but local
   `git merge-tree --write-tree` completed without conflicts and GitHub reports mergeable
@@ -269,9 +269,9 @@ stacked M2 implementation until that branch decision; no production Worker deplo
 - production evidence: 2026-10-07 14:36:45 KST snapshot remained schema v3, fresh and
   `sourceErrors: []`; stocks/KOSPI investors live; pipeline `DEGRADED` only because program input
   was explicitly stale
-- conclusion: M1 is COMPLETE; PR #3 is technically merge-ready but remains Draft/Open and unmerged
-  pending explicit direction
-- next_exact_step: begin M2 read-only operational/storage architecture audit without changing production
+- conclusion: M1 feature/storage validation is complete; PR #3 is Ready/Open but its after-hours
+  synchronization and merge remain an operational gate
+- next_exact_step: after the relay window, re-check production and synchronize the PR against a stable main head
 
 ## Checkpoint — Final PR Production Safety Guard Tested
 
