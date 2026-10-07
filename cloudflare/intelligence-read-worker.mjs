@@ -1,5 +1,8 @@
+import {summarizeJsonGrowth} from "./operational-storage-policy.mjs";
+
 const API_SCHEMA_VERSION = 1;
 const SUPPORTED_FEATURE_VERSION = 2;
+const SERVICE_RELEASE_VERSION = 1;
 const MAX_HISTORY_RANGE_MS = 12 * 60 * 60 * 1000;
 const MAX_HISTORY_LIMIT = 120;
 const MAX_RESPONSE_BYTES = 900000;
@@ -127,7 +130,7 @@ function response(payload, status = 200, extraHeaders = {}) {
   }});
 }
 
-async function health(db, now) {
+async function health(db, now, env) {
   const [observation, feature, observationGrowth, featureGrowth] = await Promise.all([
     select(db, `SELECT slot_ms,observed_at_ms,available_at_ms,trading_day,schema_version,quality_version,
       pipeline_status,metrics_json,quality_json FROM market_observations ORDER BY slot_ms DESC LIMIT 1`),
@@ -143,8 +146,13 @@ async function health(db, now) {
   const raw = observation.rows[0];
   const run = feature.rows[0];
   const quality = raw ? storedJson(raw.quality_json) : null;
+  const deploymentId = env.CF_VERSION_METADATA?.id || null;
+  const workerGitSha = /^[0-9a-f]{7,64}$/i.test(String(env.INTELLIGENCE_WORKER_GIT_SHA || "")) ?
+    env.INTELLIGENCE_WORKER_GIT_SHA : null;
   return {
     service: "market-intelligence-read-candidate", apiSchemaVersion: API_SCHEMA_VERSION, readOnly: true,
+    release: {serviceReleaseVersion: SERVICE_RELEASE_VERSION,
+      supportedFeatureVersion: SUPPORTED_FEATURE_VERSION, workerGitSha, deploymentId},
     nowMs: now, collectionHealth: raw ? raw.pipeline_status : "NO_OBSERVATIONS",
     latestObservation: raw ? {slotMs: raw.slot_ms, observedAtMs: raw.observed_at_ms,
       ageMs: Math.max(0, now - raw.observed_at_ms), tradingDay: raw.trading_day,
@@ -153,7 +161,9 @@ async function health(db, now) {
       generationStatus: run.generation_status, qualityCeiling: run.quality_ceiling,
       inputCutoffMs: run.input_cutoff_ms, generatedAtMs: run.generated_at_ms} : null,
     storageGrowth: {scope: "LATEST_FIVE_TRADING_DAYS_JSON_ONLY",
-      observations: observationGrowth.rows, featureRuns: featureGrowth.rows},
+      observations: observationGrowth.rows, featureRuns: featureGrowth.rows,
+      observationProjection: summarizeJsonGrowth(observationGrowth.rows),
+      featureRunProjection: summarizeJsonGrowth(featureGrowth.rows)},
     queryMeta: {observation: observation.meta, feature: feature.meta,
       observationGrowth: observationGrowth.meta, featureGrowth: featureGrowth.meta},
     runtime: {...runtime, scope: "WORKER_ISOLATE_LIFETIME"},
@@ -221,7 +231,7 @@ export default {
       const url = new URL(request.url);
       const cutoffMs = cutoffFrom(url, now);
       let payload;
-      if (url.pathname === "/health") payload = await health(env.MARKET_HISTORY, now);
+      if (url.pathname === "/health") payload = await health(env.MARKET_HISTORY, now, env);
       else if (url.pathname === "/state") payload = await state(env.MARKET_HISTORY, cutoffMs);
       else if (url.pathname === "/features") payload = await features(env.MARKET_HISTORY, url, cutoffMs);
       else if (url.pathname === "/history") payload = await history(env.MARKET_HISTORY, url, cutoffMs);
@@ -239,4 +249,3 @@ export default {
     }
   }
 };
-

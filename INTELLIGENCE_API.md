@@ -13,7 +13,7 @@ does not accept SQL, does not mutate D1, and does not expose Worker secrets.
 
 | Route | Fixed data access | Limits |
 | --- | --- | --- |
-| `GET /health` | Latest observation, latest Feature v2 run, five-day JSON growth summary | Four fixed SELECT queries |
+| `GET /health` | Release identity, latest observation/Feature v2 run and five-day JSON growth projection | Four fixed SELECT queries |
 | `GET /state?cutoffMs=` | Latest observation available at or before the cutoff | One row |
 | `GET /features?featureVersion=2&slotMs=&cutoffMs=` | Latest or exact immutable compact Feature v2 row | Feature version 2 only, one row |
 | `GET /history?fromMs=&toMs=&limit=&cutoffMs=` | Past-only raw observations | At most 12 hours, 120 rows and 900 KB response |
@@ -21,6 +21,10 @@ does not accept SQL, does not mutate D1, and does not expose Worker secrets.
 Every response includes `apiSchemaVersion`, the requested input cutoff where applicable, quality
 metadata and D1 query metadata. Stored Feature rows must pass version, SHA and timestamp-integrity
 checks before they are returned.
+
+`/health` can expose `INTELLIGENCE_WORKER_GIT_SHA` and Cloudflare version metadata when configured.
+Its annual storage projection is calculated only from returned JSON lengths and is explicitly not
+total D1 database storage. Missing samples remain `INSUFFICIENT_DATA`; they are never converted to zero.
 
 ## Security and operations
 
@@ -43,4 +47,3 @@ checks before they are returned.
 4. Add provider-level rate limiting and observability.
 5. Introduce consumers behind an opt-in; retain GitHub as the compatibility fallback.
 6. Roll back by disabling/removing only this candidate route. D1 and production relay remain intact.
-

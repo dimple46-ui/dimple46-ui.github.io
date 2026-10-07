@@ -1,12 +1,12 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 21:17 KST
+Last updated: 2026-10-07 21:31 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
 
 - Repository: `dimple46-ui/dimple46-ui.github.io`
-- Latest audited `main` head: `e856a4b963df6be56c6d07256beb73f8854cdd68` (snapshot-only; production Worker source remains PR #2)
+- Latest audited `main` head: `2b188d15f9b2d2888ff656f3aa8ea03f842c87ae` (PR #3 merge commit)
 - Latest non-snapshot Worker commit: `c88c8d03c50c5db5927f22b427b436d947691fc6` (`Add D1 history and point-in-time feature MVP (#2)`)
 - Latest snapshot schema: `schemaVersion: 3`
 - Final snapshot at 2026-10-07 20:01:17 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: OK`.
@@ -23,8 +23,8 @@ Status: `M2_READ_ONLY_API_CODE_COMPLETE_NOT_DEPLOYED`.
 
 M1 — Feature Engine 2.0 production validation is `COMPLETE`: correctness, real changed-bucket
 semantics, three-slot compact persistence, rollback, provider CPU evidence, D1 failure isolation,
-production isolation and documentation all passed. PR #3 is Ready/Open and unmerged, synchronized
-to stable main, and GitHub reports `mergeable_state: clean` with 55 commits ahead and 0 behind.
+production isolation and documentation all passed. PR #3 merged to main as `2b188d15...` after a
+53/53 pre-merge test pass. The production Cloudflare Worker was not replaced.
 
 M3 — Descriptive Signal Layer is `PURE_FUNCTION_CANDIDATE`: deterministic signal generation,
 quality confidence ceilings and synthetic correctness tests are implemented, but no production endpoint,
@@ -105,7 +105,7 @@ alert or investment action consumes the signals.
 
 ## In Progress
 
-- PR #3 now contains stable main `e856a4b...` as a merge parent; compare reports `behind_by: 0`.
+- M2 work continues on `feature/m2-operational-storage`; production remains unchanged.
 - The read-only intelligence API remains local/branch-only until a separate candidate Worker,
   read-only D1 binding, authentication Secret and provider-level rate limit are explicitly approved.
 - M3 signals remain pure-function outputs pending historical replay and next-session live behavior validation.
@@ -127,10 +127,11 @@ alert or investment action consumes the signals.
 
 | Item | State | Evidence / limitation |
 | --- | --- | --- |
-| `main` | Production | Worker source remains at PR #2 code; subsequent commits are snapshots. |
+| `main` | Production repository | PR #3 merged as `2b188d15...`; deployed Cloudflare Worker remains unchanged pending separate approval. |
 | PR #2 | `MERGED_MAIN`, `PRODUCTION_VALIDATED` | Merged 2026-10-02; production validation recorded in PR body. |
-| `feature/feature-engine-v2` | Ready branch | Synced to stable main at merge commit `27c16c720701114d3d800c6586cd64eb4e3539d3`. |
-| PR #3 | Ready/Open, unmerged | Compare is 54 commits ahead and 0 behind; tests and merge-tree pass. GitHub REST mergeability was still recalculating/unknown. |
+| `feature/feature-engine-v2` | Merged branch | Merged to main through PR #3. |
+| PR #3 | `MERGED_MAIN` | Merge commit `2b188d15f9b2d2888ff656f3aa8ea03f842c87ae`; no production deployment implied. |
+| `feature/m2-operational-storage` | Development branch | Additive M2 policy/observability/CI work; not deployed. |
 | `market-feature-validation` | Separate candidate | Authenticated GET at 09:44 KST on 2026-10-07 verified compact source hash `39e39bb1...`, D1 query metadata and no write. Writes remain disabled. |
 | Production `market-relay` | Operational | Continues schema v3 snapshots and D1 observations; v2 not deployed. |
 
@@ -249,8 +250,8 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Request explicit approval before merging PR #3 to main. A main merge does not authorize production
-Worker replacement, intelligence API deployment, a new Secret or any binding change.
+Complete the M2 branch tests and draft PR. Deployment of the read-only intelligence API remains a
+separate approval gate because it requires a new Secret, D1 binding and provider-level rate limit.
 
 ## NEXT LIVE MARKET VALIDATION
 
@@ -272,6 +273,26 @@ M1 candidate gates and must not trigger new feature development before live evid
 
 Same-time 5/10/20-day baselines remain `INSUFFICIENT_HISTORY` until enough real trading days exist.
 No synthetic sample may be used to pass this gate.
+
+## Checkpoint — PR #3 Merged / M2 Policy Candidate
+
+- timestamp: 2026-10-07 21:31 KST
+- main merge: PR #3 merged with expected head `4284c9b2b219cc92f5a58c4ea8085a59cbd4def4`
+- merge commit: `2b188d15f9b2d2888ff656f3aa8ea03f842c87ae`; tree
+  `e3b6824f0777b540b8ab479a5d0bad3de7afb28e` matches the tested branch tree
+- branch: `feature/m2-operational-storage`
+- milestone: M1 complete; M2 operational/storage stabilization in progress
+- completed: PR/main verification, additive storage-growth policy, honest JSON-only projections,
+  release metadata, non-destructive retention gates, CI workflow and operational migration/rollback plan
+- tests: 56/56 local pass after M2 additions; GitHub workflow pending branch push/PR execution
+- deployment: none; production Worker, bindings, Secrets, Cron, D1 rows and publication cadence unchanged
+- production validation: final `market-live.json` remains schema v3, fresh, pipeline OK and sourceErrors empty
+- waiting_for_live: 2026-10-08 live Feature/Signal checklist remains mandatory; no synthetic M2 test
+  changes its status
+- remaining: push M2 checkpoint, observe CI, measure at least 20 trading days of provider storage growth;
+  separate approval is required before a read-only candidate deployment or any production change
+- next_exact_step: commit/push the M2 branch and open a draft PR; then inspect CI and stop before the
+  first production approval gate
 
 ## Checkpoint — Stable-main Synchronization Complete
 

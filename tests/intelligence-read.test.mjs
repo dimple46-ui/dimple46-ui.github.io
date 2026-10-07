@@ -34,7 +34,9 @@ function request(path,options={}){
  return new Request(`https://candidate${path}`,{...options,headers:{Authorization:`Bearer ${token}`,
   'CF-Connecting-IP':options.ip||'192.0.2.1',...(options.headers||{})}});
 }
-const env=database=>({MARKET_HISTORY:database,INTELLIGENCE_READ_TOKEN:token,INTELLIGENCE_RATE_LIMIT_PER_MINUTE:'100'});
+const env=database=>({MARKET_HISTORY:database,INTELLIGENCE_READ_TOKEN:token,
+ INTELLIGENCE_RATE_LIMIT_PER_MINUTE:'100',INTELLIGENCE_WORKER_GIT_SHA:'abcdef0',
+ CF_VERSION_METADATA:{id:'deployment-test'}});
 
 test('authentication and methods are rejected before any D1 access',async()=>{
  const database=db();
@@ -49,6 +51,9 @@ test('health is machine-readable, bounded and contains no secret',async()=>{
  assert.equal(body.readOnly,true);assert.equal(body.collectionHealth,'OK');
  assert.equal(body.latestFeatureRun.featureVersion,2);assert.equal(body.latestFeatureRun.qualityCeiling,'UNVERIFIED_TIME');
  assert.equal(body.storageGrowth.observations[0].row_count,10);
+ assert.equal(body.release.workerGitSha,'abcdef0');assert.equal(body.release.deploymentId,'deployment-test');
+ assert.equal(body.storageGrowth.observationProjection.status,'LIMITED_SAMPLE');
+ assert.equal(body.storageGrowth.observationProjection.projectedAnnualJsonBytes,25000000);
  assert.equal(response.headers.get('Cache-Control'),'no-store');
  assert.doesNotMatch(JSON.stringify(body),new RegExp(token));
  assert.ok(database.statements.every(sql=>sql.trim().startsWith('SELECT')));

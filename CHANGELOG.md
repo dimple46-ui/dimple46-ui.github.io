@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-07 — M2 operational/storage candidate
+
+- Merged validated Feature Engine 2.0 through PR #3 without changing the deployed production Worker.
+- Added pure storage-growth, snapshot-pressure and non-destructive retention-policy helpers.
+- Added release identity and honest JSON-only annualized growth projections to the read-only health candidate.
+- Added a minimal Node test workflow and documented additive latest-state migration, rollback and archive gates.
+- No production Worker, binding, Secret, Cron, GitHub snapshot cadence or D1 retention policy changed.
+
 ## 2026-10-07 — Off-market hardening and intelligence candidates
 
 - Reject Feature v2 version/cutoff/SHA/serialization/oversize failures before compact persistence.
