@@ -30,6 +30,8 @@ test('GET replays stored observations, exposes compact preview and never writes'
   {MARKET_HISTORY:readOnlyDb(row,queries),VALIDATION_TOKEN:'test'});
  assert.equal(response.status,200);const result=await response.json();
  assert.equal(result.mode,'READ_ONLY_REPLAY');assert.equal(result.storedFeatureVersion,1);assert.equal(result.features.version,2);
+ assert.equal(result.validatorBuild,'forced-read-only-cutoff-20261007');
+ assert.equal(result.replayCutoffMs,1791340050000);
  assert.equal(result.distinctSlots,1);assert.equal(queries.length,3);assert.ok(result.compactFeaturesBytes>0);
  assert.ok(result.featuresBytes>=result.compactFeaturesBytes);assert.equal(result.features.windows['5m'].status,'INSUFFICIENT_HISTORY');
  assert.equal(result.queryMeta.current.rowsRead,1);assert.ok(result.candidateSha256);
