@@ -65,6 +65,17 @@ test('GET accepts replay cutoff from a header when the Cloudflare tester strips 
  assert.equal(result.replayCutoffMs,cutoff);assert.equal(binds[0][0],cutoff);assert.equal(queries.length,3);
 });
 
+test('GET accepts replay cutoff from the path when the Cloudflare tester strips parameters and headers',async()=>{
+ const now=Date.now(),at=now-120000,cutoff=now-60000,queries=[],binds=[];
+ const row={slot_ms:Math.floor(at/120000)*120000,observed_at_ms:at,available_at_ms:at,trading_day:'20261002',
+  metrics_json:'{}',quality_json:'{}',features_json:'{"version":1}'};
+ const response=await worker().fetch(new Request(`https://test/replay/${cutoff}`,{
+  headers:{Authorization:'Bearer test'}}),
+  {MARKET_HISTORY:readOnlyDb(row,queries,binds),VALIDATION_TOKEN:'test'});
+ assert.equal(response.status,200);const result=await response.json();
+ assert.equal(result.replayCutoffMs,cutoff);assert.equal(binds[0][0],cutoff);assert.equal(queries.length,3);
+});
+
 test('candidate write is explicit opt-in and validates the engine git SHA',async()=>{
  const at=Date.now()-1000,row={slot_ms:Math.floor(at/120000)*120000,observed_at_ms:at,available_at_ms:at,
   trading_day:'20261002',metrics_json:'{}',quality_json:'{}',features_json:'{"version":1}'};
