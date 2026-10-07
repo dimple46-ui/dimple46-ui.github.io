@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 14:38 KST
+Last updated: 2026-10-07 14:41 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -20,7 +20,7 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 
 M2 — Operational / Storage Architecture Stabilization.
 
-Status: `M2_NOT_STARTED`.
+Status: `M2_READ_ONLY_AUDIT_COMPLETE`.
 
 M1 — Feature Engine 2.0 production validation is `COMPLETE`: correctness, real changed-bucket
 semantics, three-slot compact persistence, rollback, provider CPU evidence, D1 failure isolation,
@@ -91,9 +91,9 @@ mergeable but remains Draft/Open and is not merged into `main`.
 
 ## In Progress
 
-- M2 read-only audit planning: GitHub two-minute snapshot transport, D1 retention, operational
-  observability and archive policy.
-- PR #3 remains Draft/Open pending an explicit merge decision; no production deployment is implied.
+- M2 implementation is paused at the branch boundary until the explicit PR #3 merge/hold decision.
+- Proposed next design: optional dedicated latest-state transport with GitHub as a reduced-frequency
+  fallback, while D1 remains the immutable raw-history source. No code or production binding changed.
 
 ## Blocked / Not Yet Validated
 
@@ -231,8 +231,29 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Begin M2 with a read-only audit of GitHub snapshot commit volume, latest-state consumers, D1 growth
-and retention requirements. Keep PR #3 Draft/Open until an explicit merge decision.
+Decide whether to merge technically ready PR #3 into `main` or keep it Draft/Open. Do not begin
+stacked M2 implementation until that branch decision; no production Worker deployment is implied.
+
+## Checkpoint — M2 Read-only Operational/Storage Audit
+
+- timestamp: 2026-10-07 14:41 KST
+- production code: every relay run performs GitHub Contents API GET then PUT for the same
+  `market-live.json`, creating a commit with the snapshot timestamp
+- observed commit volume: 331 snapshot commits on 2026-10-06; 170 more through 14:38 KST on
+  2026-10-07; recent history confirms approximately two-minute cadence
+- annualized design pressure: 331 commits per full relay day equals about 82,750 commits per 250
+  trading days, before non-snapshot development commits
+- repository consumers: code search found no checked-in UI/application consumer of
+  `market-live.json`; only relay/deployment documentation references it. External consumers remain
+  unknown and must be preserved with a fallback during migration
+- D1: immutable observations exist, but no retention deletion, archive policy, daily aggregate or
+  automated storage-growth monitor is implemented
+- initial M2 direction: introduce an optional dedicated latest-state path and read endpoint, retain
+  GitHub as a compatibility fallback/checkpoint at reduced frequency, and define measured D1
+  retention/archive gates before deletion is considered
+- safety: audit only; no production code, Worker, binding, Secret, Cron, D1 row or GitHub main file changed
+- blocker: M2 branch base must be chosen after the explicit PR #3 merge/hold decision
+- next_exact_step: decide PR #3 merge versus hold; merging code is separate from Cloudflare deployment
 
 ## Checkpoint — M1 Complete / PR #3 Merge-ready Candidate
 
