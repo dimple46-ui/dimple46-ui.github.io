@@ -9,8 +9,8 @@ function worker(){
  vm.runInContext(source.replace('export default {','const worker = {'),ctx);
  return vm.runInContext('worker',ctx);
 }
-function readOnlyDb(row,queries=[]){
- return {prepare(sql){queries.push(sql);assert.match(sql.trim(),/^(SELECT|WITH)\b/);return {bind(){return {
+function readOnlyDb(row,queries=[],binds=[]){
+ return {prepare(sql){queries.push(sql);assert.match(sql.trim(),/^(SELECT|WITH)\b/);return {bind(...args){binds.push(args);return {
   all:async()=>({success:true,results:sql.includes('recent_days')?[]:[row],meta:{duration:0.2,rows_read:1,rows_written:0}})
  };}};}};
 }
@@ -35,6 +35,23 @@ test('GET replays stored observations, exposes compact preview and never writes'
  assert.equal(result.queryMeta.current.rowsRead,1);assert.ok(result.candidateSha256);
  assert.match(source,/INSERT INTO feature_runs/);
  assert.doesNotMatch(source,/UPDATE market_observations|DELETE FROM market_observations|GITHUB_TOKEN|async scheduled/);
+});
+
+test('GET supports a past replay cutoff and rejects invalid or future cutoffs before D1',async()=>{
+ const now=Date.now(),at=now-120000,cutoff=now-60000,queries=[],binds=[];
+ const row={slot_ms:Math.floor(at/120000)*120000,observed_at_ms:at,available_at_ms:at,trading_day:'20261002',
+  metrics_json:'{}',quality_json:'{}',features_json:'{"version":1}'};
+ let response=await worker().fetch(new Request(`https://test/?cutoffMs=${cutoff}`,{headers:{Authorization:'Bearer test'}}),
+  {MARKET_HISTORY:readOnlyDb(row,queries,binds),VALIDATION_TOKEN:'test'});
+ assert.equal(response.status,200);const result=await response.json();
+ assert.equal(result.replayCutoffMs,cutoff);assert.equal(binds[0][0],cutoff);assert.equal(queries.length,3);
+ const untouched={prepare(){throw new Error('must not access D1');}};
+ response=await worker().fetch(new Request('https://test/?cutoffMs=not-a-number',{headers:{Authorization:'Bearer test'}}),
+  {MARKET_HISTORY:untouched,VALIDATION_TOKEN:'test'});
+ assert.equal(response.status,400);assert.equal((await response.json()).error,'INVALID_REPLAY_CUTOFF');
+ response=await worker().fetch(new Request(`https://test/?cutoffMs=${Date.now()+60000}`,{headers:{Authorization:'Bearer test'}}),
+  {MARKET_HISTORY:untouched,VALIDATION_TOKEN:'test'});
+ assert.equal(response.status,400);assert.equal((await response.json()).error,'INVALID_REPLAY_CUTOFF');
 });
 
 test('candidate write is explicit opt-in and validates the engine git SHA',async()=>{
