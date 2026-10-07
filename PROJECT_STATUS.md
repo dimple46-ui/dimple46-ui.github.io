@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 10:25 KST
+Last updated: 2026-10-07 10:27 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -22,7 +22,8 @@ M1 — Feature Engine 2.0 production validation.
 
 Status: `COMPACT_CANDIDATE_PERSISTENCE_AND_ROLLBACK_VALIDATED` in a separate authenticated
 validation Worker; one controlled v2 row was inserted and verified directly in D1, and candidate
-writes were disabled again with the post-write rollback gate passing. PR #3 is not merged into `main`.
+writes were disabled again with the post-write rollback gate passing. The post-rollback D1 count
+remained exactly one row/one slot. PR #3 is not merged into `main`.
 
 ## Completed
 
@@ -69,18 +70,21 @@ writes were disabled again with the post-write rollback gate passing. PR #3 is n
   `FEATURE_WRITE_DISABLED`. The candidate is no longer write-enabled.
 - Production snapshot generated at 2026-10-07 10:24:45 KST remained schema v3, fresh, pipeline OK,
   and `sourceErrors: []` during the candidate persistence/rollback validation.
+- Direct D1 count after the blocked post returned one Feature v2 row and one distinct slot, proving
+  the rollback request did not create or duplicate data.
 
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Confirm the v2 row count remains exactly one after the blocked POST, then complete remaining
-  isolation/observability evidence.
+- Capture actual Worker CPU evidence and complete candidate failure-injection isolation evidence.
+- Wait for a real changed stock-flow bucket transition; do not synthesize or convert unchanged/null
+  data into a change.
 - Candidate evidence for actual storage growth and Worker CPU duration.
 - Documentation drift repair through this source-of-truth document.
 
 ## Blocked / Not Yet Validated
 
-- D1 count-after-rollback and explicit failure-injection isolation evidence remain to be recorded.
+- Actual Worker CPU duration and explicit candidate D1 failure-injection isolation evidence remain.
 - Five/ten/twenty-trading-day same-time statistics: only one prior comparable trading day was available.
 - Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB; per-query D1 meta is now captured, including 1,686 rows read by the same-time query.
 - The corrected stock-flow bucket-transition branch has regression coverage and is deployed, but the 11:04 KST real replay contained only `UNCHANGED_BUCKET` windows, so a real changed-bucket divergence remains unexercised.
@@ -213,8 +217,19 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Query the D1 Feature v2 row count after the blocked post and require exactly one; then record current
-production snapshot/isolation evidence.
+Inspect the `market-feature-validation` Worker observability metrics for actual CPU duration from the
+controlled persistence request; keep wall time labeled separately.
+
+## Checkpoint — Post-rollback D1 Row Stability Verified
+
+- timestamp: 2026-10-07 10:27 KST
+- query result: Feature v2 row count 1; distinct Feature v2 slots 1
+- baseline before opt-in: 0 rows
+- controlled insert: 1 row
+- after write disabled and blocked POST: still 1 row/1 slot
+- conclusion: rollback caused no extra persistence or duplicate row
+- production: schema v3 snapshot remained fresh, pipeline OK and sourceErrors empty
+- next_exact_step: capture actual candidate Worker CPU evidence from Cloudflare observability
 
 ## Checkpoint — Post-write Rollback Gate Validated
 
