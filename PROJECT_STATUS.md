@@ -1,18 +1,18 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 14:49 KST
+Last updated: 2026-10-07 19:38 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
 
 - Repository: `dimple46-ui/dimple46-ui.github.io`
-- Latest audited `main` head: `083a82d6605d12962efd384984ad31b55a4f8a7f` (snapshot-only; production Worker source remains PR #2)
+- Latest audited `main` head: `a80869dafaacc9cf798d627e374a2c2f8a81b549` (snapshot-only; production Worker source remains PR #2)
 - Latest non-snapshot Worker commit: `c88c8d03c50c5db5927f22b427b436d947691fc6` (`Add D1 history and point-in-time feature MVP (#2)`)
 - Latest snapshot schema: `schemaVersion: 3`
-- Snapshot at 2026-10-07 14:24:47 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: OK`.
-- Samsung/SK Hynix and KOSPI investor data were live; program age was 287 seconds and still live.
-  Index/futures timestamps remained explicitly `RECENT_FETCH`/unverified rather than being treated as
-  verified exchange times.
+- Snapshot at 2026-10-07 19:36:45 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: OK`.
+- Samsung/SK Hynix remained `LIVE` in the after-hours NXT window. Program and futures were correctly
+  marked `CLOSED`; index/futures timestamps remain explicitly unverified where no exchange timestamp
+  is available. The relay was still creating snapshot commits, so the branch base was not yet stable.
 - D1: `market-history`, table `market_observations`, production observations continue to accumulate. The additive `feature_runs` table now contains exactly three Feature v2 rows across three distinct slots; production v1 observations were not updated. Earlier storage audit measured 11.56 MB.
 - PR #2: merged and production-validated. D1 failure isolation and automatic recovery were validated before merge.
 
@@ -129,8 +129,8 @@ Percentages are audit estimates, not predictive-performance scores.
 | Feature Engine 1 | 92% | 85% | `MERGED_MAIN` | Operational feature delivery remains internal to stored rows. |
 | Feature Engine 2 | 98% | 95% | `M1_COMPLETE_MERGE_READY_CANDIDATE` | Production rollout remains a separate explicit decision. |
 | Same-Time Baseline | 82% | 18% | `CANDIDATE_DEPLOYED` | Needs 5/10/20 complete trading-day samples. |
-| Relative Strength | 94% | 70% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected 5/10/30-minute replay passed; v2 persistence/rollout absent. |
-| Divergence | 78% | 46% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected branch deployed, but a real changed stock-flow bucket and predictive validation remain. |
+| Relative Strength | 94% | 70% | `M1_VALIDATED` | Real-D1 2/5/10/30-minute replay and three-slot compact v2 persistence passed; production rollout remains separate. |
+| Divergence | 78% | 46% | `M1_VALIDATED` | Real changed stock-flow bucket semantics passed; predictive validation remains future work. |
 | Derivatives Intelligence | 76% | 52% | `CANDIDATE_DEPLOYED` | Timestamp quality and heuristic-only position classification. |
 | Signal Layer | 18% | 0% | `DESIGNED` | Descriptive signal registry not implemented. |
 | Options/VKOSPI | 5% | 0% | `DESIGNED` | Deferred until M1/M2. |
@@ -176,7 +176,7 @@ Percentages are audit estimates, not predictive-performance scores.
 1. Main documentation still says D1/history is an undeployed candidate. `README.md`, `D1_SETUP.md`, `CHANGELOG.md`, `AUDIT.md` and `DEPLOYMENT.md` are stale after PR #2.
 2. PR #1 remains open although the later PR #2/main incorporated the relevant quality work.
 3. A two-minute GitHub snapshot commit cadence creates roughly 331 commits per full relay day, or 82,750 commits per 250 trading days.
-4. PR #3 appears 632 commits behind main even though those commits are snapshot-only; this obscures real code divergence.
+4. PR #3 was 1,249 snapshot commits behind main at the 19:34 KST audit; the high-frequency snapshot history obscures real code divergence.
 5. Corrected candidate v2 response measured 69,386 full feature bytes; compact encoding measured 14,067 bytes while retaining explicit invalid/null states.
 6. At 331 rows/day, compact derived JSON projects to 4.66 MB/day, 93.12 MB/20 days, 279.37 MB/60 days and 1.16 GB/250 days before SQLite/index/raw-observation overhead.
 7. D1 dashboard storage was 11.56 MB at the 2026-10-06 audit; the account plan remains unverified. Official limits are 500 MB/database on Free and 10 GB/database on Workers Paid.
@@ -233,6 +233,42 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 After the relay window ends, re-check production, synchronize PR #3 with the stable `main` head and
 request explicit approval before merge. No production Worker deployment is implied.
+
+## NEXT LIVE MARKET VALIDATION
+
+Status: `PLANNED_FOR_2026-10-08_REGULAR_MARKET`.
+
+This is the first operational task for the next regular session. It does not reopen the already passed
+M1 candidate gates and must not trigger new feature development before live evidence is collected.
+
+| Validation item | Required live data | Method | PASS | FAIL |
+| --- | --- | --- | --- | --- |
+| Production health | Current Samsung/SK Hynix snapshot, freshness, pipeline and source errors | Audit `main:market-live.json` at two or more distinct live timestamps | Schema v3 continues, timestamps advance, quality is honest, no unexplained source error | Frozen timestamp, publication failure, or stale/error data labeled live |
+| Past-only windows | Current-day D1 observations after enough elapsed time | Authenticated candidate read-only replay | 2/5/10/30m use rows at or before `input_cutoff`; no later row is read | Any future row or later publication enters a baseline |
+| Stock-flow bucket semantics | Samsung/SK Hynix foreign and institution buckets | Compare previous/current bucket and generated feature | Changed bucket has delta/direction/acceleration; unchanged bucket remains null with `UNCHANGED_BUCKET` | Unchanged bucket becomes zero or changed delta uses the same bucket |
+| Program/futures/OI/basis | Live program, futures flow, OI, OI change, basis and market basis | Compare raw observation to candidate evidence | Numeric output only when inputs are usable; closed/stale/unverified quality propagates | Stale/closed/unverified input is promoted to verified live data |
+| Relative strength/divergence | Both stocks plus KOSPI/KOSPI200 and flows | Inspect 2/5/10/30m candidate output | Direction and magnitude match raw returns/flows; contrary evidence is retained | One stock omitted, null coerced to zero, or sign mismatch |
+| Compact Feature v2 | Candidate generation; production rollout only after explicit approval | Read-only generation by default; query `feature_runs` only if an approved write/rollout occurs | Version/SHA/cutoff/quality/status are complete and immutable; production v1 remains isolated | Write occurs while disabled, metadata missing, or v1 row is rewritten |
+| Rollback/fail-safe | Candidate write flag disabled and production publication active | Confirm blocked POST behavior only when needed; observe production independently | Disabled path rejects writes and production continues | Candidate/D1 failure interrupts GitHub publication |
+
+Same-time 5/10/20-day baselines remain `INSUFFICIENT_HISTORY` until enough real trading days exist.
+No synthetic sample may be used to pass this gate.
+
+## Checkpoint — 2026-10-07 After-hours Recovery
+
+- timestamp: 2026-10-07 19:38 KST
+- branch: `feature/feature-engine-v2`
+- commit before this checkpoint: `e60ba95ef404ea32322d478549f3a21035b9c157`
+- PR #3: Ready/Open, unmerged; GitHub reported mergeable at audit time
+- production main: `a80869dafaacc9cf798d627e374a2c2f8a81b549`; 19:36:45 KST snapshot
+- production validation: schema v3, fresh, pipeline OK, sourceErrors empty; Samsung/SK Hynix live
+  in the NXT after-hours window; program/futures correctly closed
+- D1/Feature v2: prior direct evidence remains three immutable v2 rows across three slots; writes disabled
+- tests: local `node --test tests/*.test.mjs` passed all four test files; documented suite remains 36/36
+- completed: actual-state recovery, production/PR/schema/safety re-audit, next live-market gate definition
+- remaining: relay still moves during the NXT window; do not synchronize or merge against a moving base
+- next_exact_step: after the relay stops, re-audit stable `main`, synchronize PR #3, rerun tests and
+  merge-tree; request explicit approval before any main merge
 
 ## Checkpoint — M2 Read-only Operational/Storage Audit
 
