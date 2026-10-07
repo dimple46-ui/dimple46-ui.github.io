@@ -456,7 +456,8 @@ function featureWriteEnabled(env) {
 }
 function validEngineGitSha(value) { return /^[0-9a-f]{7,64}$/i.test(String(value||"")); }
 function replayCutoff(request,url,now=Date.now()) {
-  const raw=url.searchParams.get('cutoffMs')??request.headers.get('X-Replay-Cutoff-Ms');
+  const pathCutoff=url.pathname.match(/^\/replay\/(\d+)$/)?.[1];
+  const raw=url.searchParams.get('cutoffMs')??request.headers.get('X-Replay-Cutoff-Ms')??pathCutoff;
   if(raw==null) return now;
   if(!/^\d+$/.test(raw)) return null;
   const value=Number(raw);
@@ -507,7 +508,8 @@ export default {
     if(!env.VALIDATION_TOKEN||request.headers.get('Authorization')!==`Bearer ${env.VALIDATION_TOKEN}`)
       return Response.json({error:'UNAUTHORIZED'},{status:401});
     const url=new URL(request.url),started=Date.now();
-    if(request.method==='GET'&&url.pathname!=='/') return Response.json({error:'NOT_FOUND'},{status:404});
+    if(request.method==='GET'&&url.pathname!=='/'&&!/^\/replay\/\d+$/.test(url.pathname))
+      return Response.json({error:'NOT_FOUND'},{status:404});
     if(request.method==='POST'&&url.pathname!=='/feature-runs') return Response.json({error:'NOT_FOUND'},{status:404});
     if(!['GET','POST'].includes(request.method)) return Response.json({error:'METHOD_NOT_ALLOWED'},{status:405});
     try {
