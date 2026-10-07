@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 10:27 KST
+Last updated: 2026-10-07 10:36 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -23,7 +23,8 @@ M1 — Feature Engine 2.0 production validation.
 Status: `COMPACT_CANDIDATE_PERSISTENCE_AND_ROLLBACK_VALIDATED` in a separate authenticated
 validation Worker; one controlled v2 row was inserted and verified directly in D1, and candidate
 writes were disabled again with the post-write rollback gate passing. The post-rollback D1 count
-remained exactly one row/one slot. PR #3 is not merged into `main`.
+remained exactly one row/one slot. Cloudflare CPU metrics are captured. PR #3 is not merged into
+`main`.
 
 ## Completed
 
@@ -72,11 +73,14 @@ remained exactly one row/one slot. PR #3 is not merged into `main`.
   and `sourceErrors: []` during the candidate persistence/rollback validation.
 - Direct D1 count after the blocked post returned one Feature v2 row and one distinct slot, proving
   the rollback request did not create or duplicate data.
+- Cloudflare Worker metrics over the audited 24-hour window reported 72 invocations, zero errors,
+  zero CPU-limit exceedances, CPU P50/P90/P99 of 0.52/3.97/8.28 ms, actual-time P50/P90/P99 of
+  0.85/24.33/61.73 ms, and memory P50/P90/P99 of 1.57/2.51/3.48 MB.
 
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Capture actual Worker CPU evidence and complete candidate failure-injection isolation evidence.
+- Complete controlled candidate D1 failure-injection isolation evidence.
 - Wait for a real changed stock-flow bucket transition; do not synthesize or convert unchanged/null
   data into a change.
 - Candidate evidence for actual storage growth and Worker CPU duration.
@@ -84,7 +88,8 @@ remained exactly one row/one slot. PR #3 is not merged into `main`.
 
 ## Blocked / Not Yet Validated
 
-- Actual Worker CPU duration and explicit candidate D1 failure-injection isolation evidence remain.
+- The metrics page provides deployment-level CPU percentiles, not an exact per-request CPU value for
+  the one controlled persistence call. Explicit candidate D1 failure-injection isolation remains.
 - Five/ten/twenty-trading-day same-time statistics: only one prior comparable trading day was available.
 - Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB; per-query D1 meta is now captured, including 1,686 rows read by the same-time query.
 - The corrected stock-flow bucket-transition branch has regression coverage and is deployed, but the 11:04 KST real replay contained only `UNCHANGED_BUCKET` windows, so a real changed-bucket divergence remains unexercised.
@@ -113,7 +118,7 @@ Percentages are audit estimates, not predictive-performance scores.
 | Latest Snapshot | 95% | 92% | `OPERATIONALLY_STABLE` | GitHub is an inefficient latest-state transport. |
 | History Storage | 88% | 82% | `PRODUCTION_VALIDATED` | Retention, usage metrics and archive policy. |
 | Feature Engine 1 | 92% | 85% | `MERGED_MAIN` | Operational feature delivery remains internal to stored rows. |
-| Feature Engine 2 | 91% | 76% | `CANDIDATE_V2_PERSISTENCE_ROLLBACK_VALIDATED` | Count-after-rollback, real changed bucket and CPU evidence remain. |
+| Feature Engine 2 | 91% | 80% | `CANDIDATE_V2_PERSISTENCE_ROLLBACK_CPU_VALIDATED` | D1 failure injection and real changed bucket remain. |
 | Same-Time Baseline | 82% | 18% | `CANDIDATE_DEPLOYED` | Needs 5/10/20 complete trading-day samples. |
 | Relative Strength | 94% | 70% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected 5/10/30-minute replay passed; v2 persistence/rollout absent. |
 | Divergence | 78% | 46% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected branch deployed, but a real changed stock-flow bucket and predictive validation remain. |
@@ -217,8 +222,23 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Inspect the `market-feature-validation` Worker observability metrics for actual CPU duration from the
-controlled persistence request; keep wall time labeled separately.
+Temporarily break only the separate candidate's D1 binding while writes remain disabled, require the
+candidate to fail closed, verify production stays healthy, and then restore the binding immediately.
+
+## Checkpoint — Cloudflare Worker CPU Evidence Captured
+
+- timestamp: 2026-10-07 10:36 KST
+- scope: `market-feature-validation`, all deployed versions, last 24 hours
+- invocations: 72
+- errors: 0
+- CPU-limit exceedances: 0
+- CPU time: P50 0.52 ms; P90 3.97 ms; P99/P999 8.28 ms
+- actual time: P50 0.85 ms; P90 24.33 ms; P99/P999 61.73 ms
+- request duration: P50 0.78 ms; P90 24.24 ms; P99/P999 61.66 ms
+- memory: P50 1.57 MB; P90 2.51 MB; P99/P999 3.48 MB
+- interpretation: provider CPU metrics are now distinct from the 177 ms response wall time; the
+  dashboard does not isolate the exact controlled-write request's CPU value
+- next_exact_step: controlled D1 binding failure injection on the candidate only
 
 ## Checkpoint — Post-rollback D1 Row Stability Verified
 
