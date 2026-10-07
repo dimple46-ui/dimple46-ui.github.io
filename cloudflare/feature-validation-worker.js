@@ -1,5 +1,5 @@
 // Generated from PR candidate; do not edit.
-const CANDIDATE_SHA256 = "39e39bb133ed90f6fa950a056948ea03d1928905de4c8dab28434a7631f0567a";
+const CANDIDATE_SHA256 = "c5ddaa18150af09ff2bfa9bea99a01136899e9c8067bb03b53216277aec6ded9";
 const FEATURE_VERSION = 2;
 const SAME_TIME_TOLERANCE_MS = 150000;
 const KST_OFFSET_MS = 32400000;
@@ -14,6 +14,93 @@ function usableHistoryMetric(metric, atMs) {
 }
 function decodeHistoryRow(row) {
   return {...row, metrics: row.metrics ?? JSON.parse(row.metrics_json), quality: row.quality ?? JSON.parse(row.quality_json)};
+}
+// Keep the production persistence contract on Feature v1 unless a controlled rollout explicitly opts in.
+// Feature v2 is validated by the separate candidate Worker and must not silently replace v1 rows.
+function featureEngineV2Enabled(env) {
+  return String(env.FEATURE_ENGINE_V2_ENABLED ?? "false") === "true";
+}
+function historyFeaturesV1(current, rawRows) {
+  const now = current.observed_at_ms;
+  const rows = rawRows.map(decodeHistoryRow).filter(r => r.trading_day === current.trading_day &&
+    r.observed_at_ms <= now && r.available_at_ms <= now).sort((a,b) => a.observed_at_ms-b.observed_at_ms);
+  const windows = {};
+  for (const minutes of [5,10,30]) {
+    const target = now - minutes * 60000;
+    const candidates = rows.filter(r => r.observed_at_ms <= target && target-r.observed_at_ms <= 150000);
+    const baseline = candidates.at(-1);
+    const window = {status: baseline ? "AVAILABLE" : "INSUFFICIENT_HISTORY", requestedMinutes:minutes,
+      baselineAt:baseline ? new Date(baseline.observed_at_ms).toISOString() : null,
+      actualElapsedSeconds:baseline ? (now-baseline.observed_at_ms)/1000 : null, metrics:{}};
+    for (const [name, metric] of Object.entries(current.metrics)) {
+      const old = baseline?.metrics?.[name];
+      const result = {value:null, status:"INSUFFICIENT_HISTORY"};
+      if (baseline) {
+        result.status = "UNUSABLE_DATA";
+        if (usableHistoryMetric(metric,now) && usableHistoryMetric(old,baseline.observed_at_ms)) {
+          result.status = "OK";
+          const bucket = name.endsWith("Flow");
+          const isFuture = name.startsWith("futures.");
+          if (isFuture && (!current.quality.futuresCode || current.quality.futuresCode !== baseline.quality.futuresCode)) {
+            result.status = "CONTRACT_CHANGED";
+          } else if (bucket) {
+            result.status = metric.marketTime === old.marketTime ? "UNCHANGED_BUCKET" : "BUCKET_CHANGE_ONLY";
+          } else if (name.endsWith(".price")) {
+            result.value = old.value > 0 ? (metric.value/old.value-1)*100 : null;
+            result.status = result.value == null ? "INVALID_BASELINE" : "OK";
+            result.unit = "percent";
+          } else if (!/\.(previousClose|open|high|low)$/.test(name)) {
+            result.value = metric.value-old.value;
+            if (/\.(volume|tradingValue)$/.test(name) && result.value < 0) {
+              result.value=null; result.status="COUNTER_RESET";
+            }
+          } else { result.status="NOT_APPLICABLE"; }
+          result.timeBasis = metric.timeBasis;
+        }
+      }
+      window.metrics[name]=result;
+    }
+    const previousTarget = baseline ? baseline.observed_at_ms-minutes*60000 : null;
+    const earlier = baseline ? rows.filter(r => r.observed_at_ms<=previousTarget && previousTarget-r.observed_at_ms<=150000).at(-1) : null;
+    window.volumeAcceleration = {};
+    for (const name of ["samsung","skHynix"]) {
+      const field=`${name}.volume`, metric=current.metrics[field], old=baseline?.metrics[field], prev=earlier?.metrics[field];
+      const result={value:null,unit:"shares_per_minute_change",status:"INSUFFICIENT_HISTORY"};
+      if (baseline && earlier && usableHistoryMetric(metric,now) && usableHistoryMetric(old,baseline.observed_at_ms) && usableHistoryMetric(prev,earlier.observed_at_ms)) {
+        const d1=metric.value-old.value,d0=old.value-prev.value;
+        if(d1>=0 && d0>=0){result.value=d1/((now-baseline.observed_at_ms)/60000)-d0/((baseline.observed_at_ms-earlier.observed_at_ms)/60000);result.status="OK";}
+        else result.status="COUNTER_RESET";
+      }
+      window.volumeAcceleration[name]=result;
+    }
+    window.relativeStrength={};
+    for(const [a,b] of [["samsung","skHynix"],["samsung","kospi"],["skHynix","kospi"],["samsung","kospi200"],["skHynix","kospi200"]]) {
+      const av=window.metrics[`${a}.price`],bv=window.metrics[`${b}.price`];
+      window.relativeStrength[`${a}_vs_${b}`]={value:av?.value!=null&&bv?.value!=null?av.value-bv.value:null,unit:"percentage_points"};
+    }
+    windows[`${minutes}m`]=window;
+  }
+  const bucketChanges={};
+  for(const name of ["samsung","skHynix"]){
+    bucketChanges[name]={};
+    for(const field of ["foreignFlow","institutionFlow"]){
+      const key=`${name}.${field}`,metric=current.metrics[key];
+      const previous=rows.filter(r=>r.observed_at_ms<now && usableHistoryMetric(r.metrics[key],r.observed_at_ms) && r.metrics[key].marketTime !== metric?.marketTime).at(-1);
+      bucketChanges[name][field]={value:previous && usableHistoryMetric(metric,now)?metric.value-previous.metrics[key].value:null,
+        status:previous && usableHistoryMetric(metric,now)?"BUCKET_DELTA":"INSUFFICIENT_BUCKET_HISTORY",unit:"shares",
+        previousBucketTime:previous?.metrics[key]?.marketTime??null,currentBucketTime:metric?.marketTime??null};
+    }
+  }
+  const intraday={};
+  for(const name of ["samsung","skHynix"]){
+    const m=current.metrics,price=m[`${name}.price`],open=m[`${name}.open`],close=m[`${name}.previousClose`];
+    const valid=usableHistoryMetric(price,now);
+    intraday[name]={fromOpenPct:valid&&usableHistoryMetric(open,now)&&open.value>0?(price.value/open.value-1)*100:null,
+      fromPreviousClosePct:valid&&usableHistoryMetric(close,now)&&close.value>0?(price.value/close.value-1)*100:null};
+  }
+  return {version:1,generatedAt:new Date(now).toISOString(),windows,bucketChanges,intraday,
+    sameTimeHistoricalAverage:{status:"NOT_IMPLEMENTED",value:null},
+    limitations:["2-minute sampling: inspect actualElapsedSeconds", "RECENT_FETCH is not verified trade freshness", "stock flows use bucket deltas, not fabricated 5-minute flows"]};
 }
 function featureMetricQuality(metric) {
   if (!metric || metric.value == null || !Number.isFinite(metric.value)) return "MISSING_INPUT";
@@ -408,6 +495,32 @@ function compactHistoryFeatures(features) {
       windows:sameTimeWindows}};
 }
 function jsonByteLength(value) { return new TextEncoder().encode(JSON.stringify(value)).length; }
+const MAX_COMPACT_FEATURE_BYTES = 65536;
+const MAX_FEATURE_VALIDATION_BYTES = 32768;
+function serializeCompactFeatureRun(run) {
+  if(run.featureVersion!==FEATURE_VERSION) throw new Error("FEATURE_VERSION_MISMATCH");
+  if(!Number.isSafeInteger(run.slotMs)||!Number.isSafeInteger(run.observedAtMs)||
+      !Number.isSafeInteger(run.inputCutoffMs)||!Number.isSafeInteger(run.generatedAtMs))
+    throw new Error("INVALID_FEATURE_RUN_TIMESTAMP");
+  if(run.inputCutoffMs!==run.observedAtMs||run.generatedAtMs<run.inputCutoffMs)
+    throw new Error("INVALID_FEATURE_RUN_CUTOFF");
+  if(!/^[0-9a-f]{64}$/i.test(String(run.engineSourceSha256||"")))
+    throw new Error("INVALID_FEATURE_SOURCE_SHA");
+  let compactFeaturesJson,validationJson;
+  try {
+    compactFeaturesJson=JSON.stringify(run.compactFeatures);
+    validationJson=JSON.stringify(run.validation);
+  } catch {
+    throw new Error("FEATURE_SERIALIZATION_FAILED");
+  }
+  if(typeof compactFeaturesJson!=="string"||typeof validationJson!=="string")
+    throw new Error("FEATURE_SERIALIZATION_FAILED");
+  const compactFeaturesBytes=new TextEncoder().encode(compactFeaturesJson).length;
+  const validationBytes=new TextEncoder().encode(validationJson).length;
+  if(compactFeaturesBytes>MAX_COMPACT_FEATURE_BYTES||validationBytes>MAX_FEATURE_VALIDATION_BYTES)
+    throw new Error("FEATURE_PAYLOAD_TOO_LARGE");
+  return {compactFeaturesJson,validationJson,compactFeaturesBytes,validationBytes};
+}
 function normalizedD1Meta(result) {
   const meta=result?.meta||{};
   const finite=value=>value==null||value===""?null:(Number.isFinite(Number(value))?Number(value):null);
@@ -443,12 +556,14 @@ function featureValidationSummary(features, compactFeatures, queryMeta={}) {
     reductionPct:fullFeatureBytes?100-compactFeatureBytes/fullFeatureBytes*100:null,queryMeta};
 }
 function buildCompactFeatureRun(current,features,{engineGitSha,engineSourceSha256,queryMeta={},generatedAtMs=Date.now()}={}) {
+  if(features?.version!==FEATURE_VERSION) throw new Error("FEATURE_VERSION_MISMATCH");
   const compactFeatures=compactHistoryFeatures(features);
   const validation=featureValidationSummary(features,compactFeatures,queryMeta);
   const generationStatus=validation.windowsAvailable.length===4?"SUCCESS":"PARTIAL";
-  return {slotMs:current.slot_ms,featureVersion:features.version,observedAtMs:current.observed_at_ms,
+  const run={slotMs:current.slot_ms,featureVersion:features.version,observedAtMs:current.observed_at_ms,
     tradingDay:current.trading_day,engineGitSha,engineSourceSha256,generatedAtMs,inputCutoffMs:current.observed_at_ms,
     qualityCeiling:validation.qualityCeiling,generationStatus,compactFeatures,validation};
+  return {...run,...serializeCompactFeatureRun(run)};
 }
 
 function featureWriteEnabled(env) {
@@ -530,7 +645,7 @@ export default {
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(slot_ms,feature_version) DO NOTHING`).bind(
           run.slotMs,run.featureVersion,run.observedAtMs,run.tradingDay,run.engineGitSha,run.engineSourceSha256,
           run.generatedAtMs,run.inputCutoffMs,run.qualityCeiling,run.generationStatus,
-          JSON.stringify(run.compactFeatures),JSON.stringify(run.validation)).run();
+          run.compactFeaturesJson,run.validationJson).run();
       if(!write.success) throw new Error('FEATURE_RUN_WRITE_FAILED');
       const storedResult=await env.MARKET_HISTORY.prepare(
         'SELECT * FROM feature_runs WHERE slot_ms = ? AND feature_version = ?'

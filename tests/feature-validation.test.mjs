@@ -85,3 +85,27 @@ test('candidate write is explicit opt-in and validates the engine git SHA',async
  response=await worker().fetch(request(),{MARKET_HISTORY:readOnlyDb(row),VALIDATION_TOKEN:'test',FEATURE_V2_WRITE_ENABLED:'true'});
  assert.equal(response.status,503);assert.equal((await response.json()).error,'INVALID_FEATURE_ENGINE_GIT_SHA');
 });
+
+test('D1 read failures and corrupt observations return a generic failure without leaking details',async()=>{
+ const failing={prepare(){return {bind(){return {all:async()=>({success:false,results:[]})};}};}};
+ let response=await worker().fetch(new Request('https://test/',{headers:{Authorization:'Bearer test'}}),
+  {MARKET_HISTORY:failing,VALIDATION_TOKEN:'test'});
+ assert.equal(response.status,503);assert.deepEqual(await response.json(),{error:'FEATURE_VALIDATION_FAILED'});
+ const at=Date.now()-1000,row={slot_ms:Math.floor(at/120000)*120000,observed_at_ms:at,available_at_ms:at,
+  trading_day:'20261002',metrics_json:'not-json',quality_json:'{}',features_json:'{"version":1}'};
+ response=await worker().fetch(new Request('https://test/',{headers:{Authorization:'Bearer test'}}),
+  {MARKET_HISTORY:readOnlyDb(row),VALIDATION_TOKEN:'test'});
+ assert.equal(response.status,503);assert.deepEqual(await response.json(),{error:'FEATURE_VALIDATION_FAILED'});
+});
+
+test('D1 write failure is isolated and reported without storing or exposing the database error',async()=>{
+ const at=Date.now()-1000,row={slot_ms:Math.floor(at/120000)*120000,observed_at_ms:at,available_at_ms:at,
+  trading_day:'20261002',metrics_json:'{}',quality_json:'{}',features_json:'{"version":1}'};
+ const db={prepare(sql){return {bind(){return {
+  all:async()=>({success:true,results:sql.includes('recent_days')?[]:[row],meta:{rows_read:1,rows_written:0}}),
+  run:async()=>({success:false,meta:{rows_read:0,rows_written:0}})
+ };}};}};
+ const response=await worker().fetch(new Request('https://test/feature-runs',{method:'POST',headers:{Authorization:'Bearer test'}}),
+  {MARKET_HISTORY:db,VALIDATION_TOKEN:'test',FEATURE_V2_WRITE_ENABLED:'true',FEATURE_ENGINE_GIT_SHA:'abcdef0'});
+ assert.equal(response.status,503);assert.deepEqual(await response.json(),{error:'FEATURE_VALIDATION_FAILED'});
+});

@@ -91,6 +91,19 @@ test('future availability and missing baseline are rejected',()=>{
  assert.equal(s.run("historyFeatures(current,rows).windows['10m'].status"),'INSUFFICIENT_HISTORY');
  }finally{s.db.close();}
 });
+test('out-of-order rows are sorted and previous trading-day rows never enter current windows',()=>{
+ const s=setup();try{
+  s.ctx.payload=sample(40);const current=s.run('historyObservation(payload)');
+  s.ctx.payload=sample(30);const ten=s.run('historyObservation(payload)');
+  s.ctx.payload=sample(38);const two=s.run('historyObservation(payload)');
+  s.ctx.payload=sample(30,'20260930');const priorDay=s.run('historyObservation(payload)');
+  s.ctx.current=current;s.ctx.rows=[two,priorDay,current,ten];
+  const result=s.run('historyFeatures(current,rows)');
+  assert.equal(result.windows['2m'].actualElapsedSeconds,120);
+  assert.equal(result.windows['10m'].actualElapsedSeconds,600);
+  assert.equal(result.windows['30m'].status,'INSUFFICIENT_HISTORY');
+ }finally{s.db.close();}
+});
 test('same-time baselines require complete 5/10/20-day samples',async()=>{
  const s=setup();try{
  const days=['20260924','20260925','20260928','20260929','20260930'];
@@ -171,6 +184,15 @@ test('D1 failure is isolated; GitHub write still executes',async()=>{
  s.run(`let githubWrites=0; fetchLiveMarket=async()=>({data:{},ageMs:0}); enrichWithKis=async()=>({}); buildPayload=()=>payload; updateGithubFile=async()=>{githubWrites++;};`);
  await s.run('runRelay(env,context)');await Promise.all(s.ctx.jobs);
  assert.equal(s.run('githubWrites'),1);
+ }finally{s.db.close();}
+});
+test('GitHub failure does not cancel the independently scheduled D1 history write',async()=>{
+ const s=setup();try{s.ctx.payload=sample(10);s.ctx.jobs=[];s.ctx.context={waitUntil:p=>s.ctx.jobs.push(p)};
+  s.run(`fetchLiveMarket=async()=>({data:{},ageMs:0}); enrichWithKis=async()=>({}); buildPayload=()=>payload;
+    updateGithubFile=async()=>{throw new Error('synthetic GitHub failure');};`);
+  await assert.rejects(s.run('runRelay(env,context)'),/synthetic GitHub failure/);
+  await Promise.all(s.ctx.jobs);
+  assert.equal(s.db.prepare('SELECT COUNT(*) AS n FROM market_observations').get().n,1);
  }finally{s.db.close();}
 });
 test('unbound/disabled/holiday history does not write',async()=>{

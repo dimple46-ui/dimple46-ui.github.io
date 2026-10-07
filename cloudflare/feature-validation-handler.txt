@@ -77,7 +77,7 @@ export default {
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(slot_ms,feature_version) DO NOTHING`).bind(
           run.slotMs,run.featureVersion,run.observedAtMs,run.tradingDay,run.engineGitSha,run.engineSourceSha256,
           run.generatedAtMs,run.inputCutoffMs,run.qualityCeiling,run.generationStatus,
-          JSON.stringify(run.compactFeatures),JSON.stringify(run.validation)).run();
+          run.compactFeaturesJson,run.validationJson).run();
       if(!write.success) throw new Error('FEATURE_RUN_WRITE_FAILED');
       const storedResult=await env.MARKET_HISTORY.prepare(
         'SELECT * FROM feature_runs WHERE slot_ms = ? AND feature_version = ?'

@@ -22,6 +22,11 @@ function worker(){
  vm.runInContext(source.replace('export default {','const worker = {'),context);
  return vm.runInContext('worker',context);
 }
+function runtime(){
+ const context=vm.createContext({console,Date,Request,Response,TextEncoder,Set,URL});
+ vm.runInContext(source.replace('export default {','const worker = {'),context);
+ return {context,run:code=>vm.runInContext(code,context)};
+}
 function metric(value,at,{status='LIVE',timeBasis='SOURCE_TRADE_TIME',marketTime=at}={}){
  return {value,source:'TEST',status,marketTime,fetchedAt:at,timeBasis,availableAt:at};
 }
@@ -111,4 +116,18 @@ test('rollback switch prevents D1 reads and compact writes',async()=>{
   assert.equal(response.status,403);assert.equal((await response.json()).error,'FEATURE_WRITE_DISABLED');
   assert.equal(statements.length,0);assert.equal(db.prepare('SELECT COUNT(*) AS n FROM feature_runs').get().n,0);
  }finally{db.close();}
+});
+
+test('compact feature run rejects version, cutoff, source SHA, serialization and oversized payloads',()=>{
+ const s=runtime(),base={slotMs:start,featureVersion:2,observedAtMs:start,tradingDay:'20261001',
+  engineGitSha:'abcdef0',engineSourceSha256:'a'.repeat(64),generatedAtMs:start,inputCutoffMs:start,
+  qualityCeiling:'VERIFIED',generationStatus:'SUCCESS',compactFeatures:{ok:true},validation:{ok:true}};
+ s.context.run=base;
+ assert.throws(()=>s.run('serializeCompactFeatureRun({...run,featureVersion:3})'),/FEATURE_VERSION_MISMATCH/);
+ assert.throws(()=>s.run('serializeCompactFeatureRun({...run,inputCutoffMs:run.observedAtMs-1})'),/INVALID_FEATURE_RUN_CUTOFF/);
+ assert.throws(()=>s.run('serializeCompactFeatureRun({...run,engineSourceSha256:"bad"})'),/INVALID_FEATURE_SOURCE_SHA/);
+ s.run('run.compactFeatures.self=run.compactFeatures');
+ assert.throws(()=>s.run('serializeCompactFeatureRun(run)'),/FEATURE_SERIALIZATION_FAILED/);
+ s.context.run={...base,compactFeatures:{blob:'x'.repeat(65536)}};
+ assert.throws(()=>s.run('serializeCompactFeatureRun(run)'),/FEATURE_PAYLOAD_TOO_LARGE/);
 });

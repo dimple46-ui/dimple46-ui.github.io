@@ -1534,6 +1534,32 @@ function compactHistoryFeatures(features) {
       windows:sameTimeWindows}};
 }
 function jsonByteLength(value) { return new TextEncoder().encode(JSON.stringify(value)).length; }
+const MAX_COMPACT_FEATURE_BYTES = 65536;
+const MAX_FEATURE_VALIDATION_BYTES = 32768;
+function serializeCompactFeatureRun(run) {
+  if(run.featureVersion!==FEATURE_VERSION) throw new Error("FEATURE_VERSION_MISMATCH");
+  if(!Number.isSafeInteger(run.slotMs)||!Number.isSafeInteger(run.observedAtMs)||
+      !Number.isSafeInteger(run.inputCutoffMs)||!Number.isSafeInteger(run.generatedAtMs))
+    throw new Error("INVALID_FEATURE_RUN_TIMESTAMP");
+  if(run.inputCutoffMs!==run.observedAtMs||run.generatedAtMs<run.inputCutoffMs)
+    throw new Error("INVALID_FEATURE_RUN_CUTOFF");
+  if(!/^[0-9a-f]{64}$/i.test(String(run.engineSourceSha256||"")))
+    throw new Error("INVALID_FEATURE_SOURCE_SHA");
+  let compactFeaturesJson,validationJson;
+  try {
+    compactFeaturesJson=JSON.stringify(run.compactFeatures);
+    validationJson=JSON.stringify(run.validation);
+  } catch {
+    throw new Error("FEATURE_SERIALIZATION_FAILED");
+  }
+  if(typeof compactFeaturesJson!=="string"||typeof validationJson!=="string")
+    throw new Error("FEATURE_SERIALIZATION_FAILED");
+  const compactFeaturesBytes=new TextEncoder().encode(compactFeaturesJson).length;
+  const validationBytes=new TextEncoder().encode(validationJson).length;
+  if(compactFeaturesBytes>MAX_COMPACT_FEATURE_BYTES||validationBytes>MAX_FEATURE_VALIDATION_BYTES)
+    throw new Error("FEATURE_PAYLOAD_TOO_LARGE");
+  return {compactFeaturesJson,validationJson,compactFeaturesBytes,validationBytes};
+}
 function normalizedD1Meta(result) {
   const meta=result?.meta||{};
   const finite=value=>value==null||value===""?null:(Number.isFinite(Number(value))?Number(value):null);
@@ -1569,12 +1595,14 @@ function featureValidationSummary(features, compactFeatures, queryMeta={}) {
     reductionPct:fullFeatureBytes?100-compactFeatureBytes/fullFeatureBytes*100:null,queryMeta};
 }
 function buildCompactFeatureRun(current,features,{engineGitSha,engineSourceSha256,queryMeta={},generatedAtMs=Date.now()}={}) {
+  if(features?.version!==FEATURE_VERSION) throw new Error("FEATURE_VERSION_MISMATCH");
   const compactFeatures=compactHistoryFeatures(features);
   const validation=featureValidationSummary(features,compactFeatures,queryMeta);
   const generationStatus=validation.windowsAvailable.length===4?"SUCCESS":"PARTIAL";
-  return {slotMs:current.slot_ms,featureVersion:features.version,observedAtMs:current.observed_at_ms,
+  const run={slotMs:current.slot_ms,featureVersion:features.version,observedAtMs:current.observed_at_ms,
     tradingDay:current.trading_day,engineGitSha,engineSourceSha256,generatedAtMs,inputCutoffMs:current.observed_at_ms,
     qualityCeiling:validation.qualityCeiling,generationStatus,compactFeatures,validation};
+  return {...run,...serializeCompactFeatureRun(run)};
 }
 async function persistMarketHistory(env,payload) {
   if(!historyEnabled(env)) return {status:"DISABLED"};
