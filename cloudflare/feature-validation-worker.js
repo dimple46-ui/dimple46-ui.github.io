@@ -454,13 +454,11 @@ function buildCompactFeatureRun(current,features,{engineGitSha,engineSourceSha25
 function featureWriteEnabled(env) {
   return String(env.FEATURE_V2_WRITE_ENABLED??"false")==="true";
 }
-const VALIDATION_DEFAULT_REPLAY_CUTOFF_MS=1791340050000;
-const VALIDATOR_BUILD='forced-read-only-cutoff-20261007';
 function validEngineGitSha(value) { return /^[0-9a-f]{7,64}$/i.test(String(value||"")); }
 function replayCutoff(request,url,now=Date.now()) {
   const pathCutoff=url.pathname.match(/^\/replay\/(\d+)$/)?.[1];
   const raw=url.searchParams.get('cutoffMs')??request.headers.get('X-Replay-Cutoff-Ms')??pathCutoff;
-  if(raw==null) return VALIDATION_DEFAULT_REPLAY_CUTOFF_MS;
+  if(raw==null) return now;
   if(!/^\d+$/.test(raw)) return null;
   const value=Number(raw);
   return Number.isSafeInteger(value)&&value>0&&value<=now?value:null;
@@ -492,7 +490,7 @@ async function loadFeatureReplay(db,cutoffMs=Date.now()) {
 }
 function replayResponse(replay,started,cutoffMs) {
   const {current,rows,features,queryMeta,run}=replay;
-  return {mode:'READ_ONLY_REPLAY',candidateSha256:CANDIDATE_SHA256,validatorBuild:VALIDATOR_BUILD,
+  return {mode:'READ_ONLY_REPLAY',candidateSha256:CANDIDATE_SHA256,
     replayCutoffMs:cutoffMs,
     storedFeatureVersion:current.features_json?JSON.parse(current.features_json).version:null,
     observedAt:new Date(current.observed_at_ms).toISOString(),observationAgeSeconds:(Date.now()-current.observed_at_ms)/1000,
