@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 14:06 KST
+Last updated: 2026-10-07 14:26 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -9,19 +9,19 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 - Latest audited `main` head: `083a82d6605d12962efd384984ad31b55a4f8a7f` (snapshot-only; production Worker source remains PR #2)
 - Latest non-snapshot Worker commit: `c88c8d03c50c5db5927f22b427b436d947691fc6` (`Add D1 history and point-in-time feature MVP (#2)`)
 - Latest snapshot schema: `schemaVersion: 3`
-- Snapshot at 2026-10-07 14:04:44 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: OK`.
-- Samsung/SK Hynix and KOSPI investor data were live; program age was 285 seconds and still live.
+- Snapshot at 2026-10-07 14:24:47 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: OK`.
+- Samsung/SK Hynix and KOSPI investor data were live; program age was 287 seconds and still live.
   Index/futures timestamps remained explicitly `RECENT_FETCH`/unverified rather than being treated as
   verified exchange times.
-- D1: `market-history`, table `market_observations`, production observations continue to accumulate. Read-only audit at 10:34 KST found 550 rows across three trading days, all 550 stored feature rows at v1, 0 v2 rows, 20,219.3 average JSON bytes and 21,625 maximum JSON bytes. Dashboard storage was 11.56 MB.
+- D1: `market-history`, table `market_observations`, production observations continue to accumulate. The additive `feature_runs` table now contains exactly three Feature v2 rows across three distinct slots; production v1 observations were not updated. Earlier storage audit measured 11.56 MB.
 - PR #2: merged and production-validated. D1 failure isolation and automatic recovery were validated before merge.
 
 ## Current Milestone
 
 M1 — Feature Engine 2.0 production validation.
 
-Status: `M1_FINAL_PERSISTENCE_GATE_PENDING` in a separate authenticated validation Worker.
-Feature correctness, real changed-bucket direction/acceleration, compact persistence, rollback,
+Status: `M1_FINAL_DOCUMENTATION_AND_DIFF_REVIEW` in a separate authenticated validation Worker.
+Feature correctness, real changed-bucket direction/acceleration, three-slot compact persistence, rollback,
 CPU evidence, D1 fail-closed behavior, production isolation and binding recovery are validated.
 PR #3 is not merged into `main`.
 
@@ -85,12 +85,10 @@ PR #3 is not merged into `main`.
 
 ## In Progress
 
-- Correctness audit of Feature Engine 2.0 edge cases.
-- Obtain two additional distinct controlled Feature v2 slots, then disable writes and verify the
-  three-slot persistence gate without modifying `market_observations`.
-- Finalize PR #3 merge-readiness documentation now that the real changed-bucket gate passed.
-- Candidate evidence for actual storage growth and Worker CPU duration.
-- Documentation drift repair through this source-of-truth document.
+- Finalize supporting documentation with the completed three-slot persistence and rollback evidence.
+- Inspect PR #3 final diff, checks and mergeability without merging.
+- Decide whether the remaining production rollout/fail-safe requirement belongs to M1 merge readiness
+  or the post-merge controlled deployment gate.
 
 ## Blocked / Not Yet Validated
 
@@ -98,9 +96,8 @@ PR #3 is not merged into `main`.
   the one controlled persistence call.
 - Five/ten/twenty-trading-day same-time statistics: only one prior comparable trading day was available.
 - Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB; per-query D1 meta is now captured, including 1,686 rows read by the same-time query.
-- The existing controlled Feature v2 persistence evidence contains one distinct slot; two more
-  distinct slots are required by the documented three-slot gate.
-- Production fail-safe under the v2 computation/storage design.
+- Production fail-safe under the integrated v2 computation/storage design remains a rollout gate;
+  candidate D1 failure isolation and unchanged production publication are already validated.
 - Long-running storage/retention and GitHub snapshot migration.
 
 ## Branch / PR / Deployment
@@ -125,7 +122,7 @@ Percentages are audit estimates, not predictive-performance scores.
 | Latest Snapshot | 95% | 92% | `OPERATIONALLY_STABLE` | GitHub is an inefficient latest-state transport. |
 | History Storage | 88% | 82% | `PRODUCTION_VALIDATED` | Retention, usage metrics and archive policy. |
 | Feature Engine 1 | 92% | 85% | `MERGED_MAIN` | Operational feature delivery remains internal to stored rows. |
-| Feature Engine 2 | 91% | 86% | `CANDIDATE_V2_FAILURE_RECOVERY_VALIDATED` | A real changed stock-flow bucket and final merge-readiness review remain. |
+| Feature Engine 2 | 96% | 92% | `CANDIDATE_V2_PERSISTENCE_VALIDATED` | Supporting docs and final PR diff/mergeability review remain. |
 | Same-Time Baseline | 82% | 18% | `CANDIDATE_DEPLOYED` | Needs 5/10/20 complete trading-day samples. |
 | Relative Strength | 94% | 70% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected 5/10/30-minute replay passed; v2 persistence/rollout absent. |
 | Divergence | 78% | 46% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected branch deployed, but a real changed stock-flow bucket and predictive validation remain. |
@@ -189,7 +186,7 @@ Do not persist the full 69 KB derived feature object every two minutes.
 
 Selected candidate: retain immutable raw observations in D1 hot storage; compute the full derived tree at generation/query time; persist only a compact versioned feature summary needed for reproducibility; later add daily aggregates and optional R2 cold archive only after measured need. Existing v1 rows are retained and never rewritten or deleted during migration.
 
-Implemented, migrated and deployed to the separate candidate with writes still disabled:
+Implemented, migrated and deployed to the separate candidate; three controlled rows were persisted and writes are disabled again:
 
 - Separate raw observation identity from versioned feature runs.
 - Key derived output by `(slot_ms, feature_version)` so candidate and production do not race.
@@ -229,9 +226,28 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Temporarily set candidate-only `FEATURE_V2_WRITE_ENABLED=true` and deploy. Then perform controlled
-POSTs in two distinct later two-minute slots, immediately disable writes, verify exactly three v2
-slots, re-check production, finalize docs/PR diff, and assess merge readiness without auto-merging.
+Update stale supporting documentation with the completed persistence evidence, inspect PR #3's final
+diff/checks/mergeability, and assess merge readiness without auto-merging.
+
+## Checkpoint — Three-slot Feature v2 Persistence Gate Passed
+
+- timestamp: 2026-10-07 14:26 KST
+- branch: `feature/feature-engine-v2`
+- candidate: `market-feature-validation`; source SHA-256 `39e39bb133ed90f6fa950a056948ea03d1928905de4c8dab28434a7631f0567a`
+- controlled identities: `1791335520000`, `1791350040000`, `1791350280000`; all Feature v2
+- direct D1 count: 3 rows and 3 distinct slots; first/last slots matched the controlled identities
+- engine commit: all rows `a8c4330c15c0800c8f28e329a80bc9b09245edd7`
+- generation: all `SUCCESS`; quality ceilings preserved as two `UNVERIFIED_TIME` and one `STALE_INPUT`
+- compact JSON characters: 14,044; 13,936; 13,884; no full 69–70 KB derived tree was persisted
+- last write response: 13,884 compact bytes versus 68,594 full bytes, 79.76% reduction; D1 reported
+  one insert and successful read-back; no `market_observations` row was updated
+- rollback: `FEATURE_V2_WRITE_ENABLED=false`; subsequent authenticated POST returned
+  `FEATURE_WRITE_DISABLED`
+- production after gate: snapshot 2026-10-07 14:24:47 KST remained schema v3, fresh, pipeline OK,
+  sourceErrors empty; stock and KOSPI investor feeds live
+- conclusion: actual compact/versioned persistence, distinct-slot identity, quality preservation,
+  rollback and production isolation passed
+- next_exact_step: update supporting docs and inspect the final PR #3 diff/checks/mergeability
 
 ## Checkpoint — Fixed Cutoff Rollback Verified
 
@@ -534,4 +550,4 @@ slots, re-check production, finalize docs/PR diff, and assess merge readiness wi
 - Candidate source SHA-256: `438a8712d81edbe0a921c8e25d4a58551bf28907ed5ffb268f14c92d230f6bd4`.
 - Compact-storage candidate SHA-256: `39e39bb133ed90f6fa950a056948ea03d1928905de4c8dab28434a7631f0567a` (deployed and authenticated GET validated).
 - Real-response compact measurement: 14,067 bytes, 79.73% reduction, quality ceiling `UNVERIFIED_TIME`; all 2/5/10/30-minute windows available; changed stock-flow bucket still not observed.
-- Tests: 32/32 local pass.
+- Tests: 35/35 local pass.
