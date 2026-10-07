@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 09:46 KST
+Last updated: 2026-10-07 10:09 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -47,12 +47,15 @@ Status: `COMPACT_CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated vali
 - The real replay exposed D1 metadata: current query 1 row read/0 written, intraday query 24/0,
   same-time query 1,686/0. All 2/5/10/30-minute windows were available; quality ceiling was
   `UNVERIFIED_TIME`, null ratio was 44.74%, and no v2 data was stored.
+- Candidate rollback gate validated at 2026-10-07 10:09 KST: authenticated
+  `POST /feature-runs` returned HTTP 403 with the 34-byte `FEATURE_WRITE_DISABLED` response while
+  `FEATURE_V2_WRITE_ENABLED` remained absent/false. No D1 read or write path was entered.
 
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Configure the candidate engine SHA while writes remain disabled, then validate the disabled
-  POST rollback gate before explicitly opting in to one controlled v2 persistence test.
+- Confirm the pre-write `feature_runs` v2 row count is zero, then explicitly opt in to one
+  controlled candidate persistence test.
 - Candidate evidence for actual storage growth and Worker CPU duration.
 - Documentation drift repair through this source-of-truth document.
 
@@ -192,9 +195,20 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Set candidate plain-text variable `FEATURE_ENGINE_GIT_SHA` to
-`a8c4330c15c0800c8f28e329a80bc9b09245edd7` while `FEATURE_V2_WRITE_ENABLED` remains absent/false;
-then validate that authenticated `POST /feature-runs` returns `FEATURE_WRITE_DISABLED` before any write opt-in.
+Query the real `market-history` D1 database for the pre-write v2 row count and require zero before
+setting `FEATURE_V2_WRITE_ENABLED=true`.
+
+## Checkpoint — Disabled Write/Rollback Gate Validated
+
+- timestamp: 2026-10-07 10:09 KST
+- candidate: `market-feature-validation`
+- request: authenticated `POST /feature-runs`
+- result: HTTP 403; response length 34 bytes, matching `{"error":"FEATURE_WRITE_DISABLED"}`
+- configuration: `FEATURE_ENGINE_GIT_SHA` reported configured; `FEATURE_V2_WRITE_ENABLED` remained
+  absent/false
+- safety conclusion: write-disabled rollback gate passed before D1 replay or persistence
+- persistence: no v2 write is claimed; D1 count must be checked directly next
+- next_exact_step: query `feature_runs` v2 row count and require zero
 
 ## Checkpoint — Exact Compact Candidate Read-only Validated
 
