@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 10:11 KST
+Last updated: 2026-10-07 10:15 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -18,7 +18,9 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 
 M1 — Feature Engine 2.0 production validation.
 
-Status: `COMPACT_CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated validation Worker; writes remain disabled, no v2 row has been persisted, and PR #3 is not merged into `main`.
+Status: `COMPACT_CANDIDATE_PERSISTENCE_PENDING_DIRECT_D1_VERIFY` in a separate authenticated
+validation Worker; one controlled v2 insert and Worker-side read-back succeeded, but direct D1
+console verification is still pending and PR #3 is not merged into `main`.
 
 ## Completed
 
@@ -52,18 +54,24 @@ Status: `COMPACT_CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated vali
   `FEATURE_V2_WRITE_ENABLED` remained absent/false. No D1 read or write path was entered.
 - Real D1 pre-write query at 2026-10-07 10:11 KST confirmed `feature_runs` contains zero rows where
   `feature_version = 2`.
+- One controlled candidate write at 2026-10-07 10:14 KST returned `INSERTED` for slot
+  `1791335520000` (2026-10-07 10:12 KST), Feature v2, generation `SUCCESS`, engine commit
+  `a8c4330c...`; Worker-side post-write read-back found the same stored identity.
+- The inserted compact feature measured 14,044 bytes versus 70,195 full bytes (79.99% reduction).
+  D1 write metadata reported one change; elapsed wall time was 177 ms and is not CPU duration.
 
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Explicitly enable candidate v2 writes, then issue one authenticated controlled persistence request.
+- Verify the exact inserted v2 row directly in the D1 console, then return the candidate write flag
+  to disabled before duplicate/fail-safe and production-impact checks.
 - Candidate evidence for actual storage growth and Worker CPU duration.
 - Documentation drift repair through this source-of-truth document.
 
 ## Blocked / Not Yet Validated
 
-- Actual stored Feature Engine 2.0 row (`storedFeatureVersion` remained 1 in the corrected replay; v2 was query-time only).
-- No actual `feature_runs` v2 row exists yet; table/index creation alone is not persistence evidence.
+- Direct D1 console confirmation of the controlled v2 row is pending; the Worker insert and
+  immediate read-back succeeded.
 - Five/ten/twenty-trading-day same-time statistics: only one prior comparable trading day was available.
 - Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB; per-query D1 meta is now captured, including 1,686 rows read by the same-time query.
 - The corrected stock-flow bucket-transition branch has regression coverage and is deployed, but the 11:04 KST real replay contained only `UNCHANGED_BUCKET` windows, so a real changed-bucket divergence remains unexercised.
@@ -92,7 +100,7 @@ Percentages are audit estimates, not predictive-performance scores.
 | Latest Snapshot | 95% | 92% | `OPERATIONALLY_STABLE` | GitHub is an inefficient latest-state transport. |
 | History Storage | 88% | 82% | `PRODUCTION_VALIDATED` | Retention, usage metrics and archive policy. |
 | Feature Engine 1 | 92% | 85% | `MERGED_MAIN` | Operational feature delivery remains internal to stored rows. |
-| Feature Engine 2 | 91% | 60% | `COMPACT_CANDIDATE_READ_ONLY_VALIDATED` | No stored v2 row, real changed bucket or CPU evidence. |
+| Feature Engine 2 | 91% | 68% | `CANDIDATE_V2_INSERTED` | Direct D1 confirmation, rollback-after-write, real changed bucket and CPU evidence remain. |
 | Same-Time Baseline | 82% | 18% | `CANDIDATE_DEPLOYED` | Needs 5/10/20 complete trading-day samples. |
 | Relative Strength | 94% | 70% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected 5/10/30-minute replay passed; v2 persistence/rollout absent. |
 | Divergence | 78% | 46% | `CANDIDATE_READ_ONLY_VALIDATED` | Corrected branch deployed, but a real changed stock-flow bucket and predictive validation remain. |
@@ -196,8 +204,25 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Set candidate plain-text variable `FEATURE_V2_WRITE_ENABLED=true`; do not change production
-`market-relay`. Then issue one authenticated controlled persistence request.
+Query the exact inserted identity directly from the real `market-history.feature_runs` table; require
+Feature v2, matching engine commit and `SUCCESS` before disabling candidate writes again.
+
+## Checkpoint — Controlled Feature v2 Persistence Succeeded
+
+- timestamp: 2026-10-07 10:15 KST
+- candidate source SHA-256: `39e39bb133ed90f6fa950a056948ea03d1928905de4c8dab28434a7631f0567a`
+- request: one authenticated `POST /feature-runs`
+- result: `CANDIDATE_COMPACT_WRITE`, `INSERTED`
+- identity: slot `1791335520000` (2026-10-07 10:12 KST), Feature v2
+- engine commit: `a8c4330c15c0800c8f28e329a80bc9b09245edd7`
+- generation: `SUCCESS`; quality ceiling `UNVERIFIED_TIME`
+- storage measurement: 14,044 compact bytes versus 70,195 full bytes; 79.99% reduction
+- D1 write meta: 0.5017 ms, one change; adapter reported 2 rows written
+- read-back meta: 0.3756 ms, one row read; stored identity and generation status matched
+- query reads: current 1, intraday 38, same-time 1,680
+- timing: 177 ms wall time; not Worker CPU duration
+- isolation: response states no `market_observations` row was updated
+- next_exact_step: direct D1 console query for this exact row
 
 ## Checkpoint — Pre-write D1 Baseline Verified
 
