@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 10:09 KST
+Last updated: 2026-10-07 10:11 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -50,12 +50,13 @@ Status: `COMPACT_CANDIDATE_READ_ONLY_VALIDATED` in a separate authenticated vali
 - Candidate rollback gate validated at 2026-10-07 10:09 KST: authenticated
   `POST /feature-runs` returned HTTP 403 with the 34-byte `FEATURE_WRITE_DISABLED` response while
   `FEATURE_V2_WRITE_ENABLED` remained absent/false. No D1 read or write path was entered.
+- Real D1 pre-write query at 2026-10-07 10:11 KST confirmed `feature_runs` contains zero rows where
+  `feature_version = 2`.
 
 ## In Progress
 
 - Correctness audit of Feature Engine 2.0 edge cases.
-- Confirm the pre-write `feature_runs` v2 row count is zero, then explicitly opt in to one
-  controlled candidate persistence test.
+- Explicitly enable candidate v2 writes, then issue one authenticated controlled persistence request.
 - Candidate evidence for actual storage growth and Worker CPU duration.
 - Documentation drift repair through this source-of-truth document.
 
@@ -195,8 +196,17 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Query the real `market-history` D1 database for the pre-write v2 row count and require zero before
-setting `FEATURE_V2_WRITE_ENABLED=true`.
+Set candidate plain-text variable `FEATURE_V2_WRITE_ENABLED=true`; do not change production
+`market-relay`. Then issue one authenticated controlled persistence request.
+
+## Checkpoint — Pre-write D1 Baseline Verified
+
+- timestamp: 2026-10-07 10:11 KST
+- database: `market-history`
+- query: count `feature_runs` rows where `feature_version = 2`
+- result: `v2_row_count = 0`
+- conclusion: no candidate v2 feature row existed before write opt-in
+- next_exact_step: set candidate `FEATURE_V2_WRITE_ENABLED=true`
 
 ## Checkpoint — Disabled Write/Rollback Gate Validated
 
