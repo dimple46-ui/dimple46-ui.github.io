@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 20:55 KST
+Last updated: 2026-10-07 21:15 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -105,7 +105,7 @@ alert or investment action consumes the signals.
 
 ## In Progress
 
-- Synchronize PR #3 with the now-stable final snapshot head, then rerun the full suite and merge-tree.
+- PR #3 now contains stable main `e856a4b...` as a merge parent; compare reports `behind_by: 0`.
 - The read-only intelligence API remains local/branch-only until a separate candidate Worker,
   read-only D1 binding, authentication Secret and provider-level rate limit are explicitly approved.
 - M3 signals remain pure-function outputs pending historical replay and next-session live behavior validation.
@@ -129,8 +129,8 @@ alert or investment action consumes the signals.
 | --- | --- | --- |
 | `main` | Production | Worker source remains at PR #2 code; subsequent commits are snapshots. |
 | PR #2 | `MERGED_MAIN`, `PRODUCTION_VALIDATED` | Merged 2026-10-02; production validation recorded in PR body. |
-| `feature/feature-engine-v2` | Ready branch | M1 hardening, M2 read API and M3 pure signal candidate are branch-only. |
-| PR #3 | Ready/Open, unmerged | M1 evidence complete; stable-main synchronization remains before an explicit merge decision. |
+| `feature/feature-engine-v2` | Ready branch | Synced to stable main at merge commit `27c16c720701114d3d800c6586cd64eb4e3539d3`. |
+| PR #3 | Ready/Open, unmerged | Compare is 54 commits ahead and 0 behind; tests and merge-tree pass. GitHub REST mergeability was still recalculating/unknown. |
 | `market-feature-validation` | Separate candidate | Authenticated GET at 09:44 KST on 2026-10-07 verified compact source hash `39e39bb1...`, D1 query metadata and no write. Writes remain disabled. |
 | Production `market-relay` | Operational | Continues schema v3 snapshots and D1 observations; v2 not deployed. |
 
@@ -249,8 +249,8 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Synchronize PR #3 with stable main `e856a4b...`, rerun all tests and the merge-tree, then request
-explicit approval before any main merge. No production Worker deployment is implied.
+Request explicit approval before merging PR #3 to main. A main merge does not authorize production
+Worker replacement, intelligence API deployment, a new Secret or any binding change.
 
 ## NEXT LIVE MARKET VALIDATION
 
@@ -272,6 +272,24 @@ M1 candidate gates and must not trigger new feature development before live evid
 
 Same-time 5/10/20-day baselines remain `INSUFFICIENT_HISTORY` until enough real trading days exist.
 No synthetic sample may be used to pass this gate.
+
+## Checkpoint — Stable-main Synchronization Complete
+
+- timestamp: 2026-10-07 21:15 KST
+- branch: `feature/feature-engine-v2`
+- commit: `27c16c720701114d3d800c6586cd64eb4e3539d3`
+- milestone: M1 complete; M2 code candidate; M3 pure-function candidate
+- completed: merged final production snapshot base `e856a4b963df6be56c6d07256beb73f8854cdd68`
+  into the feature branch; main itself was not changed
+- branch comparison: 54 commits ahead, 0 behind; stable main is the merge base
+- tests: post-sync 53/53 local pass
+- merge validation: local `git merge-tree --write-tree` succeeded; GitHub REST mergeability remained
+  `unknown` during recalculation, so no positive GitHub mergeability claim is made
+- production impact: none; no main merge, Worker deployment, D1 write, binding, Secret or Cron change
+- waiting_for_live: 2026-10-08 Feature/Signal checklist remains mandatory
+- blocked: main merge requires explicit user approval; read API deployment separately requires a new
+  Secret, read-only binding and provider-level rate-limit approval
+- next_exact_step: request explicit approval before PR #3 main merge; keep production deployment separate
 
 ## Checkpoint — Off-market M1/M2/M3 Development
 
