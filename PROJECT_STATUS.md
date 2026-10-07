@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 21:15 KST
+Last updated: 2026-10-07 21:17 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -23,8 +23,8 @@ Status: `M2_READ_ONLY_API_CODE_COMPLETE_NOT_DEPLOYED`.
 
 M1 — Feature Engine 2.0 production validation is `COMPLETE`: correctness, real changed-bucket
 semantics, three-slot compact persistence, rollback, provider CPU evidence, D1 failure isolation,
-production isolation and documentation all passed. PR #3 is Ready/Open and unmerged; the local
-content merge-tree is clean, while GitHub mergeability changes as the two-minute snapshot base advances.
+production isolation and documentation all passed. PR #3 is Ready/Open and unmerged, synchronized
+to stable main, and GitHub reports `mergeable_state: clean` with 55 commits ahead and 0 behind.
 
 M3 — Descriptive Signal Layer is `PURE_FUNCTION_CANDIDATE`: deterministic signal generation,
 quality confidence ceilings and synthetic correctness tests are implemented, but no production endpoint,
@@ -283,8 +283,8 @@ No synthetic sample may be used to pass this gate.
   into the feature branch; main itself was not changed
 - branch comparison: 54 commits ahead, 0 behind; stable main is the merge base
 - tests: post-sync 53/53 local pass
-- merge validation: local `git merge-tree --write-tree` succeeded; GitHub REST mergeability remained
-  `unknown` during recalculation, so no positive GitHub mergeability claim is made
+- merge validation: local `git merge-tree --write-tree` succeeded; GitHub completed recalculation and
+  now reports `mergeable: true`, `mergeable_state: clean`
 - production impact: none; no main merge, Worker deployment, D1 write, binding, Secret or Cron change
 - waiting_for_live: 2026-10-08 Feature/Signal checklist remains mandatory
 - blocked: main merge requires explicit user approval; read API deployment separately requires a new
