@@ -1,7 +1,8 @@
 # M2 operational and storage stabilization
 
-Status: code and policy candidate only. Nothing in this document authorizes a production Worker,
-binding, Secret, Cron, GitHub publication cadence or D1 retention change.
+Status: isolated read-only candidate deployed and validated; production migration is not approved.
+Nothing in this document authorizes a production Worker, binding, Secret, Cron, GitHub publication
+cadence or D1 retention change.
 
 ## Measured pressure
 
@@ -11,6 +12,12 @@ binding, Secret, Cron, GitHub publication cadence or D1 retention change.
   projection is about 4.6 MB per trading day before SQLite pages, indexes and replication overhead.
 - D1 query metadata and the five latest trading-day JSON totals are exposed by the read-only
   `/health` candidate. JSON totals must never be presented as total D1 storage.
+- The 2026-10-08 13:38 KST `/health` sample covered five trading days and measured an average
+  `5,316,252.6` raw-observation JSON bytes/day, projecting `1,329,063,150` bytes per 250 trading days.
+  This excludes SQLite pages, indexes and replication overhead and is not a provider-byte forecast.
+- Compact Feature growth still has only one sampled trading day and three controlled rows
+  (`44,323` JSON bytes total), so it remains `LIMITED_SAMPLE`; it must not be extrapolated as a
+  continuous production-writer measurement.
 
 ## Target responsibilities
 
@@ -34,6 +41,10 @@ binding, Secret, Cron, GitHub publication cadence or D1 retention change.
    estimates, before selecting a hot-retention window or R2 archive.
 7. Any cadence, retention, archive or production binding change requires separate approval and an
    explicit rollback window.
+
+Gate 3 passed on 2026-10-08 at multiple regular-session timestamps, including an exact 13:42:44 KST
+match with one D1 row read and zero written. Gates 4–7 remain future work and are not implied by the
+candidate validation.
 
 ## Retention policy gate
 

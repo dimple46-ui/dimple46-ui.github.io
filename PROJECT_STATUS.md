@@ -1,7 +1,26 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-08 13:42 KST
+Last updated: 2026-10-08 13:45 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Second Live Candidate/Production State Equivalence Passed
+
+- timestamp: `2026-10-08 13:45 KST`; compared observation: `2026-10-08 13:42:44 KST`
+- candidate observation identity: slot `1791434520000`, observed/available at `1791434564157`,
+  trading day `20261008`
+- production equivalence: the corresponding `market-live.json` snapshot and candidate D1 `/state`
+  matched Samsung/SK Hynix price, OHLC, volume and trading value; stock-flow buckets; KOSPI/KOSPI200;
+  market investors; program; futures investors; OI/OI change; Basis/marketBasis
+- exact samples: Samsung `265,500` and volume `12,284,872`; SK Hynix `1,712,000` and volume
+  `1,853,074`; program total `-1,122,850,229,754`; futures/OI/Basis `1061.75/137,168/5.35`
+- quality: both sources reported `pipelineStatus=OK`, empty `sourceErrors`, and retained the explicit
+  unverified exchange-time list for indexes/futures
+- query safety: D1 meta reported one row read and zero rows written
+- result: live candidate/latest-snapshot equivalence is now validated at multiple regular-session
+  timestamps (10:16 and 13:42 KST)
+- production impact: none; the candidate performed a bounded read only
+- next_exact_step: complete stale operational documentation and retain the 20-trading-day D1 growth
+  measurement gate; do not introduce retention deletion or reduce GitHub publication cadence
 
 ## CHECKPOINT — M3 Live-input Signal Replay Validated
 
