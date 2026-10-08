@@ -50,14 +50,13 @@ alert or investment action consumes the signals.
   changed-bucket semantics, failure isolation and production continuity were already validated
 - intelligence_candidate_status: `PARTIAL` — isolated Worker routes, mandatory provider limiter,
   ticker/range/version/cutoff bounds, timeout, metadata, tests and Wrangler dry-run are complete;
-  Cloudflare Worker/Secret/binding existence is `UNKNOWN_NOT_EVIDENCED` until Dashboard verification
+  the user confirmed the candidate Worker is absent; its Secret/bindings are therefore not created
 - M1_status: core Feature Engine validation remains complete; the separate 2026-10-08 live operational
   revalidation below remains `WAITING_FOR_LIVE_MARKET_VALIDATION`
 - waiting_for_live: actual 2026-10-08 state/Feature/flow/program/futures/OI/basis/relative-strength/
   divergence/acceleration/quality and Signal behavior
-- next_exact_step: obtain the existing `market-history` D1 Database ID, replace the zero UUID in the
-  candidate-only Wrangler configuration, commit/push the recovered candidate checkpoint, then deploy
-  the separate Worker without changing production
+- next_exact_step: validate the real-ID candidate bundle, then configure the separate Cloudflare/GitHub
+  candidate deployment and enter the new Secret without changing production
 
 ## 2026-10-08 Work Classification
 
@@ -83,11 +82,11 @@ alert or investment action consumes the signals.
 
 ### BLOCKED_BY_USER_ACTION
 
-- Cloudflare Dashboard verification is required first to confirm that
+- Cloudflare Dashboard verification confirmed that
   `market-intelligence-read-candidate` does not already exist; the Work cloud browser is blocked by a
-  persistent sign-in-page verification error.
-- If no existing candidate is found, deployment needs the existing `market-history` Database ID. The
-  repository contains only an intentional zero-UUID placeholder and no Secret value.
+  persistent sign-in-page verification error, so the user verified the Worker list directly.
+- The existing `market-history` Database ID was supplied by the user and is now configured only in the
+  candidate template. No Secret value is stored.
 - Secret existence also remains unknown until the Worker is confirmed. If a new token is required, it
   must be entered directly as a Cloudflare Secret and never returned or recorded.
 
@@ -99,14 +98,13 @@ alert or investment action consumes the signals.
 - completed: mandatory provider limiter, fixed-SELECT guard, ticker/range/version/cutoff bounds, query
   deadline, response metadata, isolated Wrangler template and recovery documentation
 - tests: local `58/58 PASS`; GitHub Actions run `37692539198` `SUCCESS`
-- deployment: not evidenced; Worker/Secret/D1/rate-limit binding state is
-  `UNKNOWN_NOT_EVIDENCED` pending Dashboard verification
+- deployment: not yet performed; the candidate Worker is absent and its Secret/bindings are not created
 - validation: Wrangler 4.148 dry-run `PASS`; 19.76 KiB bundle; required candidate bindings detected
 - production_impact: none — production Worker, bindings, Secrets, routes, Cron, D1 rows and GitHub
   publication remain unchanged
 - waiting_for_live: all 2026-10-08 items in `NEXT LIVE MARKET VALIDATION`
-- next_exact_step: verify whether `market-intelligence-read-candidate` already exists; only if absent,
-  obtain the existing `market-history` Database ID and prepare the deployable configuration
+- next_exact_step: run the real-ID Wrangler dry-run and tests, then configure the separate candidate
+  deployment without exposing or recreating any Secret
 
 ## Completed
 
@@ -330,9 +328,9 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Get the existing `market-history` D1 Database ID, replace the intentional zero UUID in the isolated
-candidate Wrangler configuration, commit/push the 58-test checkpoint to Draft PR #4, then deploy the
-separate candidate. Do not modify the production Worker, route, bindings or Secrets.
+Use the supplied `market-history` D1 Database ID in the isolated candidate Wrangler configuration,
+run the real-ID bundle validation, then deploy only the separate candidate. Do not modify the production
+Worker, route, bindings or Secrets.
 
 ## NEXT LIVE MARKET VALIDATION
 

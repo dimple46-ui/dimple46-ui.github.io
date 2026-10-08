@@ -68,6 +68,6 @@ Worker CPU must continue to come from provider metrics. Wall time and D1 query d
 `wrangler.intelligence-candidate.example.toml` defines only the separate
 `market-intelligence-read-candidate` service. It has no route to the production relay, no GitHub
 credential, no scheduled trigger and no D1 mutation handler. Its provider rate limiter is mandatory;
-the Worker fails closed before D1 when the binding is absent. The example contains an intentionally
-invalid zero D1 UUID and cannot be used for deployment until the existing `market-history` Database ID
-is supplied. The Bearer token is always created as a Cloudflare Secret and never committed.
+the Worker fails closed before D1 when the binding is absent. The candidate template points only to the
+existing `market-history` database and contains no token value. The Bearer token is always created as a
+Cloudflare Secret and never committed.

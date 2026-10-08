@@ -1,4 +1,4 @@
-# Candidate-only deployment template. Do not deploy until the D1 database_id placeholder is replaced.
+# Candidate-only deployment template. Candidate deployment only; production Worker is untouched.
 name = "market-intelligence-read-candidate"
 main = "cloudflare/intelligence-read-worker.mjs"
 compatibility_date = "2026-10-07"
@@ -16,7 +16,7 @@ INTELLIGENCE_WORKER_GIT_SHA = "REPLACE_WITH_DEPLOYED_COMMIT_SHA"
 [[d1_databases]]
 binding = "MARKET_HISTORY"
 database_name = "market-history"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "c9902dac-8d27-47ec-80b5-73b2b1339535"
 
 [[ratelimits]]
 name = "INTELLIGENCE_RATE_LIMITER"
