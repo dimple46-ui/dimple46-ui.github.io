@@ -1,7 +1,36 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-08 11:57 KST
+Last updated: 2026-10-08 12:10 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Third Real Stock-flow Bucket Acceleration Validated
+
+- timestamp: `2026-10-08 12:10 KST`; market state: `REGULAR_SESSION`
+- request: authenticated read-only replay at cutoff `1791426403951`, exactly the first D1 observation
+  containing the real 11:20 KST scheduled stock-flow bucket
+- identity: mode `READ_ONLY_REPLAY`; observed at `2026-10-08T02:26:43.951Z`; 72 distinct current-day
+  slots; stored observation Feature v1 and query-time Feature v2 remained separate
+- Samsung foreign: delta `+282,000`, direction `INCREASING`, acceleration `+211,000`, status `VALID`
+- Samsung institution: delta `-100,000`, direction `DECREASING`, acceleration `+128,000`, status `VALID`
+- SK Hynix foreign: delta `-4,000`, direction `DECREASING`, acceleration `+38,000`, status `VALID`
+- SK Hynix institution: delta `+3,000`, direction `INCREASING`, acceleration `+8,000`, status `VALID`
+- semantics: all four inputs were `BUCKET_DELTA`/`VERIFIED`; the engine retained the discrete-estimate
+  limitation and did not fabricate continuous five-minute stock flow
+- horizons: 2/5/10/30-minute windows were all available; stock-flow window values remained explicitly
+  `BUCKET_CHANGE_ONLY`; price, volatility, momentum/volume acceleration, relative strength,
+  futures/OI/Basis and divergence outputs were generated from past-only observations
+- quality: overall ceiling `STALE_INPUT`; program values were null/`UNUSABLE_DATA` because the source
+  was stale; index/futures values retained `UNVERIFIED_TIME`
+- same-time history: 5/10/20-day baselines remained `INSUFFICIENT_HISTORY` with three actual trading-day
+  samples; no synthetic sample was introduced
+- storage/query evidence: full Feature 71,866 bytes; compact Feature 14,381 bytes; 79.989% reduction;
+  D1 reads current/intraday/same-time `22/73/2,349`; every query reported `rowsWritten: 0`
+- timing: 56 ms response wall time; explicitly not Worker CPU time
+- result: live changed-bucket delta, direction and acceleration gate is `VERIFIED_COMPLETE`
+- still open: live M3 Signal confidence ceiling and continuous current-day Feature v2 persistence;
+  neither is inferred from this Feature replay
+- next_exact_step: inject the isolated candidate build commit SHA and verify it through authenticated
+  `/health`; no production Worker, binding, Secret, route or writer change is authorized
 
 ## RECOVERY_CHECKPOINT — 2026-10-08 11:57 KST
 
