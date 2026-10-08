@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-08 — Isolated intelligence candidate live validation
+
+- Deployed only `market-intelligence-read-candidate` from PR #4 commit `2d34e739...`; GitHub Actions
+  and Cloudflare build passed, and authenticated `/health` reported the exact deployed Git SHA.
+- Disabled non-production branch builds so high-frequency `main` snapshot commits no longer trigger
+  irrelevant candidate previews.
+- Validated `/state` against production snapshots at multiple regular-session timestamps with zero D1
+  writes; the exact 13:42:44 KST observation matched prices, flows, program, futures, OI and Basis.
+- Replayed the existing pure M3 Signal Layer against an actual live Feature v2 input: 18 descriptive
+  signals, zero confidence-ceiling violations, no stale program signal and no probability/BUY/SELL field.
+- Production Worker, bindings, Secrets, routes, writers, snapshot cadence and D1 rows remain unchanged.
+
 ## 2026-10-08 — Isolated intelligence candidate hardening
 
 - Require a provider-level Cloudflare rate-limit binding and fail closed before D1 when unavailable.
@@ -8,7 +20,8 @@
 - Add a 5-second application query deadline, fixed-SELECT guard and consistent schema/feature/cutoff/
   freshness/quality/pipeline metadata.
 - Add an isolated Wrangler deployment template with no token value, production route or scheduled trigger.
-- Preserve all 2026-10-08 live-market items as `WAITING_FOR_LIVE_MARKET_VALIDATION`.
+- Preserve only genuinely unvalidated production items as waiting; live read equivalence, real
+  third-bucket acceleration and pure Signal behavior against captured live input are now validated.
 
 ## 2026-10-07 — M2 operational/storage candidate
 

@@ -1,6 +1,6 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- updated_at_kst: `2026-10-08 13:45 KST`
+- updated_at_kst: `2026-10-08 13:51 KST`
 - current_milestone: `M2 — Operational / Storage Architecture Stabilization`
 - current_branch: `feature/m2-operational-storage`
 - verified_head_sha: `2d34e7399f648168d6d8b88486071d27f382254f`
@@ -26,8 +26,8 @@
 - blocked_actions: main merge, production Worker/binding/Secret/route changes and destructive D1 work require
   separate approval; authenticated candidate/validator requests require the existing Dashboard-held Secrets
 - approved_scope: isolated read-only candidate code, tests, candidate deploys, documentation and validation
-- next_exact_step: update stale operational documentation to the validated M2 candidate state, while
-  preserving the 20-trading-day retention measurement gate and current production publication cadence
+- next_exact_step: keep collecting non-destructive D1 provider-byte evidence toward the 20-trading-day
+  retention gate; any consumer opt-in, production route or snapshot-cadence change requires separate approval
 
 Do not recreate PR #3, D1 History, `market_observations`, `feature_runs`, the candidate Worker, its Secret,
 bindings, rate limiter, read endpoints, or the M3 pure-function Signal candidate.

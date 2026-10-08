@@ -1,7 +1,20 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-08 13:45 KST
+Last updated: 2026-10-08 13:51 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Operational Documentation Synchronized
+
+- timestamp: `2026-10-08 13:51 KST`
+- updated: `README.md`, `D1_SETUP.md`, `CHANGELOG.md`, `AUDIT.md` and `DEPLOYMENT.md`
+- corrected stale claims: PR #3 is merged to GitHub main; the read-only intelligence candidate is
+  deployed and validated; neither fact is presented as a production relay deployment
+- preserved boundaries: production remains the PR #2 baseline, continuous Feature v2 writes remain
+  disabled, and no retention/cadence/route/binding/Secret change is authorized
+- tests: not rerun because this checkpoint changes documentation only; last code suite remains `59/59 PASS`
+- production impact: none
+- next_exact_step: M2 is candidate-validated except for long-running provider-byte measurement and any
+  separately approved consumer/production migration; do not manufacture completion from JSON estimates
 
 ## CHECKPOINT — Second Live Candidate/Production State Equivalence Passed
 
@@ -454,17 +467,16 @@ Percentages are audit estimates, not predictive-performance scores.
 
 ## Known Issues / Technical Debt
 
-1. Main documentation still says D1/history is an undeployed candidate. `README.md`, `D1_SETUP.md`, `CHANGELOG.md`, `AUDIT.md` and `DEPLOYMENT.md` are stale after PR #2.
-2. PR #1 remains open although the later PR #2/main incorporated the relevant quality work.
-3. A two-minute GitHub snapshot commit cadence creates roughly 331 commits per full relay day, or 82,750 commits per 250 trading days.
-4. PR #3 was 1,249 snapshot commits behind main at the 19:34 KST audit; the high-frequency snapshot history obscures real code divergence.
-5. Corrected candidate v2 response measured 69,386 full feature bytes; compact encoding measured 14,067 bytes while retaining explicit invalid/null states.
-6. At 331 rows/day, compact derived JSON projects to 4.66 MB/day, 93.12 MB/20 days, 279.37 MB/60 days and 1.16 GB/250 days before SQLite/index/raw-observation overhead.
-7. D1 dashboard storage was 11.56 MB at the 2026-10-06 audit; the account plan remains unverified. Official limits are 500 MB/database on Free and 10 GB/database on Workers Paid.
-8. Compact candidate replay wall time was 44 ms, but wall time is not Worker CPU duration. D1 query meta was captured; the same-time query read 1,686 rows and needs cost monitoring/optimization.
-9. Production program data can exceed the five-minute freshness rule; this correctly degrades the pipeline but reduces usable window features.
-10. Index/futures adapters use fetch time because verified exchange timestamps are unavailable.
-11. The integrated PR #3 writer cannot safely prove v2 persistence beside the production v1 writer because immutable two-minute slots and `features_json IS NULL` allow the first writer to win.
+1. PR #1 remains open although the later PR #2/main incorporated the relevant quality work.
+2. A two-minute GitHub snapshot commit cadence creates roughly 331 commits per full relay day, or 82,750 commits per 250 trading days.
+3. High-frequency snapshot history obscures real code divergence and complicates long-lived feature branches.
+4. Corrected candidate v2 response measured 69,386 full feature bytes; compact encoding measured 14,067 bytes while retaining explicit invalid/null states.
+5. At 331 rows/day, compact derived JSON projects to 4.66 MB/day, 93.12 MB/20 days, 279.37 MB/60 days and 1.16 GB/250 days before SQLite/index/raw-observation overhead.
+6. D1 dashboard storage was 11.56 MB at the 2026-10-06 audit; the account plan remains unverified. Official limits are 500 MB/database on Free and 10 GB/database on Workers Paid.
+7. Compact candidate replay wall time was 44 ms, but wall time is not Worker CPU duration. D1 query meta was captured; the same-time query read 1,686 rows and needs cost monitoring/optimization.
+8. Production program data can exceed the five-minute freshness rule; this correctly degrades the pipeline but reduces usable window features.
+9. Index/futures adapters use fetch time because verified exchange timestamps are unavailable.
+10. The integrated PR #3 writer cannot safely prove v2 persistence beside the production v1 writer because immutable two-minute slots and `features_json IS NULL` allow the first writer to win.
 
 ## Storage Decision
 
