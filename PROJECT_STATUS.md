@@ -1,7 +1,24 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-08 12:10 KST
+Last updated: 2026-10-08 13:26 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Candidate Preview Build Noise Removed
+
+- timestamp: `2026-10-08 13:26 KST`; market state: `REGULAR_SESSION`
+- incident: Cloudflare build `#7328cd3c` ran the preview command for `main` snapshot commit `1c0f63b`
+  and failed because `wrangler.intelligence-candidate.example.toml` intentionally exists only on the
+  candidate feature branch
+- impact: no production relay, D1 writer, candidate active deployment or stored row was changed; the
+  failed job was a non-production preview build
+- cause: `프로덕션 이외 분기에 대한 빌드` was enabled while `main` receives a market snapshot commit
+  about every two minutes
+- remediation: user disabled non-production branch builds in candidate `분기 제어`; production branch
+  remains `feature/m2-operational-storage`
+- expected result: `main` snapshot commits no longer run candidate preview builds; pushes to the candidate
+  production branch continue to use the configured deploy command
+- next_exact_step: trigger one candidate-branch documentation checkpoint, verify its isolated build, then
+  verify the deployed commit SHA through authenticated `/health`
 
 ## CHECKPOINT — Third Real Stock-flow Bucket Acceleration Validated
 

@@ -1,9 +1,9 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- updated_at_kst: `2026-10-08 12:10 KST`
+- updated_at_kst: `2026-10-08 13:26 KST`
 - current_milestone: `M2 — Operational / Storage Architecture Stabilization`
 - current_branch: `feature/m2-operational-storage`
-- verified_head_sha: `6b264d24f98ead63c32d4194a6a0ddac7f800e50`
+- verified_head_sha: `50b016869934a3e58fc2b0230e58ff0af20d702c`
 - main_sha_at_checkpoint: `b236241f6d4d41226466540a60b44fbcb6f7c720` (live snapshot commit; expected to advance)
 - active_pr: `#4`, Draft/Open, not merged
 - last_successful_test: local `59/59 PASS`
@@ -16,16 +16,17 @@
   empty `sourceErrors`, live Samsung/SK Hynix prices and current 11:20 stock-flow bucket; pipeline was
   `DEGRADED` only because program data was 403 seconds old (`STALE`) and index/futures exchange times
   remained explicitly unverified
-- candidate_status: isolated, authenticated, read-only and deployed; token, D1 binding, provider limiter
-  and version-metadata binding exist. Deployed `/health` release identity after `9f39fc71...` still needs
-  authenticated verification; build-command Git SHA injection is not yet configured
+- candidate_status: isolated, authenticated and read-only. Non-production branch builds were disabled
+  after `main` snapshot commits incorrectly triggered preview builds without the candidate-only Wrangler
+  file. Production branch `feature/m2-operational-storage` remains the sole candidate deploy branch.
+  Token, D1 binding, provider limiter and version metadata binding are preserved.
 - waiting_for_live: M3 Signal confidence-ceiling behavior against live Feature input; current-day continuous
   Feature v2 persistence remains unvalidated and is not enabled in production
 - blocked_actions: main merge, production Worker/binding/Secret/route changes and destructive D1 work require
   separate approval; authenticated candidate/validator requests require the existing Dashboard-held Secrets
 - approved_scope: isolated read-only candidate code, tests, candidate deploys, documentation and validation
-- next_exact_step: inject the Workers Builds commit SHA through the isolated candidate deploy command,
-  redeploy, and require authenticated `/health` to report the exact deployed commit identity
+- next_exact_step: trigger one production-branch candidate build, require build success with the revised
+  deploy command, then require authenticated `/health` to report the exact deployed commit identity
 
 Do not recreate PR #3, D1 History, `market_observations`, `feature_runs`, the candidate Worker, its Secret,
 bindings, rate limiter, read endpoints, or the M3 pure-function Signal candidate.
