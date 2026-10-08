@@ -55,11 +55,14 @@ test('health is machine-readable, bounded and contains no secret',async()=>{
  const database=db(),response=await worker.fetch(request('/health'),env(database));
  assert.equal(response.status,200);const body=await response.json();
  assert.equal(body.readOnly,true);assert.equal(body.collectionHealth,'OK');
+ assert.equal(body.release.serviceReleaseVersion,2);
  assert.equal(body.latestFeatureRun.featureVersion,2);assert.equal(body.latestFeatureRun.qualityCeiling,'UNVERIFIED_TIME');
  assert.equal(body.storageGrowth.observations[0].row_count,10);
  assert.equal(body.release.workerGitSha,'abcdef0');assert.equal(body.release.deploymentId,'deployment-test');
  assert.equal(body.release.deploymentTag,'candidate-test');
  assert.equal(body.release.deploymentTimestamp,'2026-10-08T00:00:00.000Z');
+ assert.equal(body.metadata.freshness.age_ms,body.latestObservation.ageMs);
+ assert.equal(body.metadata.freshness.basis,'AS_OF_MINUS_OBSERVED_AT');
  assert.equal(body.storageGrowth.observationProjection.status,'LIMITED_SAMPLE');
  assert.equal(body.storageGrowth.observationProjection.projectedAnnualJsonBytes,25000000);
  assert.equal(body.metadata.feature_version,2);assert.equal(body.metadata.pipeline_status,'OK');
@@ -86,11 +89,15 @@ test('state preserves null and stale quality and enforces a past-only cutoff',as
  assert.equal(future.status,400);assert.equal((await future.json()).error,'INVALID_CUTOFF');
 });
 
-test('features enforce version and stored identity integrity',async()=>{
- let response=await worker.fetch(request('/features?featureVersion=2',{ip:'192.0.2.3'}),env(db()));
+test('features enforce version, stored identity integrity and as-of freshness',async()=>{
+ const cutoff=now-1000;
+ let response=await worker.fetch(request(`/features?featureVersion=2&cutoffMs=${cutoff}`,{ip:'192.0.2.3'}),env(db()));
  assert.equal(response.status,200);let body=await response.json();
  assert.equal(body.feature.featureVersion,2);assert.equal(body.feature.inputCutoffMs,slot+1000);
  assert.equal(body.metadata.feature_version,2);assert.equal(body.metadata.quality,'UNVERIFIED_TIME');
+ assert.equal(body.metadata.input_cutoff,new Date(slot+1000).toISOString());
+ assert.equal(body.metadata.freshness.age_ms,cutoff-(slot+1000));
+ assert.equal(body.metadata.freshness.basis,'AS_OF_MINUS_OBSERVED_AT');
  response=await worker.fetch(request('/features?featureVersion=3',{ip:'192.0.2.4'}),env(db()));
  assert.equal(response.status,400);assert.equal((await response.json()).error,'INVALID_FEATURE_VERSION');
  response=await worker.fetch(request('/features',{ip:'192.0.2.5'}),env(db({badFeature:true})));

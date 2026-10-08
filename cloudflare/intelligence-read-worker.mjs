@@ -2,7 +2,7 @@ import {summarizeJsonGrowth} from "./operational-storage-policy.mjs";
 
 const API_SCHEMA_VERSION = 1;
 const SUPPORTED_FEATURE_VERSION = 2;
-const SERVICE_RELEASE_VERSION = 1;
+const SERVICE_RELEASE_VERSION = 2;
 const MAX_HISTORY_RANGE_MS = 12 * 60 * 60 * 1000;
 const MAX_HISTORY_LIMIT = 120;
 const MAX_RESPONSE_BYTES = 900000;
@@ -124,14 +124,16 @@ function publicObservation(row, metricPrefix = null) {
 }
 
 function responseMetadata({schemaVersion = API_SCHEMA_VERSION, featureVersion = null, generatedAtMs,
-  inputCutoffMs, observedAtMs = null, quality = null, pipelineStatus = null}) {
+  inputCutoffMs, observedAtMs = null, freshnessReferenceMs = inputCutoffMs,
+  quality = null, pipelineStatus = null}) {
   return {
     schema_version: schemaVersion,
     feature_version: featureVersion,
     generated_at: generatedAtMs == null ? null : new Date(generatedAtMs).toISOString(),
     input_cutoff: inputCutoffMs == null ? null : new Date(inputCutoffMs).toISOString(),
-    freshness: observedAtMs == null || inputCutoffMs == null ? null : {
-      age_ms: Math.max(0, inputCutoffMs - observedAtMs), basis: "OBSERVATION_AGE_ONLY"
+    freshness: observedAtMs == null || freshnessReferenceMs == null ? null : {
+      age_ms: Math.max(0, freshnessReferenceMs - observedAtMs),
+      basis: "AS_OF_MINUS_OBSERVED_AT"
     },
     quality,
     pipeline_status: pipelineStatus
@@ -213,7 +215,8 @@ async function health(db, now, env) {
     metadata: responseMetadata({schemaVersion: raw?.schema_version ?? API_SCHEMA_VERSION,
       featureVersion: run?.feature_version ?? null, generatedAtMs: now,
       inputCutoffMs: run?.input_cutoff_ms ?? raw?.available_at_ms ?? null,
-      observedAtMs: raw?.observed_at_ms ?? null, quality: run?.quality_ceiling ?? null,
+      observedAtMs: raw?.observed_at_ms ?? null, freshnessReferenceMs: now,
+      quality: run?.quality_ceiling ?? null,
       pipelineStatus: raw?.pipeline_status ?? "NO_OBSERVATIONS"}),
     release: {serviceReleaseVersion: SERVICE_RELEASE_VERSION,
       supportedFeatureVersion: SUPPORTED_FEATURE_VERSION, workerGitSha, deploymentId,
@@ -247,6 +250,7 @@ async function state(db, cutoffMs, now, scope) {
   return {apiSchemaVersion: API_SCHEMA_VERSION, inputCutoffMs: cutoffMs, scope: {ticker: scope.ticker},
     metadata: responseMetadata({schemaVersion: row.schema_version, generatedAtMs: now,
       inputCutoffMs: cutoffMs, observedAtMs: row.observed_at_ms,
+      freshnessReferenceMs: cutoffMs,
       quality: state.quality?.dataQuality ?? state.quality ?? null, pipelineStatus: row.pipeline_status}),
     state, queryMeta: result.meta};
 }
@@ -269,7 +273,8 @@ async function features(db, url, cutoffMs, now, scope) {
   return {apiSchemaVersion: API_SCHEMA_VERSION, inputCutoffMs: cutoffMs, scope: {ticker: scope.ticker},
     metadata: responseMetadata({schemaVersion: API_SCHEMA_VERSION, featureVersion: feature.featureVersion,
       generatedAtMs: feature.generatedAtMs, inputCutoffMs: feature.inputCutoffMs,
-      observedAtMs: feature.observedAtMs, quality: feature.qualityCeiling,
+      observedAtMs: feature.observedAtMs, freshnessReferenceMs: cutoffMs,
+      quality: feature.qualityCeiling,
       pipelineStatus: feature.generationStatus}),
     feature, queryMeta: result.meta};
 }
@@ -294,6 +299,7 @@ async function history(db, url, cutoffMs, now, scope) {
   return {apiSchemaVersion: API_SCHEMA_VERSION, inputCutoffMs: cutoffMs, scope: {ticker: scope.ticker},
     metadata: responseMetadata({schemaVersion: latest?.schemaVersion ?? API_SCHEMA_VERSION,
       generatedAtMs: now, inputCutoffMs: cutoffMs, observedAtMs: latest?.observedAtMs ?? null,
+      freshnessReferenceMs: cutoffMs,
       quality: latest?.quality?.dataQuality ?? latest?.quality ?? null,
       pipelineStatus: latest?.pipelineStatus ?? null}),
     range: {fromMs, toMs, limit, returned: rows.length}, rows, queryMeta: result.meta};

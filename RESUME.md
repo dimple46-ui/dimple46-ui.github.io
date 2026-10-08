@@ -1,12 +1,12 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- updated_at_kst: `2026-10-08 13:51 KST`
+- updated_at_kst: `2026-10-08 14:00 KST`
 - current_milestone: `M2 — Operational / Storage Architecture Stabilization`
 - current_branch: `feature/m2-operational-storage`
 - verified_head_sha: `2d34e7399f648168d6d8b88486071d27f382254f`
 - main_sha_at_checkpoint: `b236241f6d4d41226466540a60b44fbcb6f7c720` (live snapshot commit; expected to advance)
 - active_pr: `#4`, Draft/Open, not merged
-- last_successful_test: local `59/59 PASS`
+- last_successful_test: local `59/59 PASS` after candidate Feature-freshness correction
 - last_successful_ci: GitHub Actions `37727696681`, SUCCESS at `2d34e739...`
 - last_successful_deployment: isolated candidate build `24f9eab1-924a-47aa-89cb-6ff6f3c67e22`, SUCCESS
 - deployed_commit_sha: `2d34e7399f648168d6d8b88486071d27f382254f`, exactly verified by authenticated `/health`
@@ -26,8 +26,8 @@
 - blocked_actions: main merge, production Worker/binding/Secret/route changes and destructive D1 work require
   separate approval; authenticated candidate/validator requests require the existing Dashboard-held Secrets
 - approved_scope: isolated read-only candidate code, tests, candidate deploys, documentation and validation
-- next_exact_step: keep collecting non-destructive D1 provider-byte evidence toward the 20-trading-day
-  retention gate; any consumer opt-in, production route or snapshot-cadence change requires separate approval
+- next_exact_step: deploy the candidate-only freshness correction, require GitHub CI and Cloudflare build
+  success, then verify service release 2 and honest nonzero Feature age through authenticated `/health`
 
 Do not recreate PR #3, D1 History, `market_observations`, `feature_runs`, the candidate Worker, its Secret,
 bindings, rate limiter, read endpoints, or the M3 pure-function Signal candidate.

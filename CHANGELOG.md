@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-08 — Candidate Feature freshness correction
+
+- Correct read-time Feature freshness to use request/as-of time minus observation time instead of
+  incorrectly showing zero age for an old immutable Feature cutoff.
+- Preserve the original Feature input cutoff separately and label the freshness basis explicitly.
+- Advance only the isolated intelligence candidate service release to 2; production remains unchanged.
+
 ## 2026-10-08 — Isolated intelligence candidate live validation
 
 - Deployed only `market-intelligence-read-candidate` from PR #4 commit `2d34e739...`; GitHub Actions

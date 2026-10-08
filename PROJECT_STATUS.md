@@ -1,7 +1,22 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-08 13:51 KST
+Last updated: 2026-10-08 14:00 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Candidate Feature Freshness Semantics Corrected
+
+- timestamp: `2026-10-08 14:00 KST`; target: isolated read-only candidate only
+- issue: `/features` and top-level `/health` metadata could report `freshness.age_ms=0` for an old
+  stored Feature because age was calculated from the Feature input cutoff instead of the request/as-of time
+- fix: metadata now calculates `AS_OF_MINUS_OBSERVED_AT` while preserving the immutable Feature
+  `input_cutoff`; service release version advanced from 1 to 2
+- scope: `/state`, `/history`, `/features` and `/health` use an explicit freshness reference; no source
+  status, quality ceiling, stored row or production contract is changed
+- tests: focused intelligence suite `9/9 PASS`; full regression suite `59/59 PASS`
+- production impact: none before isolated candidate deployment; no production Worker, binding, Secret,
+  route, writer or D1 data change
+- next_exact_step: deploy this candidate-only correction through PR #4, verify CI/build identity, then
+  confirm `/health` reports service release 2 and a nonzero honest Feature age
 
 ## CHECKPOINT — Operational Documentation Synchronized
 
