@@ -1,7 +1,32 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-08 13:26 KST
+Last updated: 2026-10-08 13:38 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Candidate Release Identity Verified
+
+- timestamp: `2026-10-08 13:38 KST`; market state: `REGULAR_SESSION`
+- branch/deployed commit: `feature/m2-operational-storage` at
+  `2d34e7399f648168d6d8b88486071d27f382254f`
+- tests/CI: GitHub Actions run `37727696681` completed `SUCCESS`; no code changed after the existing
+  local `59/59 PASS` suite
+- deployment: isolated Cloudflare candidate build `24f9eab1-924a-47aa-89cb-6ff6f3c67e22`
+  completed successfully; `main` and production relay were not deployment targets
+- authenticated validation: `/health` returned
+  `release.workerGitSha=2d34e7399f648168d6d8b88486071d27f382254f`, exactly matching the GitHub and
+  Cloudflare build commit
+- provider metadata: `deploymentId` and `deploymentTag` were null and `deploymentTimestamp` was the
+  zero/default timestamp; these fields remain explicitly unavailable rather than being inferred
+- read-only evidence: latest observation was from trading day `20261008`; D1 query metadata reported
+  zero rows written; Feature v2 remained the latest stored compact Feature version
+- quality: `STALE_INPUT`/`DEGRADED` was preserved; empty `sourceErrors` did not override stale or
+  unverified-time quality
+- isolation: candidate authentication, D1 binding, provider limiter and version metadata binding were
+  preserved; production Worker, binding, Secret, route, writer and existing D1 rows were unchanged
+- result: candidate branch control, isolated deployment and exact release-SHA observability are
+  `VERIFIED_COMPLETE`
+- next_exact_step: validate the existing pure-function M3 descriptive Signal Layer against the captured
+  live Feature v2 replay without enabling production or candidate writes
 
 ## CHECKPOINT — Candidate Preview Build Noise Removed
 
@@ -92,7 +117,7 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 
 M2 — Operational / Storage Architecture Stabilization.
 
-Status: `M2_POLICY_AND_READ_API_CODE_COMPLETE_NOT_DEPLOYED`.
+Status: `M2_READ_API_CANDIDATE_DEPLOYED_AND_IDENTITY_VERIFIED`; production rollout is not approved.
 
 M1 — Feature Engine 2.0 production validation is `COMPLETE`: correctness, real changed-bucket
 semantics, three-slot compact persistence, rollback, provider CPU evidence, D1 failure isolation,
@@ -301,9 +326,9 @@ alert or investment action consumes the signals.
 ## In Progress
 
 - M2 work continues on `feature/m2-operational-storage`; production remains unchanged.
-- The read-only intelligence API is approved for an isolated candidate and its local code/configuration
-  gates pass. Deployment is pending the existing D1 Database ID and direct Secret entry; production
-  routing, bindings and Worker remain outside the approval scope.
+- The read-only intelligence API is deployed as an isolated candidate. Authentication, fixed read-only
+  queries, bounds, D1 reads, provider limiting, release SHA and failure isolation are validated;
+  production routing, bindings and Worker remain outside the approval scope.
 - M3 signals remain pure-function outputs pending historical replay and next-session live behavior validation.
 
 ## Blocked / Not Yet Validated
@@ -314,9 +339,8 @@ alert or investment action consumes the signals.
 - Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB; per-query D1 meta is now captured, including 1,686 rows read by the same-time query.
 - Per-request Worker CPU is not exposed by the captured dashboard percentile view.
 - Long-running storage/retention and GitHub snapshot transport redesign belong to M2.
-- No GitHub CI workflow/status checks are configured; local tests are the current automated gate.
-- Secure intelligence API deployment requires a new `INTELLIGENCE_READ_TOKEN`; it has not been created.
-  The provider-level rate-limit binding is now mandatory in code/configuration but not yet deployed.
+- Provider version metadata did not supply a deployment ID/tag and returned a zero/default deployment
+  timestamp. Exact deployment identity is instead verified through the injected commit SHA.
 - Signal tests are development correctness evidence, not predictive accuracy or live production validation.
 
 ## Branch / PR / Deployment
@@ -327,8 +351,9 @@ alert or investment action consumes the signals.
 | PR #2 | `MERGED_MAIN`, `PRODUCTION_VALIDATED` | Merged 2026-10-02; production validation recorded in PR body. |
 | `feature/feature-engine-v2` | Merged branch | Merged to main through PR #3. |
 | PR #3 | `MERGED_MAIN` | Merge commit `2b188d15f9b2d2888ff656f3aa8ea03f842c87ae`; no production deployment implied. |
-| `feature/m2-operational-storage` | Development branch | Additive M2 policy/observability/CI work; not deployed. |
-| PR #4 | Draft/Open | M2 commit `82851309548a6d0a8e7d64aaef6696219624ab0a`; 56/56 local and GitHub Actions passed. |
+| `feature/m2-operational-storage` | Isolated candidate branch | Candidate commit `2d34e739...` deployed; production unchanged. |
+| PR #4 | Draft/Open | GitHub Actions `37727696681` and Cloudflare build `24f9eab1...` passed at `2d34e739...`; unmerged. |
+| `market-intelligence-read-candidate` | `CANDIDATE_VALIDATED` | Authenticated read-only endpoints and exact deployed Git SHA verified; no production route. |
 | `market-feature-validation` | Separate candidate | Authenticated GET at 09:44 KST on 2026-10-07 verified compact source hash `39e39bb1...`, D1 query metadata and no write. Writes remain disabled. |
 | Production `market-relay` | Operational | Continues schema v3 snapshots and D1 observations; v2 not deployed. |
 
@@ -447,9 +472,9 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Use the supplied `market-history` D1 Database ID in the isolated candidate Wrangler configuration,
-run the real-ID bundle validation, then deploy only the separate candidate. Do not modify the production
-Worker, route, bindings or Secrets.
+Run the existing pure-function M3 descriptive Signal Layer against the captured 2026-10-08 live Feature
+v2 replay and verify its confidence ceiling/evidence semantics. Keep all writes disabled and do not modify
+the production Worker, route, bindings or Secrets.
 
 ## NEXT LIVE MARKET VALIDATION
 
