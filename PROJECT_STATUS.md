@@ -803,3 +803,17 @@ No synthetic sample may be used to pass this gate.
 - Compact-storage candidate SHA-256: `39e39bb133ed90f6fa950a056948ea03d1928905de4c8dab28434a7631f0567a` (deployed and authenticated GET validated).
 - Real-response compact measurement: 14,067 bytes, 79.73% reduction, quality ceiling `UNVERIFIED_TIME`; all 2/5/10/30-minute windows available; changed stock-flow bucket still not observed.
 - Tests: 36/36 local pass.
+
+## CHECKPOINT — Intelligence Candidate Git Connection
+
+- timestamp: `2026-10-08 09:44 KST`
+- branch: `feature/m2-operational-storage`
+- commit: pending checkpoint commit
+- completed: isolated `market-intelligence-read-candidate` Worker created; GitHub repository connected to the exact candidate branch
+- build: deploy command uses `wrangler.intelligence-candidate.example.toml`; non-production changes upload a version only
+- deployment: initial Hello World only; candidate intelligence bundle build is triggered by this checkpoint commit
+- validation: pending Cloudflare build result and authenticated endpoint checks
+- production_impact: none — production Worker, bindings, Secrets, routes and D1 rows remain unchanged
+- waiting_for_live: 2026-10-08 live state/Feature/flow/program/futures/OI/basis/relative-strength/divergence/acceleration/quality/Signal checks remain open
+- next_exact_step: verify the Cloudflare build, then add `INTELLIGENCE_READ_TOKEN` only as a candidate Secret
+
