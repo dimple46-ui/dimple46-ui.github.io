@@ -1,7 +1,33 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-08 10:46 KST
+Last updated: 2026-10-08 11:57 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## RECOVERY_CHECKPOINT — 2026-10-08 11:57 KST
+
+- timestamp: `2026-10-08 11:57 KST`; market state: `REGULAR_SESSION`
+- branch: remote `feature/m2-operational-storage` at `9f39fc71e8695ae6c6ae50b4c4e9884fecd671be`;
+  PR #4 remains Draft/Open and unmerged
+- main: `b236241f6d4d41226466540a60b44fbcb6f7c720` at inspection time; this is a normal live-snapshot
+  commit and is expected to advance about every two minutes
+- tests/CI: local `59/59 PASS`; GitHub Actions `37714775586` SUCCESS at the verified branch head
+- deployment: isolated Cloudflare candidate build `6bb0e9d9-a456-484f-b48c-fa6e38c48681` SUCCESS for
+  `9f39fc71...`; no production service was a deployment target
+- candidate: existing Secret, D1 binding, provider limiter and version metadata binding are preserved;
+  authenticated endpoints and all bounds were already validated with zero reported D1 rows written
+- production: 11:56:42 KST snapshot was fresh with empty `sourceErrors`; Samsung/SK Hynix prices were
+  `LIVE`, stock flow had advanced to the real 11:20 bucket, and futures/OI/Basis were available
+- degraded explanation: `pipelineStatus=DEGRADED` was caused by program market time 11:50 KST being
+  403 seconds old, beyond its 300-second freshness ceiling. Index and futures exchange timestamps remain
+  `UNVERIFIED_TIME`; neither condition is promoted to `LIVE` or treated as a source exception.
+- live bucket evidence: actual 09:30, 10:00 and 11:20 values are now present for both stocks. This is
+  sufficient input for acceleration, but engine output is not marked PASS until authenticated replay.
+- partial local recovery: a documentation-only follow-up checkpoint exists locally but was not published
+  because the prior Work action exhausted its approval/usage allowance; no deployed code depends on it
+- waiting_for_live: authenticated third-bucket Feature replay and Signal confidence-ceiling inspection;
+  continuous 2026-10-08 Feature v2 persistence remains disabled/unvalidated
+- next_exact_step: authenticated read-only Feature validator replay after the 11:20 bucket; writes must
+  stay disabled
 
 ## Current Production
 
@@ -36,7 +62,8 @@ alert or investment action consumes the signals.
 - timestamp: `2026-10-08 10:46 KST`
 - market_state: `REGULAR_SESSION`
 - branch: `feature/m2-operational-storage` (local continuation `m2-live-validation-local`)
-- implementation_commit: `2394fbc26fa09f6743a9e1547c883b998e8322da`
+- implementation_commit: local `2394fbc26fa09f6743a9e1547c883b998e8322da`; published with this
+  checkpoint as remote PR #4 commit `9f39fc71e8695ae6c6ae50b4c4e9884fecd671be`
 - remote_head_before_checkpoint: `e81600e64fe9ac4eee2e37a34f111eb97a252752`
 - completed: isolated `market-intelligence-read-candidate` deployed from GitHub; candidate-only
   `INTELLIGENCE_READ_TOKEN`, read-only `MARKET_HISTORY`, provider rate limiter and version metadata
@@ -63,7 +90,9 @@ alert or investment action consumes the signals.
 - observability refinement: release response now supports deployment ID, tag and timestamp and rejects
   placeholder/malformed Git SHAs; limitation text now distinguishes provider rate limiting from
   per-isolate failure counters
-- tests: local `59/59 PASS`
+- tests: local `59/59 PASS`; GitHub Actions run `37714775586` passed at remote commit `9f39fc71...`
+- deployment: isolated Cloudflare build `6bb0e9d9-a456-484f-b48c-fa6e38c48681` successfully deployed
+  PR #4 commit `9f39fc71...` at 10:49 KST; production services were not targets of this build
 - production_impact: none — production relay, GitHub publication, D1 writer and Feature writer were not
   changed; candidate failures remain isolated
 - waiting_for_live: a third real scheduled stock-flow bucket is required to validate live acceleration;
@@ -72,9 +101,8 @@ alert or investment action consumes the signals.
 - release_identity_gap: deployed `/health` returned `workerGitSha: null` and `deploymentId: null`; the
   code preserves this as unknown rather than inventing an identity. Git SHA injection through the
   candidate build command and a subsequent authenticated `/health` check remain required.
-- next_exact_step: push this checkpoint to PR #4, require CI and isolated candidate build success, then
-  configure the candidate deploy command to inject the Workers Builds commit SHA without changing any
-  production service
+- next_exact_step: configure only the candidate deploy command to inject the Workers Builds commit SHA,
+  trigger an isolated candidate redeploy, then require authenticated `/health` to report that exact SHA
 
 ## RECOVERY_CHECKPOINT — 2026-10-08 06:53 KST
 
