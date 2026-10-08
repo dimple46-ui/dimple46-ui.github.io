@@ -1,7 +1,27 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-08 13:38 KST
+Last updated: 2026-10-08 13:42 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — M3 Live-input Signal Replay Validated
+
+- timestamp: `2026-10-08 13:42 KST`; validation type: `LIVE_INPUT_OFFLINE_SIGNAL_REPLAY`
+- input: captured authenticated Feature v2 replay at cutoff `2026-10-08T02:26:43.951Z`
+  (11:26:43 KST), containing the real third scheduled Samsung/SK Hynix stock-flow bucket
+- result: 18 deterministic descriptive signals; focused Signal suite `6/6 PASS`
+- stock flow: Samsung `FOREIGN_BUYING_ACCELERATING`, SK Hynix
+  `FOREIGN_SELLING_DECELERATING`, and SK Hynix `INSTITUTION_FLOW_REVERSAL` matched the verified
+  bucket deltas and acceleration values
+- futures: six 5/10/30-minute position/risk signals retained `UNVERIFIED_TIME`; confidence was capped
+  at `MEDIUM`, never `HIGH`
+- program: zero program signals were emitted because the live Feature input was `STALE_INPUT`
+- invariants: zero confidence-ceiling violations, zero probability fields, Feature version 2 and the
+  exact input cutoff were preserved; no BUY/SELL action was generated
+- scope: this validates the existing pure Signal function against actual live-market input; it is not
+  a production Signal endpoint, alert, prediction-accuracy claim or production deployment
+- production impact: none; no D1, GitHub snapshot, candidate or production write was executed
+- next_exact_step: capture a second live authenticated candidate `/state` response and compare its
+  exact observation identity and values with the corresponding production snapshot
 
 ## CHECKPOINT — Candidate Release Identity Verified
 
@@ -329,7 +349,8 @@ alert or investment action consumes the signals.
 - The read-only intelligence API is deployed as an isolated candidate. Authentication, fixed read-only
   queries, bounds, D1 reads, provider limiting, release SHA and failure isolation are validated;
   production routing, bindings and Worker remain outside the approval scope.
-- M3 signals remain pure-function outputs pending historical replay and next-session live behavior validation.
+- M3 signals remain pure-function outputs. Correctness against a captured real live Feature v2 replay
+  is validated; endpoint delivery, persistence, alerts and predictive evaluation are not implemented.
 
 ## Blocked / Not Yet Validated
 

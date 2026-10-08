@@ -1,6 +1,6 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- updated_at_kst: `2026-10-08 13:38 KST`
+- updated_at_kst: `2026-10-08 13:42 KST`
 - current_milestone: `M2 — Operational / Storage Architecture Stabilization`
 - current_branch: `feature/m2-operational-storage`
 - verified_head_sha: `2d34e7399f648168d6d8b88486071d27f382254f`
@@ -20,13 +20,13 @@
   branch builds are disabled; `feature/m2-operational-storage` is the sole candidate deploy branch.
   Token, D1 binding, provider limiter and version metadata binding are preserved. Provider deployment
   ID/tag remain unavailable and its timestamp is the zero/default value; no identity was invented.
-- waiting_for_live: M3 Signal confidence-ceiling behavior against live Feature input; current-day continuous
-  Feature v2 persistence remains unvalidated and is not enabled in production
+- waiting_for_live: second-timestamp candidate/latest-snapshot equivalence and current-day continuous
+  Feature v2 persistence; the latter remains unvalidated and is not enabled in production
 - blocked_actions: main merge, production Worker/binding/Secret/route changes and destructive D1 work require
   separate approval; authenticated candidate/validator requests require the existing Dashboard-held Secrets
 - approved_scope: isolated read-only candidate code, tests, candidate deploys, documentation and validation
-- next_exact_step: run the existing pure-function M3 descriptive Signal Layer against the captured live
-  Feature v2 replay and verify confidence ceiling/evidence semantics without enabling any write path
+- next_exact_step: capture a second live authenticated candidate `/state` response and compare its exact
+  observation identity and values with the corresponding production snapshot
 
 Do not recreate PR #3, D1 History, `market_observations`, `feature_runs`, the candidate Worker, its Secret,
 bindings, rate limiter, read endpoints, or the M3 pure-function Signal candidate.
