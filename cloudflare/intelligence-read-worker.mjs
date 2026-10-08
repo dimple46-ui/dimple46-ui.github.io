@@ -204,6 +204,8 @@ async function health(db, now, env) {
   const run = feature.rows[0];
   const quality = raw ? storedJson(raw.quality_json) : null;
   const deploymentId = env.CF_VERSION_METADATA?.id || null;
+  const deploymentTag = env.CF_VERSION_METADATA?.tag || null;
+  const deploymentTimestamp = env.CF_VERSION_METADATA?.timestamp || null;
   const workerGitSha = /^[0-9a-f]{7,64}$/i.test(String(env.INTELLIGENCE_WORKER_GIT_SHA || "")) ?
     env.INTELLIGENCE_WORKER_GIT_SHA : null;
   return {
@@ -214,7 +216,8 @@ async function health(db, now, env) {
       observedAtMs: raw?.observed_at_ms ?? null, quality: run?.quality_ceiling ?? null,
       pipelineStatus: raw?.pipeline_status ?? "NO_OBSERVATIONS"}),
     release: {serviceReleaseVersion: SERVICE_RELEASE_VERSION,
-      supportedFeatureVersion: SUPPORTED_FEATURE_VERSION, workerGitSha, deploymentId},
+      supportedFeatureVersion: SUPPORTED_FEATURE_VERSION, workerGitSha, deploymentId,
+      deploymentTag, deploymentTimestamp},
     nowMs: now, collectionHealth: raw ? raw.pipeline_status : "NO_OBSERVATIONS",
     latestObservation: raw ? {slotMs: raw.slot_ms, observedAtMs: raw.observed_at_ms,
       ageMs: Math.max(0, now - raw.observed_at_ms), tradingDay: raw.trading_day,
@@ -230,7 +233,7 @@ async function health(db, now, env) {
       observationGrowth: observationGrowth.meta, featureGrowth: featureGrowth.meta},
     runtime: {...runtime, scope: "WORKER_ISOLATE_LIFETIME"},
     limitations: ["JSON byte totals exclude SQLite pages, indexes and replication overhead",
-      "Failure count and rate limiting are per Worker isolate until provider-level observability/rate limiting is configured"]
+      "Failure count is per Worker isolate; provider-level and isolate fallback rate limiting are configured"]
   };
 }
 

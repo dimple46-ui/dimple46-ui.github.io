@@ -40,7 +40,8 @@ function request(path,options={}){
 const providerLimiter=(success=true)=>({calls:[],async limit(input){this.calls.push(input);return {success};}});
 const env=(database,overrides={})=>({MARKET_HISTORY:database,INTELLIGENCE_READ_TOKEN:token,
  INTELLIGENCE_RATE_LIMIT_PER_MINUTE:'100',INTELLIGENCE_WORKER_GIT_SHA:'abcdef0',
- CF_VERSION_METADATA:{id:'deployment-test'},INTELLIGENCE_RATE_LIMITER:providerLimiter(),...overrides});
+ CF_VERSION_METADATA:{id:'deployment-test',tag:'candidate-test',timestamp:'2026-10-08T00:00:00.000Z'},
+ INTELLIGENCE_RATE_LIMITER:providerLimiter(),...overrides});
 
 test('authentication and methods are rejected before any D1 access',async()=>{
  const database=db();
@@ -57,12 +58,21 @@ test('health is machine-readable, bounded and contains no secret',async()=>{
  assert.equal(body.latestFeatureRun.featureVersion,2);assert.equal(body.latestFeatureRun.qualityCeiling,'UNVERIFIED_TIME');
  assert.equal(body.storageGrowth.observations[0].row_count,10);
  assert.equal(body.release.workerGitSha,'abcdef0');assert.equal(body.release.deploymentId,'deployment-test');
+ assert.equal(body.release.deploymentTag,'candidate-test');
+ assert.equal(body.release.deploymentTimestamp,'2026-10-08T00:00:00.000Z');
  assert.equal(body.storageGrowth.observationProjection.status,'LIMITED_SAMPLE');
  assert.equal(body.storageGrowth.observationProjection.projectedAnnualJsonBytes,25000000);
  assert.equal(body.metadata.feature_version,2);assert.equal(body.metadata.pipeline_status,'OK');
  assert.equal(response.headers.get('Cache-Control'),'no-store');
  assert.doesNotMatch(JSON.stringify(body),new RegExp(token));
  assert.ok(database.statements.every(sql=>sql.trim().startsWith('SELECT')));
+});
+
+test('health never presents placeholder or malformed release identity as a Git SHA',async()=>{
+ const response=await worker.fetch(request('/health',{ip:'192.0.2.19'}),env(db(),{
+  INTELLIGENCE_WORKER_GIT_SHA:'REPLACE_WITH_DEPLOYED_COMMIT_SHA'}));
+ assert.equal(response.status,200);const body=await response.json();
+ assert.equal(body.release.workerGitSha,null);
 });
 
 test('state preserves null and stale quality and enforces a past-only cutoff',async()=>{

@@ -1,6 +1,6 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-08 06:53 KST
+Last updated: 2026-10-08 10:46 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
 ## Current Production
@@ -10,9 +10,9 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 - Deployed production Worker baseline remains PR #2 commit `c88c8d03c50c5db5927f22b427b436d947691fc6`.
   GitHub main now contains PR #3 code, but no Cloudflare Worker deployment was performed.
 - Latest snapshot schema: `schemaVersion: 3`
-- Final snapshot at 2026-10-07 20:01:17 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: OK`.
-- Samsung/SK Hynix source time was 20:00:00 KST and both were correctly marked `CLOSED`. Program and
-  futures were also closed. The relay stopped after the final snapshot, leaving a stable main head.
+- 2026-10-08 regular-session D1 observation at 10:16:46 KST contained live Samsung/SK Hynix prices,
+  current stock-flow buckets, live market investor flow and current futures/OI/Basis data. It preserved
+  the stale program state and unverified exchange times instead of promoting them to live data.
 - D1: `market-history`, table `market_observations`, production observations continue to accumulate. The additive `feature_runs` table now contains exactly three Feature v2 rows across three distinct slots; production v1 observations were not updated. Earlier storage audit measured 11.56 MB.
 - PR #2: merged and production-validated. D1 failure isolation and automatic recovery were validated before merge.
 
@@ -30,6 +30,51 @@ production isolation and documentation all passed. PR #3 merged to main as `2b18
 M3 — Descriptive Signal Layer is `PURE_FUNCTION_CANDIDATE`: deterministic signal generation,
 quality confidence ceilings and synthetic correctness tests are implemented, but no production endpoint,
 alert or investment action consumes the signals.
+
+## CHECKPOINT — Intelligence Candidate Live Read Validation
+
+- timestamp: `2026-10-08 10:46 KST`
+- market_state: `REGULAR_SESSION`
+- branch: `feature/m2-operational-storage` (local continuation `m2-live-validation-local`)
+- implementation_commit: `2394fbc26fa09f6743a9e1547c883b998e8322da`
+- remote_head_before_checkpoint: `e81600e64fe9ac4eee2e37a34f111eb97a252752`
+- completed: isolated `market-intelligence-read-candidate` deployed from GitHub; candidate-only
+  `INTELLIGENCE_READ_TOKEN`, read-only `MARKET_HISTORY`, provider rate limiter and version metadata
+  bindings configured; no production binding, Secret, route or Worker was changed
+- authentication: missing token and wrong token returned HTTP 401; correct token accepted
+- endpoints: `/health`, `/state`, `/features` and bounded `/history` returned authenticated read-only
+  responses; every reported D1 query had `rowsWritten: 0`
+- boundary validation: POST returned `METHOD_NOT_ALLOWED`; invalid ticker, oversized history range,
+  future cutoff, unsupported Feature version and `limit=121` returned their explicit validation errors
+- live state: Samsung/SK Hynix prices, stock flows, KOSPI/KOSPI200, market flow, program, futures flow,
+  OI/OI change, Basis/marketBasis, freshness, source errors and pipeline quality were read from the
+  2026-10-08 production history without fabricating null, zero or verified exchange time
+- live changed bucket: actual 09:30 to 10:00 stock-flow transition replayed at cutoff
+  `1791421605263`; Samsung foreign delta `+71,000`, Samsung institution delta `-228,000`, SK Hynix
+  foreign delta `-42,000`, SK Hynix institution delta `-5,000`; direction was emitted and acceleration
+  remained null with `INSUFFICIENT_BUCKET_HISTORY`
+- unchanged bucket: latest replay returned `BUCKET_UNCHANGED` with null delta/direction/acceleration,
+  never an artificial zero
+- Feature v2 read: stored compact Feature v2 preserved `engine_git_sha`, `input_cutoff`, quality ceiling,
+  2/5/10/30-minute windows, volatility, acceleration, relative strength, program, futures/OI/Basis and
+  divergence; 13,884 compact bytes versus 68,594 full bytes (79.759% reduction)
+- storage status: latest stored Feature v2 row is still from 2026-10-07; continuous 2026-10-08 Feature
+  v2 persistence is not claimed and no candidate write was enabled
+- observability refinement: release response now supports deployment ID, tag and timestamp and rejects
+  placeholder/malformed Git SHAs; limitation text now distinguishes provider rate limiting from
+  per-isolate failure counters
+- tests: local `59/59 PASS`
+- production_impact: none — production relay, GitHub publication, D1 writer and Feature writer were not
+  changed; candidate failures remain isolated
+- waiting_for_live: a third real scheduled stock-flow bucket is required to validate live acceleration;
+  the next source bucket is 11:20 KST and should be observed after its normal fetch delay. Continuous
+  same-day Feature v2 persistence also remains unvalidated because it is not enabled in production.
+- release_identity_gap: deployed `/health` returned `workerGitSha: null` and `deploymentId: null`; the
+  code preserves this as unknown rather than inventing an identity. Git SHA injection through the
+  candidate build command and a subsequent authenticated `/health` check remain required.
+- next_exact_step: push this checkpoint to PR #4, require CI and isolated candidate build success, then
+  configure the candidate deploy command to inject the Workers Builds commit SHA without changing any
+  production service
 
 ## RECOVERY_CHECKPOINT — 2026-10-08 06:53 KST
 
