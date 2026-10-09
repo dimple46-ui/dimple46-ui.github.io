@@ -1,0 +1,31 @@
+# Candidate-only deployment template. Candidate deployment only; production Worker is untouched.
+name = "market-intelligence-read-candidate"
+main = "cloudflare/intelligence-read-worker.mjs"
+compatibility_date = "2026-10-07"
+workers_dev = true
+preview_urls = false
+
+[observability]
+enabled = true
+
+[vars]
+INTELLIGENCE_QUERY_TIMEOUT_MS = "5000"
+INTELLIGENCE_RATE_LIMIT_PER_MINUTE = "60"
+INTELLIGENCE_WORKER_GIT_SHA = "REPLACE_WITH_DEPLOYED_COMMIT_SHA"
+
+[[d1_databases]]
+binding = "MARKET_HISTORY"
+database_name = "market-history"
+database_id = "c9902dac-8d27-47ec-80b5-73b2b1339535"
+
+[[ratelimits]]
+name = "INTELLIGENCE_RATE_LIMITER"
+# Candidate-specific, positive integer namespace. Do not reuse for another limiter.
+namespace_id = "741930205"
+
+  [ratelimits.simple]
+  limit = 60
+  period = 60
+
+[version_metadata]
+binding = "CF_VERSION_METADATA"

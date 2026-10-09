@@ -1,7 +1,171 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-07 21:31 KST
+Last updated: 2026-10-08 14:00 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Candidate Feature Freshness Semantics Corrected
+
+- timestamp: `2026-10-08 14:00 KST`; target: isolated read-only candidate only
+- issue: `/features` and top-level `/health` metadata could report `freshness.age_ms=0` for an old
+  stored Feature because age was calculated from the Feature input cutoff instead of the request/as-of time
+- fix: metadata now calculates `AS_OF_MINUS_OBSERVED_AT` while preserving the immutable Feature
+  `input_cutoff`; service release version advanced from 1 to 2
+- scope: `/state`, `/history`, `/features` and `/health` use an explicit freshness reference; no source
+  status, quality ceiling, stored row or production contract is changed
+- tests: focused intelligence suite `9/9 PASS`; full regression suite `59/59 PASS`
+- production impact: none before isolated candidate deployment; no production Worker, binding, Secret,
+  route, writer or D1 data change
+- next_exact_step: deploy this candidate-only correction through PR #4, verify CI/build identity, then
+  confirm `/health` reports service release 2 and a nonzero honest Feature age
+
+## CHECKPOINT — Operational Documentation Synchronized
+
+- timestamp: `2026-10-08 13:51 KST`
+- updated: `README.md`, `D1_SETUP.md`, `CHANGELOG.md`, `AUDIT.md` and `DEPLOYMENT.md`
+- corrected stale claims: PR #3 is merged to GitHub main; the read-only intelligence candidate is
+  deployed and validated; neither fact is presented as a production relay deployment
+- preserved boundaries: production remains the PR #2 baseline, continuous Feature v2 writes remain
+  disabled, and no retention/cadence/route/binding/Secret change is authorized
+- tests: not rerun because this checkpoint changes documentation only; last code suite remains `59/59 PASS`
+- production impact: none
+- next_exact_step: M2 is candidate-validated except for long-running provider-byte measurement and any
+  separately approved consumer/production migration; do not manufacture completion from JSON estimates
+
+## CHECKPOINT — Second Live Candidate/Production State Equivalence Passed
+
+- timestamp: `2026-10-08 13:45 KST`; compared observation: `2026-10-08 13:42:44 KST`
+- candidate observation identity: slot `1791434520000`, observed/available at `1791434564157`,
+  trading day `20261008`
+- production equivalence: the corresponding `market-live.json` snapshot and candidate D1 `/state`
+  matched Samsung/SK Hynix price, OHLC, volume and trading value; stock-flow buckets; KOSPI/KOSPI200;
+  market investors; program; futures investors; OI/OI change; Basis/marketBasis
+- exact samples: Samsung `265,500` and volume `12,284,872`; SK Hynix `1,712,000` and volume
+  `1,853,074`; program total `-1,122,850,229,754`; futures/OI/Basis `1061.75/137,168/5.35`
+- quality: both sources reported `pipelineStatus=OK`, empty `sourceErrors`, and retained the explicit
+  unverified exchange-time list for indexes/futures
+- query safety: D1 meta reported one row read and zero rows written
+- result: live candidate/latest-snapshot equivalence is now validated at multiple regular-session
+  timestamps (10:16 and 13:42 KST)
+- production impact: none; the candidate performed a bounded read only
+- next_exact_step: complete stale operational documentation and retain the 20-trading-day D1 growth
+  measurement gate; do not introduce retention deletion or reduce GitHub publication cadence
+
+## CHECKPOINT — M3 Live-input Signal Replay Validated
+
+- timestamp: `2026-10-08 13:42 KST`; validation type: `LIVE_INPUT_OFFLINE_SIGNAL_REPLAY`
+- input: captured authenticated Feature v2 replay at cutoff `2026-10-08T02:26:43.951Z`
+  (11:26:43 KST), containing the real third scheduled Samsung/SK Hynix stock-flow bucket
+- result: 18 deterministic descriptive signals; focused Signal suite `6/6 PASS`
+- stock flow: Samsung `FOREIGN_BUYING_ACCELERATING`, SK Hynix
+  `FOREIGN_SELLING_DECELERATING`, and SK Hynix `INSTITUTION_FLOW_REVERSAL` matched the verified
+  bucket deltas and acceleration values
+- futures: six 5/10/30-minute position/risk signals retained `UNVERIFIED_TIME`; confidence was capped
+  at `MEDIUM`, never `HIGH`
+- program: zero program signals were emitted because the live Feature input was `STALE_INPUT`
+- invariants: zero confidence-ceiling violations, zero probability fields, Feature version 2 and the
+  exact input cutoff were preserved; no BUY/SELL action was generated
+- scope: this validates the existing pure Signal function against actual live-market input; it is not
+  a production Signal endpoint, alert, prediction-accuracy claim or production deployment
+- production impact: none; no D1, GitHub snapshot, candidate or production write was executed
+- next_exact_step: capture a second live authenticated candidate `/state` response and compare its
+  exact observation identity and values with the corresponding production snapshot
+
+## CHECKPOINT — Candidate Release Identity Verified
+
+- timestamp: `2026-10-08 13:38 KST`; market state: `REGULAR_SESSION`
+- branch/deployed commit: `feature/m2-operational-storage` at
+  `2d34e7399f648168d6d8b88486071d27f382254f`
+- tests/CI: GitHub Actions run `37727696681` completed `SUCCESS`; no code changed after the existing
+  local `59/59 PASS` suite
+- deployment: isolated Cloudflare candidate build `24f9eab1-924a-47aa-89cb-6ff6f3c67e22`
+  completed successfully; `main` and production relay were not deployment targets
+- authenticated validation: `/health` returned
+  `release.workerGitSha=2d34e7399f648168d6d8b88486071d27f382254f`, exactly matching the GitHub and
+  Cloudflare build commit
+- provider metadata: `deploymentId` and `deploymentTag` were null and `deploymentTimestamp` was the
+  zero/default timestamp; these fields remain explicitly unavailable rather than being inferred
+- read-only evidence: latest observation was from trading day `20261008`; D1 query metadata reported
+  zero rows written; Feature v2 remained the latest stored compact Feature version
+- quality: `STALE_INPUT`/`DEGRADED` was preserved; empty `sourceErrors` did not override stale or
+  unverified-time quality
+- isolation: candidate authentication, D1 binding, provider limiter and version metadata binding were
+  preserved; production Worker, binding, Secret, route, writer and existing D1 rows were unchanged
+- result: candidate branch control, isolated deployment and exact release-SHA observability are
+  `VERIFIED_COMPLETE`
+- next_exact_step: validate the existing pure-function M3 descriptive Signal Layer against the captured
+  live Feature v2 replay without enabling production or candidate writes
+
+## CHECKPOINT — Candidate Preview Build Noise Removed
+
+- timestamp: `2026-10-08 13:26 KST`; market state: `REGULAR_SESSION`
+- incident: Cloudflare build `#7328cd3c` ran the preview command for `main` snapshot commit `1c0f63b`
+  and failed because `wrangler.intelligence-candidate.example.toml` intentionally exists only on the
+  candidate feature branch
+- impact: no production relay, D1 writer, candidate active deployment or stored row was changed; the
+  failed job was a non-production preview build
+- cause: `프로덕션 이외 분기에 대한 빌드` was enabled while `main` receives a market snapshot commit
+  about every two minutes
+- remediation: user disabled non-production branch builds in candidate `분기 제어`; production branch
+  remains `feature/m2-operational-storage`
+- expected result: `main` snapshot commits no longer run candidate preview builds; pushes to the candidate
+  production branch continue to use the configured deploy command
+- next_exact_step: trigger one candidate-branch documentation checkpoint, verify its isolated build, then
+  verify the deployed commit SHA through authenticated `/health`
+
+## CHECKPOINT — Third Real Stock-flow Bucket Acceleration Validated
+
+- timestamp: `2026-10-08 12:10 KST`; market state: `REGULAR_SESSION`
+- request: authenticated read-only replay at cutoff `1791426403951`, exactly the first D1 observation
+  containing the real 11:20 KST scheduled stock-flow bucket
+- identity: mode `READ_ONLY_REPLAY`; observed at `2026-10-08T02:26:43.951Z`; 72 distinct current-day
+  slots; stored observation Feature v1 and query-time Feature v2 remained separate
+- Samsung foreign: delta `+282,000`, direction `INCREASING`, acceleration `+211,000`, status `VALID`
+- Samsung institution: delta `-100,000`, direction `DECREASING`, acceleration `+128,000`, status `VALID`
+- SK Hynix foreign: delta `-4,000`, direction `DECREASING`, acceleration `+38,000`, status `VALID`
+- SK Hynix institution: delta `+3,000`, direction `INCREASING`, acceleration `+8,000`, status `VALID`
+- semantics: all four inputs were `BUCKET_DELTA`/`VERIFIED`; the engine retained the discrete-estimate
+  limitation and did not fabricate continuous five-minute stock flow
+- horizons: 2/5/10/30-minute windows were all available; stock-flow window values remained explicitly
+  `BUCKET_CHANGE_ONLY`; price, volatility, momentum/volume acceleration, relative strength,
+  futures/OI/Basis and divergence outputs were generated from past-only observations
+- quality: overall ceiling `STALE_INPUT`; program values were null/`UNUSABLE_DATA` because the source
+  was stale; index/futures values retained `UNVERIFIED_TIME`
+- same-time history: 5/10/20-day baselines remained `INSUFFICIENT_HISTORY` with three actual trading-day
+  samples; no synthetic sample was introduced
+- storage/query evidence: full Feature 71,866 bytes; compact Feature 14,381 bytes; 79.989% reduction;
+  D1 reads current/intraday/same-time `22/73/2,349`; every query reported `rowsWritten: 0`
+- timing: 56 ms response wall time; explicitly not Worker CPU time
+- result: live changed-bucket delta, direction and acceleration gate is `VERIFIED_COMPLETE`
+- still open: live M3 Signal confidence ceiling and continuous current-day Feature v2 persistence;
+  neither is inferred from this Feature replay
+- next_exact_step: inject the isolated candidate build commit SHA and verify it through authenticated
+  `/health`; no production Worker, binding, Secret, route or writer change is authorized
+
+## RECOVERY_CHECKPOINT — 2026-10-08 11:57 KST
+
+- timestamp: `2026-10-08 11:57 KST`; market state: `REGULAR_SESSION`
+- branch: remote `feature/m2-operational-storage` at `9f39fc71e8695ae6c6ae50b4c4e9884fecd671be`;
+  PR #4 remains Draft/Open and unmerged
+- main: `b236241f6d4d41226466540a60b44fbcb6f7c720` at inspection time; this is a normal live-snapshot
+  commit and is expected to advance about every two minutes
+- tests/CI: local `59/59 PASS`; GitHub Actions `37714775586` SUCCESS at the verified branch head
+- deployment: isolated Cloudflare candidate build `6bb0e9d9-a456-484f-b48c-fa6e38c48681` SUCCESS for
+  `9f39fc71...`; no production service was a deployment target
+- candidate: existing Secret, D1 binding, provider limiter and version metadata binding are preserved;
+  authenticated endpoints and all bounds were already validated with zero reported D1 rows written
+- production: 11:56:42 KST snapshot was fresh with empty `sourceErrors`; Samsung/SK Hynix prices were
+  `LIVE`, stock flow had advanced to the real 11:20 bucket, and futures/OI/Basis were available
+- degraded explanation: `pipelineStatus=DEGRADED` was caused by program market time 11:50 KST being
+  403 seconds old, beyond its 300-second freshness ceiling. Index and futures exchange timestamps remain
+  `UNVERIFIED_TIME`; neither condition is promoted to `LIVE` or treated as a source exception.
+- live bucket evidence: actual 09:30, 10:00 and 11:20 values are now present for both stocks. This is
+  sufficient input for acceleration, but engine output is not marked PASS until authenticated replay.
+- partial local recovery: a documentation-only follow-up checkpoint exists locally but was not published
+  because the prior Work action exhausted its approval/usage allowance; no deployed code depends on it
+- waiting_for_live: authenticated third-bucket Feature replay and Signal confidence-ceiling inspection;
+  continuous 2026-10-08 Feature v2 persistence remains disabled/unvalidated
+- next_exact_step: authenticated read-only Feature validator replay after the 11:20 bucket; writes must
+  stay disabled
 
 ## Current Production
 
@@ -10,9 +174,9 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 - Deployed production Worker baseline remains PR #2 commit `c88c8d03c50c5db5927f22b427b436d947691fc6`.
   GitHub main now contains PR #3 code, but no Cloudflare Worker deployment was performed.
 - Latest snapshot schema: `schemaVersion: 3`
-- Final snapshot at 2026-10-07 20:01:17 KST: `fresh: true`, `sourceErrors: []`, `pipelineStatus: OK`.
-- Samsung/SK Hynix source time was 20:00:00 KST and both were correctly marked `CLOSED`. Program and
-  futures were also closed. The relay stopped after the final snapshot, leaving a stable main head.
+- 2026-10-08 regular-session D1 observation at 10:16:46 KST contained live Samsung/SK Hynix prices,
+  current stock-flow buckets, live market investor flow and current futures/OI/Basis data. It preserved
+  the stale program state and unverified exchange times instead of promoting them to live data.
 - D1: `market-history`, table `market_observations`, production observations continue to accumulate. The additive `feature_runs` table now contains exactly three Feature v2 rows across three distinct slots; production v1 observations were not updated. Earlier storage audit measured 11.56 MB.
 - PR #2: merged and production-validated. D1 failure isolation and automatic recovery were validated before merge.
 
@@ -20,7 +184,7 @@ Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evide
 
 M2 — Operational / Storage Architecture Stabilization.
 
-Status: `M2_POLICY_AND_READ_API_CODE_COMPLETE_NOT_DEPLOYED`.
+Status: `M2_READ_API_CANDIDATE_DEPLOYED_AND_IDENTITY_VERIFIED`; production rollout is not approved.
 
 M1 — Feature Engine 2.0 production validation is `COMPLETE`: correctness, real changed-bucket
 semantics, three-slot compact persistence, rollback, provider CPU evidence, D1 failure isolation,
@@ -30,6 +194,128 @@ production isolation and documentation all passed. PR #3 merged to main as `2b18
 M3 — Descriptive Signal Layer is `PURE_FUNCTION_CANDIDATE`: deterministic signal generation,
 quality confidence ceilings and synthetic correctness tests are implemented, but no production endpoint,
 alert or investment action consumes the signals.
+
+## CHECKPOINT — Intelligence Candidate Live Read Validation
+
+- timestamp: `2026-10-08 10:46 KST`
+- market_state: `REGULAR_SESSION`
+- branch: `feature/m2-operational-storage` (local continuation `m2-live-validation-local`)
+- implementation_commit: local `2394fbc26fa09f6743a9e1547c883b998e8322da`; published with this
+  checkpoint as remote PR #4 commit `9f39fc71e8695ae6c6ae50b4c4e9884fecd671be`
+- remote_head_before_checkpoint: `e81600e64fe9ac4eee2e37a34f111eb97a252752`
+- completed: isolated `market-intelligence-read-candidate` deployed from GitHub; candidate-only
+  `INTELLIGENCE_READ_TOKEN`, read-only `MARKET_HISTORY`, provider rate limiter and version metadata
+  bindings configured; no production binding, Secret, route or Worker was changed
+- authentication: missing token and wrong token returned HTTP 401; correct token accepted
+- endpoints: `/health`, `/state`, `/features` and bounded `/history` returned authenticated read-only
+  responses; every reported D1 query had `rowsWritten: 0`
+- boundary validation: POST returned `METHOD_NOT_ALLOWED`; invalid ticker, oversized history range,
+  future cutoff, unsupported Feature version and `limit=121` returned their explicit validation errors
+- live state: Samsung/SK Hynix prices, stock flows, KOSPI/KOSPI200, market flow, program, futures flow,
+  OI/OI change, Basis/marketBasis, freshness, source errors and pipeline quality were read from the
+  2026-10-08 production history without fabricating null, zero or verified exchange time
+- live changed bucket: actual 09:30 to 10:00 stock-flow transition replayed at cutoff
+  `1791421605263`; Samsung foreign delta `+71,000`, Samsung institution delta `-228,000`, SK Hynix
+  foreign delta `-42,000`, SK Hynix institution delta `-5,000`; direction was emitted and acceleration
+  remained null with `INSUFFICIENT_BUCKET_HISTORY`
+- unchanged bucket: latest replay returned `BUCKET_UNCHANGED` with null delta/direction/acceleration,
+  never an artificial zero
+- Feature v2 read: stored compact Feature v2 preserved `engine_git_sha`, `input_cutoff`, quality ceiling,
+  2/5/10/30-minute windows, volatility, acceleration, relative strength, program, futures/OI/Basis and
+  divergence; 13,884 compact bytes versus 68,594 full bytes (79.759% reduction)
+- storage status: latest stored Feature v2 row is still from 2026-10-07; continuous 2026-10-08 Feature
+  v2 persistence is not claimed and no candidate write was enabled
+- observability refinement: release response now supports deployment ID, tag and timestamp and rejects
+  placeholder/malformed Git SHAs; limitation text now distinguishes provider rate limiting from
+  per-isolate failure counters
+- tests: local `59/59 PASS`; GitHub Actions run `37714775586` passed at remote commit `9f39fc71...`
+- deployment: isolated Cloudflare build `6bb0e9d9-a456-484f-b48c-fa6e38c48681` successfully deployed
+  PR #4 commit `9f39fc71...` at 10:49 KST; production services were not targets of this build
+- production_impact: none — production relay, GitHub publication, D1 writer and Feature writer were not
+  changed; candidate failures remain isolated
+- waiting_for_live: a third real scheduled stock-flow bucket is required to validate live acceleration;
+  the next source bucket is 11:20 KST and should be observed after its normal fetch delay. Continuous
+  same-day Feature v2 persistence also remains unvalidated because it is not enabled in production.
+- release_identity_gap: deployed `/health` returned `workerGitSha: null` and `deploymentId: null`; the
+  code preserves this as unknown rather than inventing an identity. Git SHA injection through the
+  candidate build command and a subsequent authenticated `/health` check remain required.
+- next_exact_step: configure only the candidate deploy command to inject the Workers Builds commit SHA,
+  trigger an isolated candidate redeploy, then require authenticated `/health` to report that exact SHA
+
+## RECOVERY_CHECKPOINT — 2026-10-08 06:53 KST
+
+- timestamp: `2026-10-08 06:53 KST`
+- market_state: `PRE_MARKET`
+- branch: local `m2-operational-storage-local`; remote `feature/m2-operational-storage`
+- HEAD: local candidate hardening commit `d362324cc4ea9bb0d999824d8b1d5f86cea2997a`;
+  remote PR #4 hardening commit `11e6d3f9c59aaa38deaeafd6180cafb0fc074be4`
+- main_HEAD: `5c6acef4f38baf8c3bebb64f929fadc41c8a4976`
+- PR_3_status: `MERGED`; merge commit `2b188d15f9b2d2888ff656f3aa8ea03f842c87ae`
+- last_completed_commit: remote PR #4 head `11e6d3f9c59aaa38deaeafd6180cafb0fc074be4`;
+  equivalent local hardening commit `d362324cc4ea9bb0d999824d8b1d5f86cea2997a`
+- last_completed_test: local `58/58 PASS`; remote GitHub Actions run `37692539198` passed at
+  `11e6d3f9...`
+- last_completed_deployment: separate Feature validator only; no read-only intelligence candidate
+  deployment evidence is available and the production Worker remains the PR #2 baseline
+- last_completed_validation: Feature v2 has three immutable D1 rows in three distinct slots; rollback,
+  changed-bucket semantics, failure isolation and production continuity were already validated
+- intelligence_candidate_status: `PARTIAL` — isolated Worker routes, mandatory provider limiter,
+  ticker/range/version/cutoff bounds, timeout, metadata, tests and Wrangler dry-run are complete;
+  the user confirmed the candidate Worker is absent; its Secret/bindings are therefore not created
+- M1_status: core Feature Engine validation remains complete; the separate 2026-10-08 live operational
+  revalidation below remains `WAITING_FOR_LIVE_MARKET_VALIDATION`
+- waiting_for_live: actual 2026-10-08 state/Feature/flow/program/futures/OI/basis/relative-strength/
+  divergence/acceleration/quality and Signal behavior
+- next_exact_step: validate the real-ID candidate bundle, then configure the separate Cloudflare/GitHub
+  candidate deployment and enter the new Secret without changing production
+
+## 2026-10-08 Work Classification
+
+### COMPLETED_OFF_MARKET
+
+- Recovered the exact local/remote/main/PR state without recreating PR #3, D1 History, Feature Engine or
+  `feature_runs`.
+- Hardened the intelligence candidate to accept only `005930`, `000660` or an explicit combined scope;
+  ticker-specific history is mandatory and bounded to 12 hours/120 rows.
+- Made the Cloudflare provider rate-limit binding mandatory and fail-closed before D1; retained the
+  secondary per-isolate limit as defense-in-depth.
+- Added a fixed-SELECT guard, 5-second query deadline, stable response metadata and stock-specific
+  history filtering without coercing null/stale data.
+- Added a candidate-only Wrangler template with no Secret value, production route, Cron or production
+  binding. Wrangler 4.148 dry-run bundled 19.76 KiB and identified only the candidate D1, rate-limit,
+  version-metadata and non-secret variable bindings.
+- Local regression suite: `58/58 PASS`.
+
+### WAITING_FOR_LIVE_MARKET_VALIDATION
+
+- Keep every item in `NEXT LIVE MARKET VALIDATION` below open until actual 2026-10-08 regular-session
+  evidence exists. Synthetic tests, off-market snapshots and historical replay cannot close these gates.
+
+### BLOCKED_BY_USER_ACTION
+
+- Cloudflare Dashboard verification confirmed that
+  `market-intelligence-read-candidate` does not already exist; the Work cloud browser is blocked by a
+  persistent sign-in-page verification error, so the user verified the Worker list directly.
+- The existing `market-history` Database ID was supplied by the user and is now configured only in the
+  candidate template. No Secret value is stored.
+- Secret existence also remains unknown until the Worker is confirmed. If a new token is required, it
+  must be entered directly as a Cloudflare Secret and never returned or recorded.
+
+## CHECKPOINT — Intelligence Candidate Hardened / PR #4 CI Passed
+
+- timestamp: `2026-10-08 06:55 KST`
+- branch: `feature/m2-operational-storage`
+- commit: `11e6d3f9c59aaa38deaeafd6180cafb0fc074be4`
+- completed: mandatory provider limiter, fixed-SELECT guard, ticker/range/version/cutoff bounds, query
+  deadline, response metadata, isolated Wrangler template and recovery documentation
+- tests: local `58/58 PASS`; GitHub Actions run `37692539198` `SUCCESS`
+- deployment: not yet performed; the candidate Worker is absent and its Secret/bindings are not created
+- validation: Wrangler 4.148 dry-run `PASS`; 19.76 KiB bundle; required candidate bindings detected
+- production_impact: none — production Worker, bindings, Secrets, routes, Cron, D1 rows and GitHub
+  publication remain unchanged
+- waiting_for_live: all 2026-10-08 items in `NEXT LIVE MARKET VALIDATION`
+- next_exact_step: run the real-ID Wrangler dry-run and tests, then configure the separate candidate
+  deployment without exposing or recreating any Secret
 
 ## Completed
 
@@ -107,9 +393,11 @@ alert or investment action consumes the signals.
 ## In Progress
 
 - M2 work continues on `feature/m2-operational-storage`; production remains unchanged.
-- The read-only intelligence API remains local/branch-only until a separate candidate Worker,
-  read-only D1 binding, authentication Secret and provider-level rate limit are explicitly approved.
-- M3 signals remain pure-function outputs pending historical replay and next-session live behavior validation.
+- The read-only intelligence API is deployed as an isolated candidate. Authentication, fixed read-only
+  queries, bounds, D1 reads, provider limiting, release SHA and failure isolation are validated;
+  production routing, bindings and Worker remain outside the approval scope.
+- M3 signals remain pure-function outputs. Correctness against a captured real live Feature v2 replay
+  is validated; endpoint delivery, persistence, alerts and predictive evaluation are not implemented.
 
 ## Blocked / Not Yet Validated
 
@@ -119,9 +407,8 @@ alert or investment action consumes the signals.
 - Actual Worker CPU duration and account plan/usage. D1 dashboard storage was observed at 11.56 MB; per-query D1 meta is now captured, including 1,686 rows read by the same-time query.
 - Per-request Worker CPU is not exposed by the captured dashboard percentile view.
 - Long-running storage/retention and GitHub snapshot transport redesign belong to M2.
-- No GitHub CI workflow/status checks are configured; local tests are the current automated gate.
-- Secure intelligence API deployment requires a new `INTELLIGENCE_READ_TOKEN`; it has not been
-  created or requested. The built-in limiter is per-isolate and is not a substitute for a provider-level rule.
+- Provider version metadata did not supply a deployment ID/tag and returned a zero/default deployment
+  timestamp. Exact deployment identity is instead verified through the injected commit SHA.
 - Signal tests are development correctness evidence, not predictive accuracy or live production validation.
 
 ## Branch / PR / Deployment
@@ -132,8 +419,9 @@ alert or investment action consumes the signals.
 | PR #2 | `MERGED_MAIN`, `PRODUCTION_VALIDATED` | Merged 2026-10-02; production validation recorded in PR body. |
 | `feature/feature-engine-v2` | Merged branch | Merged to main through PR #3. |
 | PR #3 | `MERGED_MAIN` | Merge commit `2b188d15f9b2d2888ff656f3aa8ea03f842c87ae`; no production deployment implied. |
-| `feature/m2-operational-storage` | Development branch | Additive M2 policy/observability/CI work; not deployed. |
-| PR #4 | Draft/Open | M2 commit `82851309548a6d0a8e7d64aaef6696219624ab0a`; 56/56 local and GitHub Actions passed. |
+| `feature/m2-operational-storage` | Isolated candidate branch | Candidate commit `2d34e739...` deployed; production unchanged. |
+| PR #4 | Draft/Open | GitHub Actions `37727696681` and Cloudflare build `24f9eab1...` passed at `2d34e739...`; unmerged. |
+| `market-intelligence-read-candidate` | `CANDIDATE_VALIDATED` | Authenticated read-only endpoints and exact deployed Git SHA verified; no production route. |
 | `market-feature-validation` | Separate candidate | Authenticated GET at 09:44 KST on 2026-10-07 verified compact source hash `39e39bb1...`, D1 query metadata and no write. Writes remain disabled. |
 | Production `market-relay` | Operational | Continues schema v3 snapshots and D1 observations; v2 not deployed. |
 
@@ -194,17 +482,16 @@ Percentages are audit estimates, not predictive-performance scores.
 
 ## Known Issues / Technical Debt
 
-1. Main documentation still says D1/history is an undeployed candidate. `README.md`, `D1_SETUP.md`, `CHANGELOG.md`, `AUDIT.md` and `DEPLOYMENT.md` are stale after PR #2.
-2. PR #1 remains open although the later PR #2/main incorporated the relevant quality work.
-3. A two-minute GitHub snapshot commit cadence creates roughly 331 commits per full relay day, or 82,750 commits per 250 trading days.
-4. PR #3 was 1,249 snapshot commits behind main at the 19:34 KST audit; the high-frequency snapshot history obscures real code divergence.
-5. Corrected candidate v2 response measured 69,386 full feature bytes; compact encoding measured 14,067 bytes while retaining explicit invalid/null states.
-6. At 331 rows/day, compact derived JSON projects to 4.66 MB/day, 93.12 MB/20 days, 279.37 MB/60 days and 1.16 GB/250 days before SQLite/index/raw-observation overhead.
-7. D1 dashboard storage was 11.56 MB at the 2026-10-06 audit; the account plan remains unverified. Official limits are 500 MB/database on Free and 10 GB/database on Workers Paid.
-8. Compact candidate replay wall time was 44 ms, but wall time is not Worker CPU duration. D1 query meta was captured; the same-time query read 1,686 rows and needs cost monitoring/optimization.
-9. Production program data can exceed the five-minute freshness rule; this correctly degrades the pipeline but reduces usable window features.
-10. Index/futures adapters use fetch time because verified exchange timestamps are unavailable.
-11. The integrated PR #3 writer cannot safely prove v2 persistence beside the production v1 writer because immutable two-minute slots and `features_json IS NULL` allow the first writer to win.
+1. PR #1 remains open although the later PR #2/main incorporated the relevant quality work.
+2. A two-minute GitHub snapshot commit cadence creates roughly 331 commits per full relay day, or 82,750 commits per 250 trading days.
+3. High-frequency snapshot history obscures real code divergence and complicates long-lived feature branches.
+4. Corrected candidate v2 response measured 69,386 full feature bytes; compact encoding measured 14,067 bytes while retaining explicit invalid/null states.
+5. At 331 rows/day, compact derived JSON projects to 4.66 MB/day, 93.12 MB/20 days, 279.37 MB/60 days and 1.16 GB/250 days before SQLite/index/raw-observation overhead.
+6. D1 dashboard storage was 11.56 MB at the 2026-10-06 audit; the account plan remains unverified. Official limits are 500 MB/database on Free and 10 GB/database on Workers Paid.
+7. Compact candidate replay wall time was 44 ms, but wall time is not Worker CPU duration. D1 query meta was captured; the same-time query read 1,686 rows and needs cost monitoring/optimization.
+8. Production program data can exceed the five-minute freshness rule; this correctly degrades the pipeline but reduces usable window features.
+9. Index/futures adapters use fetch time because verified exchange timestamps are unavailable.
+10. The integrated PR #3 writer cannot safely prove v2 persistence beside the production v1 writer because immutable two-minute slots and `features_json IS NULL` allow the first writer to win.
 
 ## Storage Decision
 
@@ -252,8 +539,9 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Complete the M2 branch tests and draft PR. Deployment of the read-only intelligence API remains a
-separate approval gate because it requires a new Secret, D1 binding and provider-level rate limit.
+Run the existing pure-function M3 descriptive Signal Layer against the captured 2026-10-08 live Feature
+v2 replay and verify its confidence ceiling/evidence semantics. Keep all writes disabled and do not modify
+the production Worker, route, bindings or Secrets.
 
 ## NEXT LIVE MARKET VALIDATION
 
@@ -726,3 +1014,17 @@ No synthetic sample may be used to pass this gate.
 - Compact-storage candidate SHA-256: `39e39bb133ed90f6fa950a056948ea03d1928905de4c8dab28434a7631f0567a` (deployed and authenticated GET validated).
 - Real-response compact measurement: 14,067 bytes, 79.73% reduction, quality ceiling `UNVERIFIED_TIME`; all 2/5/10/30-minute windows available; changed stock-flow bucket still not observed.
 - Tests: 36/36 local pass.
+
+## CHECKPOINT — Intelligence Candidate Git Connection
+
+- timestamp: `2026-10-08 09:44 KST`
+- branch: `feature/m2-operational-storage`
+- commit: pending checkpoint commit
+- completed: isolated `market-intelligence-read-candidate` Worker created; GitHub repository connected to the exact candidate branch
+- build: deploy command uses `wrangler.intelligence-candidate.example.toml`; non-production changes upload a version only
+- deployment: initial Hello World only; candidate intelligence bundle build is triggered by this checkpoint commit
+- validation: pending Cloudflare build result and authenticated endpoint checks
+- production_impact: none — production Worker, bindings, Secrets, routes and D1 rows remain unchanged
+- waiting_for_live: 2026-10-08 live state/Feature/flow/program/futures/OI/basis/relative-strength/divergence/acceleration/quality/Signal checks remain open
+- next_exact_step: verify the Cloudflare build, then add `INTELLIGENCE_READ_TOKEN` only as a candidate Secret
+
