@@ -1,7 +1,45 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-08 14:00 KST
+Last updated: 2026-10-11 15:52 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Read-only Signal Replay Validator Added
+
+- timestamp: `2026-10-11 15:52 KST`; market state: `WEEKEND_CLOSED`
+- completed: added a local, side-effect-free validator for authenticated Feature v2 replay JSON plus a
+  CLI for the next regular-session capture
+- enforced: `READ_ONLY_REPLAY`, Feature v2, input cutoff not later than replay cutoff, all reported D1
+  writes equal zero, deterministic Signal output, confidence ceiling, stale/null program suppression,
+  exact Signal input cutoff, and absence of probability or BUY/SELL action semantics
+- output: compact stock-flow delta/direction/acceleration summary and unique descriptive Signal types;
+  raw source data and authentication values are not copied or logged
+- tests: focused Signal/validator suites `9/9 PASS`; full regression suite `62/62 PASS`
+- validation class: `OFF_MARKET_VALIDATED`; synthetic fixtures test correctness but do not satisfy the
+  next live-market gate
+- production impact: none; no network, D1 write, Worker deployment, binding, Secret, route or main change
+- next_exact_step: commit/push this isolated validator checkpoint; candidate release-2 activation remains
+  separately blocked on Cloudflare build/deploy-log inspection
+
+## RECOVERY_CHECKPOINT — Candidate Build/Activation Mismatch Preserved
+
+- timestamp: `2026-10-11 15:46 KST`; market state: `WEEKEND_CLOSED`
+- branch: `feature/m2-operational-storage`; remote HEAD:
+  `33dc4fb2711a4e4807adbed1f7e7f57225cb11ff`; PR #4 remains Draft/Open and unmerged
+- main HEAD at recovery: `f4570a7d1aff08206d70934a4bb9bbaaf33e96d0`
+- tests/CI: unchanged candidate freshness code has local `59/59 PASS`; GitHub Actions run
+  `37729557411` is `SUCCESS` for exact remote HEAD `33dc4fb...`
+- Cloudflare build: candidate build `619e116a-b23c-4c5d-b304-99b0bf9797df` is reported successful for
+  `33dc4fb...`; this proves a build result, not the active Worker version
+- active deployment evidence: the last authenticated `/health` after that build still reported service
+  release 1, freshness basis `OBSERVATION_AGE_ONLY`, and SHA `2d34e739...`; release 2 activation is
+  therefore `BLOCKED_BY_USER_ACTION`/external verification, not complete
+- production: no production Worker, binding, Secret, route, writer, history or GitHub publication change
+- completed work locked: PR #3/M1, D1 History, compact `feature_runs`, bounded read API, authentication,
+  provider limiter, live state equivalence, third-bucket Feature replay and M3 live-input replay are not repeated
+- waiting_for_live: continuous current-day Feature v2 persistence remains disabled/unvalidated; future
+  live latency/recovery and live Signal transitions remain `WAITING_FOR_LIVE_MARKET_VALIDATION`
+- next_exact_step: inspect the candidate build log/deploy command for build `619e116a...`, then activate
+  and authenticate release 2 only in the isolated candidate; independent off-market validation tooling may proceed
 
 ## CHECKPOINT — Candidate Feature Freshness Semantics Corrected
 
@@ -539,13 +577,14 @@ See `FEATURE_STORAGE.md` for the measured A/B/C/D comparison, encoding contract,
 
 ## Next Exact Step
 
-Run the existing pure-function M3 descriptive Signal Layer against the captured 2026-10-08 live Feature
-v2 replay and verify its confidence ceiling/evidence semantics. Keep all writes disabled and do not modify
-the production Worker, route, bindings or Secrets.
+Inspect candidate Cloudflare build `619e116a-b23c-4c5d-b304-99b0bf9797df` and confirm that its deploy
+command activates, rather than only uploads, the Worker version. Then authenticate `/health` and require
+service release 2, Git SHA `33dc4fb...`, freshness basis `AS_OF_MINUS_OBSERVED_AT` and nonzero old-Feature
+age. Do not change the production Worker, route, bindings or Secrets.
 
 ## NEXT LIVE MARKET VALIDATION
 
-Status: `PLANNED_FOR_2026-10-08_REGULAR_MARKET`.
+Status: `PARTIALLY_VALIDATED_2026-10-08`; only explicitly remaining live gates carry forward.
 
 This is the first operational task for the next regular session. It does not reopen the already passed
 M1 candidate gates and must not trigger new feature development before live evidence is collected.
@@ -563,6 +602,15 @@ M1 candidate gates and must not trigger new feature development before live evid
 
 Same-time 5/10/20-day baselines remain `INSUFFICIENT_HISTORY` until enough real trading days exist.
 No synthetic sample may be used to pass this gate.
+
+For a new authenticated validator capture saved outside Git, run:
+
+```sh
+node scripts/validate-signal-replay.mjs /path/to/replay.json --engine-sha <validated-git-sha>
+```
+
+The command is read-only and fails if query metadata reports a write or the replay contains a future
+Feature cutoff. Its success is replay correctness evidence, not proof of current live-market behavior.
 
 ## Checkpoint — PR #3 Merged / M2 Policy Candidate
 

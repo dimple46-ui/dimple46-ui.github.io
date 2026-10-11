@@ -74,6 +74,21 @@ The candidate `/health` response includes:
 
 Worker CPU must continue to come from provider metrics. Wall time and D1 query duration are not CPU.
 
+## Replay validation procedure
+
+`scripts/validate-signal-replay.mjs` accepts a locally saved authenticated Feature-validator response
+and performs no network or database operation. It rejects non-read-only responses, future cutoffs,
+nonzero D1 writes, confidence-ceiling violations, stale/null program signals, nondeterministic output,
+and predictive/action fields. Use it for historical and next-session validation without committing the
+captured response or any Bearer token:
+
+```sh
+node scripts/validate-signal-replay.mjs /path/to/replay.json --engine-sha <validated-git-sha>
+```
+
+A passing replay is `OFF_MARKET_VALIDATED` or `LIVE_INPUT_OFFLINE_SIGNAL_REPLAY` evidence according to
+the capture source. It does not prove that the active candidate deployment or production writer changed.
+
 ## Isolated candidate deployment boundary
 
 `wrangler.intelligence-candidate.example.toml` defines only the separate
