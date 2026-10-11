@@ -15,7 +15,7 @@ function fixture(){
    cashVsFutures:{state:'CASH_UP_FUTURES_DOWN',status:'VALID',quality:'UNVERIFIED_TIME',strength:1,
     supportingEvidence:[{metric:'cash',value:1},{metric:'futures',value:-1}],contraryEvidence:[]}}};
  return {version:2,inputCutoff:cutoff,
-  bucketChanges:{samsung:{foreignFlow:metric(100,{status:'BUCKET_DELTA',acceleration:150}),
+  bucketChanges:{samsung:{foreignFlow:metric(100,{status:'BUCKET_DELTA',acceleration:50}),
     institutionFlow:metric(20,{status:'BUCKET_DELTA',acceleration:50})},
    skHynix:{foreignFlow:metric(-100,{status:'BUCKET_DELTA',acceleration:40}),
     institutionFlow:metric(0,{status:'BUCKET_UNCHANGED',acceleration:null})}},
@@ -36,9 +36,9 @@ test('descriptive signals cover flow acceleration, reversal, program, futures, r
 
 test('signal schema is reproducible and carries evidence, invalidation and versions',()=>{
  const signal=generated().find(value=>value.signal_type==='FOREIGN_BUYING_ACCELERATING');
- assert.equal(signal.signal_id,`s1:${cutoff}:005930:BUCKET:FOREIGN_BUYING_ACCELERATING`);
+ assert.equal(signal.signal_id,`s2:${cutoff}:005930:BUCKET:FOREIGN_BUYING_ACCELERATING`);
  assert.equal(signal.input_cutoff,cutoff);assert.equal(signal.generated_at,generatedAt);
- assert.equal(signal.feature_version,2);assert.equal(signal.signal_version,1);assert.equal(signal.engine_git_sha,sha);
+ assert.equal(signal.feature_version,2);assert.equal(signal.signal_version,2);assert.equal(signal.engine_git_sha,sha);
  assert.ok(signal.supporting_evidence.length>=2);assert.ok(signal.invalidation.length>=1);
  assert.match(signal.confidence.meaning,/NOT_PREDICTIVE_PROBABILITY/);
 });
@@ -56,6 +56,18 @@ test('stale, null and unchanged inputs do not create false zero-flow signals',()
  features.bucketChanges.skHynix.foreignFlow=metric(0,{status:'BUCKET_UNCHANGED',acceleration:0});
  const signals=generated(features).filter(value=>value.signal_type.startsWith('FOREIGN_'));
  assert.equal(signals.length,0);
+});
+
+test('foreign reversal and institution acceleration are mutually exclusive per flow bucket',()=>{
+ const features=fixture();
+ features.bucketChanges.samsung.foreignFlow=metric(40,{status:'BUCKET_DELTA',acceleration:100});
+ features.bucketChanges.samsung.institutionFlow=metric(100,{status:'BUCKET_DELTA',acceleration:40});
+ features.bucketChanges.skHynix.institutionFlow=metric(-100,{status:'BUCKET_DELTA',acceleration:-40});
+ const signals=generated(features).filter(value=>value.horizon==='BUCKET');
+ assert.ok(signals.some(value=>value.ticker==='005930'&&value.signal_type==='FOREIGN_FLOW_REVERSAL'));
+ assert.ok(signals.some(value=>value.ticker==='005930'&&value.signal_type==='INSTITUTION_BUYING_ACCELERATING'));
+ assert.ok(signals.some(value=>value.ticker==='000660'&&value.signal_type==='INSTITUTION_SELLING_ACCELERATING'));
+ assert.equal(signals.filter(value=>value.ticker==='005930'&&value.signal_type.startsWith('FOREIGN_')).length,1);
 });
 
 test('futures classifications preserve contrary evidence and remain descriptive',()=>{

@@ -1,4 +1,4 @@
-import {generateDescriptiveSignals} from './signal-engine.mjs';
+import {generateDescriptiveSignals, SIGNAL_VERSION} from './signal-engine.mjs';
 
 const LEVELS = ['NONE', 'LOW', 'MEDIUM', 'HIGH'];
 const STOCKS = ['samsung', 'skHynix'];
@@ -91,7 +91,7 @@ export function validateSignalReplay(replay, {engineGitSha, generatedAt} = {}) {
     replayCutoffMs,
     inputCutoff: replay.features.inputCutoff,
     featureVersion: replay.features.version,
-    signalVersion: signals[0]?.signal_version ?? 1,
+    signalVersion: signals[0]?.signal_version ?? SIGNAL_VERSION,
     signalCount: signals.length,
     signalTypes: [...new Set(signals.map(signal => signal.signal_type))].sort(),
     stockFlow: stockFlowSummary(replay.features),

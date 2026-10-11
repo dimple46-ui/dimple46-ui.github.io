@@ -1,4 +1,4 @@
-export const SIGNAL_VERSION = 1;
+export const SIGNAL_VERSION = 2;
 const FEATURE_VERSION = 2;
 const CONFIDENCE_LEVELS = ["NONE", "LOW", "MEDIUM", "HIGH"];
 const QUALITY_ORDER = [
@@ -55,6 +55,17 @@ function stableSignalId({inputCutoff, ticker, horizon, signalType}) {
   return `s${SIGNAL_VERSION}:${inputCutoff}:${ticker}:${horizon}:${signalType}`;
 }
 
+function flowSignalType(prefix, currentDelta, acceleration) {
+  const previousDelta = currentDelta - acceleration;
+  if (Math.sign(previousDelta) !== 0 && Math.sign(currentDelta) !== 0 &&
+    Math.sign(previousDelta) !== Math.sign(currentDelta)) return `${prefix}_FLOW_REVERSAL`;
+  if (currentDelta > 0 && acceleration > 0) return `${prefix}_BUYING_ACCELERATING`;
+  if (currentDelta < 0 && acceleration < 0) return `${prefix}_SELLING_ACCELERATING`;
+  if (currentDelta < 0 && acceleration > 0) return `${prefix}_SELLING_DECELERATING`;
+  if (currentDelta > 0 && acceleration < 0) return `${prefix}_BUYING_DECELERATING`;
+  return null;
+}
+
 function createSignal(context, definition) {
   const quality = worstQuality(definition.qualityInputs || []);
   const baseConfidence = definition.supportingEvidence.length >= 3 && definition.contraryEvidence.length === 0 ? "HIGH" :
@@ -83,31 +94,27 @@ function createSignal(context, definition) {
 
 function addStockFlowSignals(signals, features, context) {
   for (const [stock, identity] of Object.entries(STOCKS)) {
-    const foreign = features.bucketChanges?.[stock]?.foreignFlow;
-    if (usableMetric(foreign, ["BUCKET_DELTA"]) && typeof foreign.acceleration === "number") {
-      let signalType = null;
-      if (foreign.value > 0 && foreign.acceleration > 0) signalType = "FOREIGN_BUYING_ACCELERATING";
-      else if (foreign.value < 0 && foreign.acceleration < 0) signalType = "FOREIGN_SELLING_ACCELERATING";
-      else if (foreign.value < 0 && foreign.acceleration > 0) signalType = "FOREIGN_SELLING_DECELERATING";
-      if (signalType) signals.push(createSignal(context, {
+    for (const [flowName, prefix] of [["foreignFlow", "FOREIGN"], ["institutionFlow", "INSTITUTION"]]) {
+      const flow = features.bucketChanges?.[stock]?.[flowName];
+      if (!usableMetric(flow, ["BUCKET_DELTA"]) || typeof flow.acceleration !== "number") continue;
+      const signalType = flowSignalType(prefix, flow.value, flow.acceleration);
+      if (!signalType) continue;
+      const previousDelta = flow.value - flow.acceleration;
+      const reversal = signalType.endsWith("FLOW_REVERSAL");
+      signals.push(createSignal(context, {
         ticker: identity.ticker, horizon: "BUCKET", signalType,
-        strength: strengthFrom(foreign.value, foreign.acceleration), qualityInputs: [foreign],
-        supportingEvidence: [{metric: `${stock}.foreignFlowDelta`, value: foreign.value},
-          {metric: `${stock}.foreignFlowAcceleration`, value: foreign.acceleration}],
-        contraryEvidence: [], invalidation: ["NEXT_BUCKET_REVERSES_DIRECTION", "INPUT_QUALITY_BECOMES_UNUSABLE"]
+        strength: strengthFrom(flow.value, flow.acceleration), qualityInputs: [flow],
+        supportingEvidence: reversal ? [
+          {metric: `${stock}.${flowName}PreviousDelta`, value: previousDelta},
+          {metric: `${stock}.${flowName}CurrentDelta`, value: flow.value}
+        ] : [
+          {metric: `${stock}.${flowName}Delta`, value: flow.value},
+          {metric: `${stock}.${flowName}Acceleration`, value: flow.acceleration}
+        ],
+        contraryEvidence: [], invalidation: reversal ?
+          ["NEXT_BUCKET_RETURNS_TO_PREVIOUS_DIRECTION", "INPUT_QUALITY_BECOMES_UNUSABLE"] :
+          ["NEXT_BUCKET_ACCELERATION_CHANGES", "INPUT_QUALITY_BECOMES_UNUSABLE"]
       }));
-    }
-    const institution = features.bucketChanges?.[stock]?.institutionFlow;
-    if (usableMetric(institution, ["BUCKET_DELTA"]) && typeof institution.acceleration === "number") {
-      const previousDelta = institution.value - institution.acceleration;
-      if (Math.sign(previousDelta) !== 0 && Math.sign(institution.value) !== 0 && Math.sign(previousDelta) !== Math.sign(institution.value))
-        signals.push(createSignal(context, {
-          ticker: identity.ticker, horizon: "BUCKET", signalType: "INSTITUTION_FLOW_REVERSAL",
-          strength: strengthFrom(institution.value, institution.acceleration), qualityInputs: [institution],
-          supportingEvidence: [{metric: `${stock}.institutionPreviousDelta`, value: previousDelta},
-            {metric: `${stock}.institutionCurrentDelta`, value: institution.value}],
-          contraryEvidence: [], invalidation: ["NEXT_BUCKET_RETURNS_TO_PREVIOUS_DIRECTION", "INPUT_QUALITY_BECOMES_UNUSABLE"]
-        }));
     }
   }
 }

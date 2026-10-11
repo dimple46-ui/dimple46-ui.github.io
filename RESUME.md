@@ -1,12 +1,12 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- updated_at_kst: `2026-10-11 15:52 KST`
+- updated_at_kst: `2026-10-11 15:55 KST`
 - current_milestone: `M2 — Operational / Storage Architecture Stabilization`
 - current_branch: `feature/m2-operational-storage`
 - verified_head_sha: `33dc4fb2711a4e4807adbed1f7e7f57225cb11ff`
 - main_sha_at_checkpoint: `f4570a7d1aff08206d70934a4bb9bbaaf33e96d0` (live snapshot commit; expected to advance)
 - active_pr: `#4`, Draft/Open, not merged
-- last_successful_test: local `62/62 PASS` after adding the read-only Signal replay validator
+- last_successful_test: local `63/63 PASS` after Signal v2 stock-flow classification coverage
 - last_successful_ci: GitHub Actions `37729557411`, SUCCESS at `33dc4fb...`
 - last_successful_deployment: isolated candidate build `24f9eab1-924a-47aa-89cb-6ff6f3c67e22`, SUCCESS
 - deployed_commit_sha: `2d34e7399f648168d6d8b88486071d27f382254f`, exactly verified by authenticated `/health`
@@ -25,6 +25,9 @@
 - off_market_validation: `scripts/validate-signal-replay.mjs` now checks captured read-only Feature v2
   replays for past-only cutoffs, zero D1 writes, deterministic Signal output, confidence ceilings,
   stale/null suppression and descriptive-only semantics; it does not fetch, persist or deploy data
+- signal_candidate: pure-function Signal version 2 adds foreign-flow reversal and institution flow
+  acceleration/deceleration with one mutually exclusive classification per verified changed bucket;
+  relative-strength reversal remains unimplemented until prior comparable relative-strength state exists
 - waiting_for_live: current-day continuous Feature v2 persistence remains unvalidated and is not enabled
   in production; D1 provider-byte growth still needs the planned 20-trading-day measurement window
 - blocked_actions: main merge, production Worker/binding/Secret/route changes and destructive D1 work require

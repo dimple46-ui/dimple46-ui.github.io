@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-11 — Descriptive stock-flow Signal coverage
+
+- Advance the pure Signal candidate to Signal version 2.
+- Add foreign-flow reversal and institution buying/selling acceleration/deceleration classifications
+  from verified bucket delta plus acceleration inputs.
+- Emit at most one classification for each stock/flow bucket so a reversal is not duplicated as an
+  acceleration signal; unchanged, stale, null or insufficient bucket history still emits nothing.
+- Add a local read-only replay validator for deterministic, past-only and confidence-ceiling checks.
+- No Signal endpoint, alert, BUY/SELL recommendation, production route or Worker change is introduced.
+
 ## 2026-10-08 — Candidate Feature freshness correction
 
 - Correct read-time Feature freshness to use request/as-of time minus observation time instead of

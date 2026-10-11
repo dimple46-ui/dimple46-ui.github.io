@@ -1,7 +1,23 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-11 15:52 KST
+Last updated: 2026-10-11 15:55 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Signal v2 Stock-flow Classification Expanded
+
+- timestamp: `2026-10-11 15:55 KST`; validation class: `OFF_MARKET_VALIDATED`
+- completed: added `FOREIGN_FLOW_REVERSAL` plus institution buying/selling acceleration and deceleration
+  to the existing pure descriptive Signal layer; Signal schema/version advanced from 1 to 2
+- semantics: previous bucket delta is reconstructed only from a valid current delta and acceleration;
+  reversal takes precedence so each stock/flow bucket emits at most one classification
+- safety: unchanged/stale/null/insufficient bucket inputs still emit no flow Signal; confidence remains
+  quality-capped and no probability, BUY/SELL action, endpoint, alert or persistence was added
+- deferred honestly: relative-strength reversal needs prior comparable relative-strength state and was
+  not fabricated from one current acceleration snapshot
+- tests: focused Signal/replay suites `10/10 PASS`; full regression suite `63/63 PASS`
+- production impact: none; pure candidate code only, no Worker deployment or D1/GitHub publication write
+- next_exact_step: validate Signal version 2 against the next authenticated real replay containing changed
+  stock-flow buckets; this remains distinct from the blocked candidate release-2 activation check
 
 ## CHECKPOINT — Read-only Signal Replay Validator Added
 
