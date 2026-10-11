@@ -1,7 +1,23 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-11 15:55 KST
+Last updated: 2026-10-11 15:58 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Off-market M2/M3 Changes Verified Remotely
+
+- timestamp: `2026-10-11 15:58 KST`; market state: `WEEKEND_CLOSED`
+- branch/code commit: `feature/m2-operational-storage` at
+  `d8d51330ce70b90f1f3530a0dacda2f8aa7b56cf`; PR #4 remains Draft/Open, unmerged and mergeable
+- completed: read-only Signal replay validator plus Signal version 2 stock-flow classifications
+- tests/CI: local `63/63 PASS`; GitHub Actions run `38119570471` completed `SUCCESS` at the exact code SHA
+- candidate build: Cloudflare build `3dd74257-284b-4129-8969-26520b85d8e9` reports success for the exact
+  code SHA; no Worker runtime code was changed by the second Signal-only commit
+- deployment validation: `NEEDS_EXTERNAL_VERIFICATION`; the last authenticated runtime evidence still
+  identifies deployed candidate SHA `2d34e739...`/service release 1, so build success is not called activation
+- production impact: none; production Worker, binding, Secret, route, writers, D1 data and main are unchanged
+- waiting_for_live: run Signal v2 against a new real changed-bucket replay and retain live latency/recovery gates
+- next_exact_step: authenticated candidate `/health` after inspecting the latest build deploy command; require
+  service release 2 and honest `AS_OF_MINUS_OBSERVED_AT` freshness before marking activation complete
 
 ## CHECKPOINT — Signal v2 Stock-flow Classification Expanded
 
