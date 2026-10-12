@@ -1,7 +1,30 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-12 12:58 KST
+Last updated: 2026-10-12 13:05 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Current-session Candidate/Production Equivalence Passed
+
+- timestamp: `2026-10-12 13:05 KST`; compared observation: `2026-10-12 13:02:45 KST`
+- identity: candidate slot `1791777720000`, observed/available at `1791777765346`, trading day
+  `20261012`; production `relayUpdatedAt` exactly `2026-10-12T04:02:45.346Z`
+- stocks: Samsung `252,750`, volume `9,515,281`, foreign/institution `-416,000/-81,000`;
+  SK Hynix `1,617,000`, volume `1,747,740`, foreign/institution `-276,000/+14,000`
+- market/program: KOSPI/KOSPI200 `6420.93/1011.14`; market foreign/institution
+  `-1,153,343,000,000/+58,749,000,000`; program total `-531,541,085,867`
+- futures: price/OI/OI change `1015.6/138,679/+1,743`; Basis/marketBasis `4.72/4.26`;
+  foreign/institution/individual `-1,058/+1,444/-368`
+- quality: both sides `pipelineStatus=OK`, empty `sourceErrors`, no quality issues, and the same explicit
+  unverified-time list for indexes and futures; RECENT_FETCH was not promoted to exchange-verified time
+- query safety: candidate read exactly one D1 row and reported zero rows written
+- real three-bucket stock flow: Samsung foreign deltas `-176,000 → -245,000` (acceleration `-69,000`),
+  institution `+90,000 → -171,000` (reversal); SK Hynix foreign `-78,000 → -59,000`
+  (selling deceleration `+19,000`), institution `+44,000 → -30,000` (reversal)
+- result: current-session read endpoint equivalence is `CANDIDATE_VALIDATED`; expected Signal states are
+  not yet marked PASS until the Feature replay returns the engine-calculated output
+- production impact: none; GitHub source was read-only and candidate query wrote zero rows
+- next_exact_step: authenticated read-only Feature replay at cutoff `1791777765346`, then run Signal v2
+  validation against the returned real Feature; no compact Feature write is authorized
 
 ## CHECKPOINT — Candidate Release 2 Runtime Identity Verified
 
