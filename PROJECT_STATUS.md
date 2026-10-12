@@ -1,7 +1,27 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-12 13:16 KST
+Last updated: 2026-10-12 13:21 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Live Program Delta/Divergence Passed; Acceleration Needs Third Source Time
+
+- timestamp: `2026-10-12 13:21 KST`; validation class: `LIVE_INPUT_OFFLINE_SIGNAL_REPLAY`
+- replay identity: cutoff `1791777765346`, input cutoff `2026-10-12T04:02:45.346Z`, Feature v2
+- windows and safety: 2/5/10/30-minute windows all `AVAILABLE`; current/intraday/same-time queries
+  read `9/123/3,014` rows and wrote zero; Signal v2 validator `PASS`
+- program result: the 10-minute window produced a verified program-total delta of
+  `-21,732,554,974`, direction `DECREASING`; Samsung price/program was `CONFIRMING` and SK Hynix was
+  `PRICE_UP_PROGRAM_DOWN`, both with explicit `UNVALIDATED` confidence and `VERIFIED` input quality
+- unchanged-source handling: 2/5/30-minute comparisons whose program source time had not changed
+  remained null/`UNUSABLE_DATA`; no unchanged value was converted to zero
+- acceleration boundary: program acceleration remained null/`INSUFFICIENT_HISTORY` because this cutoff
+  did not supply three distinct usable program source times; this is not marked PASS
+- quality: overall ceiling remained `UNVERIFIED_TIME`; futures-derived Signals were not promoted above
+  their unverified exchange-time input
+- production impact: none; read-only replay and local validation only
+- next_exact_step: replay cutoff `1791778365346` (approximately 13:12:45 KST), which should include
+  the 13:10 program source update, and require a real three-source-time program acceleration or preserve
+  `INSUFFICIENT_HISTORY` with evidence
 
 ## CHECKPOINT — Actual Changed Stock-flow Transition and Signal v2 Passed
 

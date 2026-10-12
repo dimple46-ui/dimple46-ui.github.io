@@ -1,6 +1,6 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- updated_at_kst: `2026-10-12 13:16 KST`
+- updated_at_kst: `2026-10-12 13:21 KST`
 - current_milestone: `M2 — Operational / Storage Architecture Stabilization`
 - current_branch: `feature/m2-operational-storage`
 - verified_head_sha: `d8d51330ce70b90f1f3530a0dacda2f8aa7b56cf`
@@ -12,9 +12,9 @@
 - deployed_commit_sha: `d8d51330ce70b90f1f3530a0dacda2f8aa7b56cf`, exactly verified by authenticated `/health`
 - latest_candidate_build: `3dd74257-284b-4129-8969-26520b85d8e9`, active runtime verified at
   `d8d51330...`; Cloudflare deployment ID/tag remain explicitly unavailable
-- last_successful_validation: actual changed-bucket replay at input cutoff
-  `2026-10-12T02:26:43.839Z` passed Signal v2 with verified deltas/accelerations for both stocks and
-  both investor flows, deterministic output, confidence ceilings and zero D1 writes
+- last_successful_validation: replay at input cutoff `2026-10-12T04:02:45.346Z` passed Signal v2 and
+  produced a verified 10-minute program-total delta of `-21,732,554,974` plus Samsung confirming and
+  SK Hynix price-up/program-down relationships; all D1 writes remained zero
 - current_live_validation: candidate D1 `/state` exactly matched production `market-live.json` at
   `2026-10-12 13:02:45 KST` for observation identity, both stocks, market/program flows, futures/OI/Basis,
   quality and pipeline; one D1 row read, zero written. Three real stock-flow buckets are available.
@@ -36,13 +36,13 @@
   acceleration/deceleration with one mutually exclusive classification per verified changed bucket;
   relative-strength reversal remains unimplemented until prior comparable relative-strength state exists
 - waiting_for_live: current-day continuous Feature v2 persistence remains unvalidated and is not enabled
-  in production; a fresh program-acceleration replay and D1 provider-byte growth over the planned
-  20-trading-day measurement window remain open
+  in production; program acceleration still needs three distinct usable source times, and D1 provider-byte
+  growth still needs the planned 20-trading-day measurement window
 - blocked_actions: main merge, production Worker/binding/Secret/route changes and destructive D1 work require
   separate approval; authenticated candidate/validator requests require the existing Dashboard-held Secrets
 - approved_scope: isolated read-only candidate code, tests, candidate deploys, documentation and validation
-- next_exact_step: capture a replay whose program inputs are live and validate program acceleration plus
-  program/price divergence while preserving quality ceilings and zero D1 writes
+- next_exact_step: replay cutoff `1791778365346` to include the 13:10 program source update; validate
+  program acceleration or preserve `INSUFFICIENT_HISTORY` with exact source-time evidence
 
 Do not recreate PR #3, D1 History, `market_observations`, `feature_runs`, the candidate Worker, its Secret,
 bindings, rate limiter, read endpoints, or the M3 pure-function Signal candidate.
