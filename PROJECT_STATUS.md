@@ -1,7 +1,32 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-12 14:34 KST
+Last updated: 2026-10-12 22:04 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## RECOVERY_CHECKPOINT — Existing Builds Inspection Required; No New Token or Deployment
+
+- timestamp: `2026-10-12 22:04 KST`; milestone: M2; status: `BLOCKED_BY_USER_ACTION`
+- branch: `feature/m2-operational-storage`; remote HEAD before checkpoint:
+  `89f6cde1130493d1af5964b111e5d19ff99713d9`; PR #4 confirmed Draft/Open, not merged
+- local: clean `m2-live-validation-local` at `4d94e4d`, a separate local mirror history;
+  remote RESUME content matched. Do not force-push the diverged local history.
+- tests/CI: unchanged code; reused 72/72 full-suite and 8/8 automation test records. Requeried CI
+  `38208469640`: node-tests SUCCESS; `38208466333`: local-checks SUCCESS, remote-checks SKIPPED.
+- deployment: Cloudflare bot reports `Deployment skipped` for `89f6cde...`, build
+  `82e01032-bd61-48c3-9474-cf4386d1175f`. No deployment executed or newly verified in this recovery.
+  Last authenticated runtime evidence remains `d8d51330...`, not current-code deployment proof.
+- access: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, INTELLIGENCE_READ_TOKEN and VALIDATION_TOKEN
+  absent in Work environment; values never printed. GitHub Secrets status remains UNVERIFIED.
+  User reports cloud browser unavailable and no Worker selector on API-token page.
+- correction: missing UI selector alone does not establish that automation requires a new account.
+  Workers role documentation supports per-Worker scopes, but this account/UI has not been verified.
+  Broad account-level edit was neither approved nor configured; reuse existing Builds first.
+- production_impact: none; no Worker, binding, Secret, route, migration, D1 write or main merge.
+  No new production/D1 health claim is made without authenticated evidence.
+- waiting_for_live: unchanged. Source-alignment fix remains TESTED_NOT_DEPLOYED; stored v2 age,
+  continuous persistence and long-window storage measurement remain separately tracked.
+- next_exact_step: inspect existing intelligence candidate Settings > Build for connected branch
+  and exact build/deploy commands without changing settings or exposing Secret values.
 
 ## CHECKPOINT — Candidate Automation Checks; Authentication Required Before Deployment Wiring
 
