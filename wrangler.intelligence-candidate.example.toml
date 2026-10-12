@@ -5,6 +5,11 @@ compatibility_date = "2026-10-07"
 workers_dev = true
 preview_urls = false
 
+# Cloudflare Builds already calls wrangler deploy with this configuration.
+# Run the existing regression gate before Wrangler can upload candidate code.
+[build]
+command = "node --test tests/*.test.mjs"
+
 [observability]
 enabled = true
 
