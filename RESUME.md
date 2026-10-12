@@ -1,6 +1,7 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- updated_at_kst: `2026-10-12 14:34 KST`
+- updated_at_kst: `2026-10-12 22:04 KST`
+- recovery_verified_remote_head: `89f6cde1130493d1af5964b111e5d19ff99713d9` (before this documentation checkpoint)
 - current_milestone: `M2 — Operational / Storage Architecture Stabilization`
 - current_branch: `feature/m2-operational-storage`
 - verified_head_sha: `08b32931fa5a2c3c7e211f117041e63e620d4a24` (automation code; docs checkpoint follows)
@@ -48,9 +49,18 @@
 - access_status: Work has no configured Cloudflare API token/account ID; GitHub Secrets existence is
   UNVERIFIED (connector excludes Secrets APIs). Cloud browser is at Cloudflare sign-in, not logged in.
   Do not create/reissue existing tokens or copy credential values into chat/checkpoints.
-- next_exact_step: authenticate the existing cloud-browser Cloudflare tab, then inspect existing candidate
-  Builds/settings/token permissions to connect the deployer without overwriting unknown settings.
-  After automation activation, return to validator deployment and replay cutoff `1791778965346`.
+- recovery_status: `BLOCKED_BY_USER_ACTION`; remote RESUME matched local; PR #4 remains Draft/Open.
+  CI jobs for runs `38208466333` and `38208469640` rechecked: local checks/full regression SUCCESS,
+  remote checks SKIPPED. Unchanged tests were not rerun. Cloudflare bot reports deployment SKIPPED
+  for `89f6cde...`, build `82e01032-bd61-48c3-9474-cf4386d1175f`; this is not a new deployed version.
+- credential_scope_status: API-token UI has no Worker selector per user report. Account-wide edit
+  authority was NOT approved or provisioned. This does not prove automatic deployment impossible.
+  Existing Cloudflare Builds must be inspected before proposing another deployer or broader token.
+- next_exact_step: inspect the existing `market-intelligence-read-candidate` Settings > Build
+  configuration (connected branch and build/deploy commands only; no Secret values or changes).
+  Work environment has none of the four Cloudflare/candidate credential variables; GitHub-held
+  Secret presence remains UNVERIFIED. User reports cloud browser unavailable. After access is
+  restored, reuse the existing deployment path and resume validator replay cutoff `1791778965346`.
 
 Do not recreate PR #3, D1 History, `market_observations`, `feature_runs`, the candidate Worker, its Secret,
 bindings, rate limiter, read endpoints, or the M3 pure-function Signal candidate.
