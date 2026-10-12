@@ -1,14 +1,15 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- updated_at_kst: `2026-10-12 13:59 KST`
+- updated_at_kst: `2026-10-12 14:34 KST`
 - current_milestone: `M2 — Operational / Storage Architecture Stabilization`
 - current_branch: `feature/m2-operational-storage`
-- verified_head_sha: `102672c34932b2f496c33407323529496571b6e6`
+- verified_head_sha: `08b32931fa5a2c3c7e211f117041e63e620d4a24` (automation code; docs checkpoint follows)
 - main_sha_at_checkpoint: `f4570a7d1aff08206d70934a4bb9bbaaf33e96d0` (live snapshot commit; expected to advance)
 - active_pr: `#4`, Draft/Open, not merged
-- last_successful_test: local full regression `64/64 PASS` after source-time-aligned program acceleration
-  coverage; focused Feature/Signal suites `34/34 PASS`
-- last_successful_ci: GitHub Actions `38206167262`, SUCCESS at `102672c...` with `64/64 PASS`
+- last_successful_test: local full regression `72/72 PASS`; new automation tests `8/8 PASS` (synthetic only)
+- last_successful_ci: candidate-check workflow `38208466333` SUCCESS at `08b32931...`;
+  remote-check job disabled/not run. Full regression CI `38208469640` SUCCESS at `08b32931...`;
+  prior full-suite CI `38206167262` SUCCESS at `102672c...` remains valid for unchanged runtime code.
 - last_successful_deployment: isolated candidate build `3dd74257-284b-4129-8969-26520b85d8e9`, SUCCESS
 - deployed_commit_sha: `d8d51330ce70b90f1f3530a0dacda2f8aa7b56cf`, exactly verified by authenticated `/health`
 - latest_candidate_build: `3dd74257-284b-4129-8969-26520b85d8e9`, active runtime verified at
@@ -42,8 +43,14 @@
 - blocked_actions: main merge, production Worker/binding/Secret/route changes and destructive D1 work require
   separate approval; authenticated candidate/validator requests require the existing Dashboard-held Secrets
 - approved_scope: isolated read-only candidate code, tests, candidate deploys, documentation and validation
-- next_exact_step: deploy only `market-feature-validation` from exact code commit `102672c...`, then
-  replay cutoff `1791778965346` with the existing authentication and verify program acceleration
+- automation_status: read-only check runner and candidate-settings audit implemented; automatic deployment,
+  migration and rollback are NOT implemented/activated. See `CANDIDATE_AUTOMATION.md`.
+- access_status: Work has no configured Cloudflare API token/account ID; GitHub Secrets existence is
+  UNVERIFIED (connector excludes Secrets APIs). Cloud browser is at Cloudflare sign-in, not logged in.
+  Do not create/reissue existing tokens or copy credential values into chat/checkpoints.
+- next_exact_step: authenticate the existing cloud-browser Cloudflare tab, then inspect existing candidate
+  Builds/settings/token permissions to connect the deployer without overwriting unknown settings.
+  After automation activation, return to validator deployment and replay cutoff `1791778965346`.
 
 Do not recreate PR #3, D1 History, `market_observations`, `feature_runs`, the candidate Worker, its Secret,
 bindings, rate limiter, read endpoints, or the M3 pure-function Signal candidate.

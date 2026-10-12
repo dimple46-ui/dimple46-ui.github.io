@@ -1,7 +1,38 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-12 13:59 KST
+Last updated: 2026-10-12 14:34 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Candidate Automation Checks; Authentication Required Before Deployment Wiring
+
+- timestamp: `2026-10-12 14:34 KST`; milestone: M2; branch: `feature/m2-operational-storage`; PR #4 Draft/Open
+- recovery: remote HEAD `6596f2d...` matched the clean local tree; last runtime code `102672c...`
+  and full-suite CI `38206167262` SUCCESS were confirmed. No prior work was recreated.
+- commit: `08b32931fa5a2c3c7e211f117041e63e620d4a24`; local mirror commit `9c051f9`
+- completed: fixed-origin GET-only candidate smoke runner; existing Signal replay validator reuse;
+  Cloudflare candidate-settings read-access audit with value redaction; opt-in remote CI checks;
+  automation activation/rollback constraints documented in `CANDIDATE_AUTOMATION.md`
+- tests: new synthetic automation `8/8 PASS`; full regression `72/72 PASS`; no runtime source changed
+- CI: candidate-check run `38208466333` SUCCESS (local job only; remote checks not enabled);
+  full regression run `38208469640` SUCCESS at exact code SHA `08b32931...`
+- deployment: NOT_PERFORMED by Work; possible existing Cloudflare Builds activity remains unverified.
+  Last externally evidenced intelligence runtime remains `d8d51330...`; no newer deployed SHA claimed.
+- validation: synthetic correctness only; new checks have NOT been run against authenticated D1/API.
+  Read-only means application-layer fixed SELECT queries, not D1 binding-level denial of writes.
+- actual access: environment presence checks found no Cloudflare token/account ID or GitHub CLI token;
+  connector cannot read Secrets metadata. Browser reached Cloudflare sign-in. Cloudflare/GitHub stored
+  Secret existence and deploy permissions are NEEDS_EXTERNAL_VERIFICATION, not assumed absent.
+- production impact: no main merge, relay deploy, binding/Secret/route change, migration or D1 write.
+  Fresh GitHub snapshot fetch still reports schemaVersion 3, sourceErrors [], pipelineStatus DEGRADED;
+  snapshot evaluatedAt `2026-10-12T05:32:57.139Z` reports program STALE and index/futures exchange
+  timestamps unverified. This is not represented as all sources LIVE or proof of deployment isolation.
+- remaining: authenticated audit, least-privilege existing credential reuse, actual deployment wiring,
+  provider version/rollback evidence, post-deploy replay. Migration automation intentionally excluded
+  pending reviewed authority on shared production D1; existing migrations are not reapplied.
+- waiting_for_live: unchanged; source-time program fix remains TESTED_NOT_DEPLOYED, continuous v2 writes
+  remain disabled/unvalidated, provider-byte growth still needs 20-trading-day evidence.
+- next_exact_step: authenticate Cloudflare in the current cloud-browser tab; inspect existing candidate
+  configuration before adopting Wrangler settings or adding a second competing deployment path.
 
 ## CHECKPOINT — Source-time-aligned Program Acceleration Candidate Implemented
 
