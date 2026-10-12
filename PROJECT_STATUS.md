@@ -1,7 +1,28 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-11 15:58 KST
+Last updated: 2026-10-12 12:58 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Candidate Release 2 Runtime Identity Verified
+
+- timestamp: `2026-10-12 12:58 KST`; market state: `REGULAR_SESSION`
+- authenticated `/health`: service `market-intelligence-read-candidate`, read-only API schema 1,
+  service release 2 and exact deployed SHA `d8d51330ce70b90f1f3530a0dacda2f8aa7b56cf`
+- freshness correction: basis `AS_OF_MINUS_OBSERVED_AT`; reported age `67,655 ms` exactly matched the
+  latest observation age instead of incorrectly returning zero
+- live D1 evidence: latest observation trading day `20261012`, slot `1791777360000`, observed at
+  `1791777405864`; empty observation `sourceErrors`
+- read-only evidence: observation/Feature/growth queries all reported `rowsWritten: 0`; no D1 mutation
+- quality honesty: collection remained `DEGRADED`; the latest compact Feature v2 row was still the
+  `20261007` controlled run with `STALE_INPUT`, so it was not represented as a current live Feature
+- storage evidence: five-day observation JSON projection is now about `1,467,115,500` bytes/year, but
+  includes the incomplete current day and still excludes SQLite pages/indexes/replication; Feature growth
+  remains `LIMITED_SAMPLE` with only three controlled rows
+- provider metadata: deployment ID/tag remain null and timestamp remains zero/default; no value was inferred
+- production impact: none; production relay health remained schema 3 with History and KIS enabled
+- result: candidate release-2 activation and freshness correction are `CANDIDATE_VALIDATED`
+- next_exact_step: capture authenticated `/state` and compare the exact current D1 observation with its
+  corresponding production GitHub snapshot before current-session Signal replay
 
 ## CHECKPOINT — Off-market M2/M3 Changes Verified Remotely
 
