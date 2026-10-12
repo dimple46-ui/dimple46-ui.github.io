@@ -1,7 +1,35 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-12 13:10 KST
+Last updated: 2026-10-12 13:16 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Actual Changed Stock-flow Transition and Signal v2 Passed
+
+- timestamp: `2026-10-12 13:16 KST`; validation class: `LIVE_INPUT_OFFLINE_SIGNAL_REPLAY`
+- replay identity: cutoff `1791772010000`, selected observation/input cutoff
+  `2026-10-12T02:26:43.839Z`, 74 distinct current-day slots, Feature version 2 over stored
+  observation Feature version 1
+- stock-flow transition: all four metrics were real `BUCKET_DELTA` values with `VERIFIED` quality;
+  Samsung foreign `-245,000`, direction decreasing, acceleration `-69,000`; Samsung institution
+  `-171,000`, decreasing, acceleration `-261,000`; SK Hynix foreign `-59,000`, decreasing,
+  acceleration `+19,000`; SK Hynix institution `-30,000`, decreasing, acceleration `-74,000`
+- Signal v2 result: validator `PASS`; Samsung emitted `FOREIGN_SELLING_ACCELERATING` and
+  `INSTITUTION_FLOW_REVERSAL`; SK Hynix emitted `FOREIGN_SELLING_DECELERATING` and
+  `INSTITUTION_FLOW_REVERSAL`. Reversal/acceleration classifications were mutually exclusive.
+- Feature evidence: all 2/5/10/30-minute windows were `AVAILABLE`; Samsung-vs-SK Hynix relative
+  strength was produced for every horizon; full output `71,603` bytes versus compact `14,194` bytes
+  (`80.18%` reduction)
+- quality honesty: overall ceiling remained `STALE_INPUT`; stale program inputs produced null/
+  `UNUSABLE_DATA`, while futures/OI/Basis retained `UNVERIFIED_TIME` rather than being promoted
+- safety: current/intraday/same-time queries read `54/75/3,011` rows and wrote zero; validator confirmed
+  past-only input, deterministic output, confidence ceilings, stale/null suppression and descriptive-only
+  semantics
+- production impact: none; authenticated candidate replay was analyzed locally and made no D1,
+  production Worker, binding, Secret, route or GitHub snapshot change
+- gate result: actual changed stock-flow transition and Signal v2 behavior are `CANDIDATE_VALIDATED`;
+  continuous current-day Feature v2 persistence and a fresh program-acceleration replay remain open
+- next_exact_step: capture a replay whose program inputs are live and verify program acceleration plus
+  program/price divergence without relaxing the quality ceiling
 
 ## CHECKPOINT — Current Replay Safety Passed; Bucket Transition Still Pending
 
