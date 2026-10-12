@@ -1,7 +1,26 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-12 13:21 KST
+Last updated: 2026-10-12 13:28 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Stale Program Source Correctly Suppressed at 13:10 Replay
+
+- timestamp: `2026-10-12 13:28 KST`; validation class: `LIVE_INPUT_OFFLINE_SIGNAL_REPLAY`
+- replay identity: requested cutoff `1791778365346`; selected input cutoff
+  `2026-10-12T04:10:47.629Z`, Feature v2 and Signal v2
+- result: local replay validator `PASS`; 14 descriptive Signals, deterministic output, valid confidence
+  ceilings, past-only input and zero D1 writes
+- program quality: the selected observation still carried `STALE_INPUT`; all 2/5/10/30-minute program
+  delta/direction/acceleration and price/program divergence outputs remained null with explicit
+  `UNUSABLE_DATA`, `INSUFFICIENT_HISTORY` or `INSUFFICIENT_OR_UNUSABLE_INPUT`
+- safety conclusion: stale program data was not promoted to live, zero, a direction, acceleration or
+  divergence. This passes the stale-input gate but does not pass fresh program acceleration.
+- other quality: overall ceiling remained `STALE_INPUT`; futures-derived Signals retained their lower
+  quality ceiling
+- query safety: current/intraday/same-time queries read `8/127/3,008` rows and wrote zero
+- production impact: none; read-only replay and local validation only
+- next_exact_step: replay cutoff `1791778965346` (approximately 13:22:45 KST) after the 13:20 program
+  source interval; require a fresh source before evaluating acceleration, otherwise keep the gate waiting
 
 ## CHECKPOINT — Live Program Delta/Divergence Passed; Acceleration Needs Third Source Time
 
