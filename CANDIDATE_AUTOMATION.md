@@ -19,8 +19,12 @@ Local regression: 72/72 PASS. Code/config commit: `7a7ea50db1d7be701422275f07c81
 No Worker target, binding, Secret, route or runtime source is changed by this config patch.
 GitHub Tests run `38255370075` succeeded. Cloudflare Build
 `1417e3bb-f29b-4600-aca2-004612cea6a7` failed at that same commit; GitHub check `114832470208`
-provides no error text or annotations. Read the provider build log before changing code, credentials
-or retrying. This is BUILD_FAILED, not DEPLOYED_VALIDATED or proof of a particular failure cause.
+provides no error text or annotations. The subsequent user screenshot identifies a stale build-token
+error before repository cloning: the provider reports its selected token was deleted or rolled.
+The test gate/deploy command was not reached. This is BUILD_FAILED, not DEPLOYED_VALIDATED.
+Inspect existing candidate Build Configuration > API token choices before repairing the link;
+do not confuse this build credential with the runtime `INTELLIGENCE_READ_TOKEN` Secret.
+Reference: https://developers.cloudflare.com/workers/ci-cd/builds/troubleshoot/#stale-api-token
 
 Configuration evidence is not a successful build or authenticated deployment receipt. Work still
 cannot perform authenticated post-deploy checks without the existing endpoint credential being
@@ -65,6 +69,10 @@ The existing intelligence Builds branch/command was subsequently confirmed as do
 Its configured deployment path can be triggered through GitHub without placing a new Cloudflare
 token in Work. Direct settings inspection and authenticated API checks still require access.
 Feature validator deployment is still pending.
+
+On 2026-10-13, credential presence remained unchanged. A secure Cloudflare browser login was
+attempted, but the site returned HTTP 403 for its login API. No authenticated session was verified;
+automated sign-in stopped. Candidate build-token inspection therefore still needs user-side access.
 
 ## Additional deployment controls (not activated)
 

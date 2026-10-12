@@ -1,7 +1,46 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-12 22:26 KST
+Last updated: 2026-10-13 06:54 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## RECOVERY_CHECKPOINT — Unsaved Diagnosis Recovered; Provider Login Blocked
+
+- timestamp: `2026-10-13 06:54 KST`; milestone: M2; branch: `feature/m2-operational-storage`
+- verified_remote_head_before_checkpoint: `1eff5d59ccb3cc4478d3740e24c11bad7ec613e2`
+- PR #4: Draft/Open, unmerged; remote RESUME still contained the earlier unknown-cause checkpoint.
+- recovered: local RESUME/PROJECT_STATUS edits identifying the stale build-token error; prior GitHub
+  write was not executed because automatic approval review could not complete at the usage limit.
+- tests/CI: unchanged code; reused 72/72 local result; exact `7a7ea50...` checks still show
+  node-tests SUCCESS and Workers Builds FAILURE. No unnecessary test execution or deployment retry.
+- access: executor credential presence check false for Cloudflare token/account ID and both endpoint
+  tokens; GitHub secret presence remains unknown. Secure browser login submitted, but Cloudflare
+  returned `API Request Failed: post .../login (403)`. Login success is not claimed; no repeat attempt.
+- deployment/validation: no new deployment or authenticated D1 validation; old runtime evidence retained.
+- production_impact: none. No main merge, production change, D1 mutation or Secret change.
+- waiting_for_live: unchanged; source-time replay and other existing gates are not promoted.
+- next_exact_step: user inspects candidate Settings > Build > Build Configuration > API token names/options,
+  without saving or sending token values; Work cannot inspect/repair that link with current access.
+
+## CHECKPOINT — Provider Build Token Failure Identified
+
+- timestamp: `2026-10-12 22:29 KST`; branch: `feature/m2-operational-storage`; M2
+- verified_remote_head_before_checkpoint: `1eff5d59ccb3cc4478d3740e24c11bad7ec613e2`
+- evidence: directly inspected user screenshot `image(20261012-132847).png`, build
+  `1417e3bb-f29b-4600-aca2-004612cea6a7`, code SHA `7a7ea50...`.
+  At 22:24:52.096 the provider reports the selected build token was deleted or rolled.
+  The screenshot clips the end of the error; Cloudflare's official stale-API-token troubleshooting
+  matches the visible text. Actual deletion/rotation is not independently verified.
+- completed: isolated failure to pre-clone build authorization; regression gate and deploy command
+  were not reached. No code fix or repeated regression test is warranted by this evidence.
+- tests/CI: reuse local 72/72 PASS and GitHub CI `38255370075` SUCCESS for `7a7ea50...`.
+- deployment: FAILED before cloning; no new deployed SHA, successful rollback or live PASS claimed.
+- production_impact: none; no Worker, binding, Secret, route, migration, D1 write or main merge.
+- remaining: repair candidate build-token selection, then retry and verify exact deployment identity;
+  authenticated endpoint checks and separate validator/source-time replay remain pending.
+- waiting_for_live: unchanged.
+- next_exact_step: inspect candidate Settings > Build > Build Configuration > API token selector,
+  existing names/options only, without saving or exposing token values. BLOCKED_BY_USER_ACTION;
+  no authenticated provider credential is available to Work. Do not recreate runtime Secrets.
 
 ## CHECKPOINT — Reused Existing Intelligence Builds; Pre-deploy Regression Gate
 
