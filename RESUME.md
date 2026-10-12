@@ -1,14 +1,15 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- updated_at_kst: `2026-10-12 22:04 KST`
+- updated_at_kst: `2026-10-12 22:26 KST`
 - recovery_verified_remote_head: `89f6cde1130493d1af5964b111e5d19ff99713d9` (before this documentation checkpoint)
 - current_milestone: `M2 — Operational / Storage Architecture Stabilization`
 - current_branch: `feature/m2-operational-storage`
-- verified_head_sha: `08b32931fa5a2c3c7e211f117041e63e620d4a24` (automation code; docs checkpoint follows)
+- verified_head_sha: `7a7ea50db1d7be701422275f07c817d213ccc090` (candidate pre-deploy regression gate)
 - main_sha_at_checkpoint: `f4570a7d1aff08206d70934a4bb9bbaaf33e96d0` (live snapshot commit; expected to advance)
 - active_pr: `#4`, Draft/Open, not merged
 - last_successful_test: local full regression `72/72 PASS`; new automation tests `8/8 PASS` (synthetic only)
-- last_successful_ci: candidate-check workflow `38208466333` SUCCESS at `08b32931...`;
+- last_successful_ci: full regression `38255370075` SUCCESS at `7a7ea50...`;
+  candidate-check workflow `38208466333` SUCCESS at `08b32931...`;
   remote-check job disabled/not run. Full regression CI `38208469640` SUCCESS at `08b32931...`;
   prior full-suite CI `38206167262` SUCCESS at `102672c...` remains valid for unchanged runtime code.
 - last_successful_deployment: isolated candidate build `3dd74257-284b-4129-8969-26520b85d8e9`, SUCCESS
@@ -44,8 +45,11 @@
 - blocked_actions: main merge, production Worker/binding/Secret/route changes and destructive D1 work require
   separate approval; authenticated candidate/validator requests require the existing Dashboard-held Secrets
 - approved_scope: isolated read-only candidate code, tests, candidate deploys, documentation and validation
-- automation_status: read-only check runner and candidate-settings audit implemented; automatic deployment,
-  migration and rollback are NOT implemented/activated. See `CANDIDATE_AUTOMATION.md`.
+- automation_status: existing intelligence Cloudflare Builds branch and complete deploy command confirmed
+  from user screenshot/text; candidate-only Wrangler config now runs the full regression suite before
+  upload. Local 72/72 PASS and GitHub CI SUCCESS. Cloudflare Build `1417e3bb-f29b-4600-aca2-004612cea6a7`
+  FAILED for `7a7ea50...`; GitHub check contains no failure text. Runtime identity remains unverified.
+  Direct API deployment, migration and rollback are NOT activated. See `CANDIDATE_AUTOMATION.md`.
 - access_status: Work has no configured Cloudflare API token/account ID; GitHub Secrets existence is
   UNVERIFIED (connector excludes Secrets APIs). Cloud browser is at Cloudflare sign-in, not logged in.
   Do not create/reissue existing tokens or copy credential values into chat/checkpoints.
@@ -56,11 +60,12 @@
 - credential_scope_status: API-token UI has no Worker selector per user report. Account-wide edit
   authority was NOT approved or provisioned. This does not prove automatic deployment impossible.
   Existing Cloudflare Builds must be inspected before proposing another deployer or broader token.
-- next_exact_step: inspect the existing `market-intelligence-read-candidate` Settings > Build
-  configuration (connected branch and build/deploy commands only; no Secret values or changes).
-  Work environment has none of the four Cloudflare/candidate credential variables; GitHub-held
-  Secret presence remains UNVERIFIED. User reports cloud browser unavailable. After access is
-  restored, reuse the existing deployment path and resume validator replay cutoff `1791778965346`.
+- next_exact_step: read the failure log for existing intelligence Build
+  `1417e3bb-f29b-4600-aca2-004612cea6a7` at `7a7ea50...`; user Dashboard access is required because
+  GitHub check `114832470208` exposes failure status but no error text/annotations. Do not retry or
+  change permissions speculatively. Do not recreate the Worker or token. The candidate setting
+  screenshot/command inspection is COMPLETE. Separate validator deployment and program replay cutoff
+  `1791778965346` remain pending; the intelligence deploy does not deploy the feature validator.
 
 Do not recreate PR #3, D1 History, `market_observations`, `feature_runs`, the candidate Worker, its Secret,
 bindings, rate limiter, read endpoints, or the M3 pure-function Signal candidate.

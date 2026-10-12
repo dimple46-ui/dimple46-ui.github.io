@@ -1,7 +1,30 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-12 22:04 KST
+Last updated: 2026-10-12 22:26 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Reused Existing Intelligence Builds; Pre-deploy Regression Gate
+
+- timestamp: `2026-10-12 22:26 KST`; milestone: M2; branch: `feature/m2-operational-storage`
+- commit: `7a7ea50db1d7be701422275f07c817d213ccc090`; PR #4 stays Draft/Open
+- evidence: user screenshot and complete command confirm existing Cloudflare Builds on the candidate
+  branch, Disable builds OFF, root `/`, watch include `*`, and Wrangler deploy with
+  `INTELLIGENCE_WORKER_GIT_SHA:$WORKERS_CI_COMMIT_SHA`. Configuration is confirmed; deployment is separate.
+- completed: candidate Wrangler `[build]` now runs `node --test tests/*.test.mjs` before upload.
+  No second deployer, new API token or additional Dashboard configuration is needed for this gate.
+- tests: local full regression 72/72 PASS after config change; reused existing tests, no duplicate
+  synthetic/live validation claims. Offline Wrangler CLI inspection unavailable (package not cached).
+- CI: GitHub Tests run `38255370075` SUCCESS for the exact code commit.
+- deployment/validation: Cloudflare Build `1417e3bb-f29b-4600-aca2-004612cea6a7` FAILED, check
+  `114832470208`, completed `2026-10-12T13:24:54Z`. No error text or annotations exposed by GitHub.
+  No deployed SHA or rollback is claimed; inspect the provider log before deciding any correction.
+- production_impact: no production Worker/binding/Secret/route, D1 data or main merge changed;
+  this configuration targets only the existing read-only intelligence candidate.
+- remaining: provider build receipt, authenticated post-deploy identity/health, Wrangler pin and
+  rollback evidence; separate validator deployment and source-aligned program replay remain pending.
+- waiting_for_live: unchanged; tests do not promote any live-only gate.
+- next_exact_step: read the Cloudflare failure log for Build `1417e3bb-f29b-4600-aca2-004612cea6a7`.
+  Status `BLOCKED_BY_USER_ACTION` for provider-only log access; no blind retry or credential escalation.
 
 ## RECOVERY_CHECKPOINT — Existing Builds Inspection Required; No New Token or Deployment
 

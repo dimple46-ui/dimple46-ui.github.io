@@ -1,5 +1,36 @@
 # Candidate automation — staged activation
 
+## Existing Cloudflare Builds reused (2026-10-12)
+
+User-provided candidate Settings screenshot and complete deploy command confirm:
+
+- repository `dimple46-ui/dimple46-ui.github.io`, branch `feature/m2-operational-storage`
+- Disable builds OFF, root `/`, watch include `*`, separate build command empty
+- existing deploy command:
+
+```sh
+npx wrangler deploy --config wrangler.intelligence-candidate.example.toml --var INTELLIGENCE_QUERY_TIMEOUT_MS:5000 --var INTELLIGENCE_RATE_LIMIT_PER_MINUTE:60 --var INTELLIGENCE_WORKER_GIT_SHA:$WORKERS_CI_COMMIT_SHA
+```
+
+The candidate-only Wrangler file now includes `[build] command = "node --test tests/*.test.mjs"`.
+The existing command therefore runs the regression suite before upload. This avoids racing GitHub
+CI completion with an unchecked Cloudflare deployment; it does not install a second deployer.
+Local regression: 72/72 PASS. Code/config commit: `7a7ea50db1d7be701422275f07c817d213ccc090`.
+No Worker target, binding, Secret, route or runtime source is changed by this config patch.
+GitHub Tests run `38255370075` succeeded. Cloudflare Build
+`1417e3bb-f29b-4600-aca2-004612cea6a7` failed at that same commit; GitHub check `114832470208`
+provides no error text or annotations. Read the provider build log before changing code, credentials
+or retrying. This is BUILD_FAILED, not DEPLOYED_VALIDATED or proof of a particular failure cause.
+
+Configuration evidence is not a successful build or authenticated deployment receipt. Work still
+cannot perform authenticated post-deploy checks without the existing endpoint credential being
+available in an approved executor. Worker runtime Secrets are not automatically build-time Secrets.
+Never extract or print them. The deploy command remains unpinned as currently configured; a
+Wrangler version pin and rollback activation remain follow-up work after provider build evidence.
+The separate feature validator is not deployed by this intelligence configuration.
+
+Reference: https://developers.cloudflare.com/workers/wrangler/custom-builds/
+
 ## Implemented, not deployment-validated
 
 `scripts/check-candidate.mjs` performs bounded GET-only authenticated smoke checks on the two
@@ -24,19 +55,21 @@ are not automatically GitHub Secrets and cannot be recovered by reading their me
 `workflow_dispatch` may require the workflow to exist on the default branch; the branch push
 trigger is provided without requiring or authorizing a main merge.
 
-## Current blocker
+## Direct-access blocker
 
 On 2026-10-12 the Work execution environment had no Cloudflare token/account ID or GitHub CLI token.
 The GitHub connector does not expose Secrets endpoints. The cloud browser showed Cloudflare's
 sign-in page, not an authenticated account. GitHub Secret existence and actual Cloudflare settings
-remain `NEEDS_EXTERNAL_VERIFICATION`, not absent. Authentication is the next step; do not create
-another Worker, binding or token. Existing intelligence Cloudflare Builds must be inspected and reused,
-not raced by a second deployer. Feature validator deployment is still pending.
+remain `NEEDS_EXTERNAL_VERIFICATION`, not absent. Do not create another Worker, binding or token.
+The existing intelligence Builds branch/command was subsequently confirmed as documented above.
+Its configured deployment path can be triggered through GitHub without placing a new Cloudflare
+token in Work. Direct settings inspection and authenticated API checks still require access.
+Feature validator deployment is still pending.
 
-## Deployment activation gate (not implemented/executed yet)
+## Additional deployment controls (not activated)
 
-After authenticated inspection, reuse Cloudflare Builds or add a candidate-only Wrangler job,
-whichever preserves the existing setup. Pin Wrangler (registry version observed: 4.149.0), verify
+Reuse the confirmed Cloudflare Builds path; do not add a competing Wrangler job.
+After authenticated inspection, pin Wrangler (previous registry version observed: 4.149.0), verify
 the exact tested commit, and rebuild the generated validator using the existing build script.
 The hand-edited generated file must not be accepted as source identity without regeneration.
 Inspect actual settings before adopting the example Wrangler config as authoritative. Preserve
