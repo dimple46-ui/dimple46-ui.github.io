@@ -1,20 +1,21 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- updated_at_kst: `2026-10-12 13:28 KST`
+- updated_at_kst: `2026-10-12 13:59 KST`
 - current_milestone: `M2 — Operational / Storage Architecture Stabilization`
 - current_branch: `feature/m2-operational-storage`
-- verified_head_sha: `d8d51330ce70b90f1f3530a0dacda2f8aa7b56cf`
+- verified_head_sha: `102672c34932b2f496c33407323529496571b6e6`
 - main_sha_at_checkpoint: `f4570a7d1aff08206d70934a4bb9bbaaf33e96d0` (live snapshot commit; expected to advance)
 - active_pr: `#4`, Draft/Open, not merged
-- last_successful_test: local `63/63 PASS` after Signal v2 stock-flow classification coverage
-- last_successful_ci: GitHub Actions `38119570471`, SUCCESS at `d8d51330...` with `63/63 PASS`
+- last_successful_test: local full regression `64/64 PASS` after source-time-aligned program acceleration
+  coverage; focused Feature/Signal suites `34/34 PASS`
+- last_successful_ci: GitHub Actions `38206167262`, SUCCESS at `102672c...` with `64/64 PASS`
 - last_successful_deployment: isolated candidate build `3dd74257-284b-4129-8969-26520b85d8e9`, SUCCESS
 - deployed_commit_sha: `d8d51330ce70b90f1f3530a0dacda2f8aa7b56cf`, exactly verified by authenticated `/health`
 - latest_candidate_build: `3dd74257-284b-4129-8969-26520b85d8e9`, active runtime verified at
   `d8d51330...`; Cloudflare deployment ID/tag remain explicitly unavailable
-- last_successful_validation: replay at input cutoff `2026-10-12T04:10:47.629Z` passed all safety
-  checks and correctly suppressed stale program delta/acceleration/divergence across every horizon;
-  current/intraday/same-time D1 writes were all zero
+- last_successful_validation: replay at input cutoff `2026-10-12T04:22:45.140Z` had verified program
+  quality and a real 30-minute delta of `-78,889,655,137`; it exposed the observation/source-time
+  alignment gap while preserving zero D1 writes and all safety checks
 - current_live_validation: candidate D1 `/state` exactly matched production `market-live.json` at
   `2026-10-12 13:02:45 KST` for observation identity, both stocks, market/program flows, futures/OI/Basis,
   quality and pipeline; one D1 row read, zero written. Three real stock-flow buckets are available.
@@ -35,14 +36,14 @@
 - signal_candidate: pure-function Signal version 2 adds foreign-flow reversal and institution flow
   acceleration/deceleration with one mutually exclusive classification per verified changed bucket;
   relative-strength reversal remains unimplemented until prior comparable relative-strength state exists
-- waiting_for_live: current-day continuous Feature v2 persistence remains unvalidated and is not enabled
-  in production; program acceleration still needs three distinct usable source times, and D1 provider-byte
-  growth still needs the planned 20-trading-day measurement window
+- waiting_for_live: the source-time alignment correction is `TESTED_NOT_DEPLOYED` and needs an isolated
+  candidate replay; continuous Feature v2 persistence remains disabled, and D1 provider-byte growth still
+  needs the planned 20-trading-day measurement window
 - blocked_actions: main merge, production Worker/binding/Secret/route changes and destructive D1 work require
   separate approval; authenticated candidate/validator requests require the existing Dashboard-held Secrets
 - approved_scope: isolated read-only candidate code, tests, candidate deploys, documentation and validation
-- next_exact_step: replay cutoff `1791778965346` after the 13:20 program source interval; evaluate
-  program acceleration only if the selected source is fresh, otherwise retain the waiting gate
+- next_exact_step: deploy only `market-feature-validation` from exact code commit `102672c...`, then
+  replay cutoff `1791778965346` with the existing authentication and verify program acceleration
 
 Do not recreate PR #3, D1 History, `market_observations`, `feature_runs`, the candidate Worker, its Secret,
 bindings, rate limiter, read endpoints, or the M3 pure-function Signal candidate.

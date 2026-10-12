@@ -1,7 +1,32 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-12 13:28 KST
+Last updated: 2026-10-12 13:59 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Source-time-aligned Program Acceleration Candidate Implemented
+
+- timestamp: `2026-10-12 13:59 KST`; milestone: M2/M3 candidate correctness
+- live evidence: replay cutoff `1791778965346` selected input cutoff
+  `2026-10-12T04:22:45.140Z`; program quality was `VERIFIED`, 30-minute total-program delta was
+  `-78,889,655,137`, Samsung price/program was `CONFIRMING`, and SK Hynix was
+  `PRICE_UP_PROGRAM_DOWN`; D1 writes were zero
+- diagnosed gap: 10-minute program source updates can arrive seconds after the 2-minute observation
+  target. Observation-time baselines therefore selected an older stale row and could leave program
+  acceleration permanently `INSUFFICIENT_HISTORY` despite three source updates being available.
+- candidate fix: program delta and acceleration now align by distinct `SOURCE_MARKET_TIME` points already
+  available at the current cutoff. No row observed or available after the current cutoff is admitted.
+- horizon safety: source points must match current-minus-one/two requested horizons within the existing
+  150-second tolerance; 2/5-minute outputs are not fabricated from 10-minute source intervals
+- quality safety: current stale/null program input still prevents aligned output; existing stale/null and
+  future-availability tests remain passing
+- tests: focused suites `34/34 PASS`; full regression `64/64 PASS` including a delayed-source fixture
+  that reproduces the live alignment gap and expects a real 10-minute acceleration
+- commit/CI: code commit `102672c34932b2f496c33407323529496571b6e6`; GitHub Actions run
+  `38206167262` completed `SUCCESS` with the full `64/64` suite
+- deployment: `TESTED_NOT_DEPLOYED`; no candidate or production Worker was changed
+- production impact: none; production continues Feature v1 and existing collection/publication paths
+- next_exact_step: deploy only the isolated `market-feature-validation` candidate from code commit
+  `102672c...`, then replay cutoff `1791778965346` and require source-aligned program acceleration
 
 ## CHECKPOINT — Stale Program Source Correctly Suppressed at 13:10 Replay
 
