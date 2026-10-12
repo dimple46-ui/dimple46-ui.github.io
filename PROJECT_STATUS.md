@@ -1,7 +1,29 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-12 13:05 KST
+Last updated: 2026-10-12 13:10 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Current Replay Safety Passed; Bucket Transition Still Pending
+
+- timestamp: `2026-10-12 13:10 KST`; source: uploaded authenticated read-only replay response
+- replay identity: cutoff `1791778092400`, observation/input cutoff `2026-10-12T04:07:08.406Z`,
+  124 distinct current-day slots, Feature version 2 over stored observation Feature version 1
+- windows: 2/5/10/30-minute windows all `AVAILABLE`; Samsung/SK Hynix relative-strength values were
+  produced with `VERIFIED` stock quality and explicit `UNVERIFIED_TIME` index comparisons
+- safety: current/intraday/same-time queries read `1/125/3020` rows and all wrote zero; compact output
+  reduced `63,310` bytes to `13,105` bytes (`79.30%`)
+- quality: overall ceiling `MISSING_INPUT`; program inputs were `STALE_INPUT` and futures window
+  baselines were `MISSING_INPUT`, so program/futures/OI/Basis/divergence values remained null instead
+  of being promoted or replaced with zero
+- stock-flow semantics: all four metrics were `BUCKET_UNCHANGED`, value/direction/acceleration null;
+  `changedBucketObserved=false` is correct for a replay long after the 11:20 bucket transition
+- Signal v2 validator: `PASS`, three relative-strength descriptive signals, deterministic output,
+  confidence ceiling respected, no probability/BUY/SELL field and no false program/stock-flow Signal
+- classification: `LIVE_INPUT_OFFLINE_SIGNAL_REPLAY` safety PASS; changed-bucket Signal v2 transition
+  remains `WAITING_FOR_LIVE_MARKET_VALIDATION`
+- production impact: none; uploaded response was analyzed locally and is not committed
+- next_exact_step: authenticated replay cutoff `1791772010000` (11:26:50 KST), expected to select the
+  first stored observation after the 11:20 bucket fetch and expose actual changed-bucket acceleration
 
 ## CHECKPOINT — Current-session Candidate/Production Equivalence Passed
 

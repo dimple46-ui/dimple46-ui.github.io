@@ -1,6 +1,6 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- updated_at_kst: `2026-10-12 13:05 KST`
+- updated_at_kst: `2026-10-12 13:10 KST`
 - current_milestone: `M2 — Operational / Storage Architecture Stabilization`
 - current_branch: `feature/m2-operational-storage`
 - verified_head_sha: `d8d51330ce70b90f1f3530a0dacda2f8aa7b56cf`
@@ -18,6 +18,10 @@
 - current_live_validation: candidate D1 `/state` exactly matched production `market-live.json` at
   `2026-10-12 13:02:45 KST` for observation identity, both stocks, market/program flows, futures/OI/Basis,
   quality and pipeline; one D1 row read, zero written. Three real stock-flow buckets are available.
+- latest_feature_replay: read-only replay at input cutoff `2026-10-12T04:07:08.406Z` passed the local
+  Signal v2 validator with all D1 writes zero, deterministic output and confidence ceilings. All
+  2/5/10/30m windows were available; repeated stock-flow bucket remained null/`BUCKET_UNCHANGED`.
+  Program was honestly stale and futures baselines missing, so no false program/futures Signal emitted.
 - production_status: production relay health at `2026-10-12 12:50:53 KST` remained schema 3 with History
   and KIS enabled; no production Worker, binding, Secret or route was changed
 - candidate_status: isolated, authenticated and read-only release 2 is active. Authenticated `/health` at
@@ -35,8 +39,8 @@
 - blocked_actions: main merge, production Worker/binding/Secret/route changes and destructive D1 work require
   separate approval; authenticated candidate/validator requests require the existing Dashboard-held Secrets
 - approved_scope: isolated read-only candidate code, tests, candidate deploys, documentation and validation
-- next_exact_step: run authenticated read-only Feature replay at cutoff `1791777765346` and validate
-  actual 2/5/10/30m Feature plus Signal v2 stock-flow reversal/acceleration without any write
+- next_exact_step: replay the first observation after the 11:20 bucket fetch using cutoff
+  `1791772010000`; require `changedBucketObserved=true` and validate Signal v2 reversal/acceleration
 
 Do not recreate PR #3, D1 History, `market_observations`, `feature_runs`, the candidate Worker, its Secret,
 bindings, rate limiter, read endpoints, or the M3 pure-function Signal candidate.
