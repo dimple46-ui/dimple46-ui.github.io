@@ -1,7 +1,23 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-13 06:54 KST
+Last updated: 2026-10-13 08:58 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — New Build Token Selected; Existing Builds Retry Pending
+
+- timestamp: `2026-10-13 08:58 KST`; branch: `feature/m2-operational-storage`; milestone: M2
+- verified_head_before_checkpoint: `4ac1895cd19a6f87bed686e3aef428759f0be956`; PR #4 unmerged
+- evidence: screenshot `image(20261012-235752).png` shows new build token
+  `Workers 빌드 - 2026-10-13 08:57` selected; user then reported Save completed.
+  Scope and successful token authentication remain unverified; no token value was read or stored.
+- completed: existing build-token selection inspection; no replacement runtime Secret or Worker.
+- tests: unchanged source/config; reuse 72/72 local and CI `38255370075` for code `7a7ea50...`.
+- deployment: this documentation commit requests one build through the existing branch integration;
+  success is not assumed. Wrangler pre-upload regression gate remains enabled.
+- production_impact: targets only `market-intelligence-read-candidate`; no production Worker, binding,
+  Secret, route, main merge or D1 write requested.
+- validation/waiting_for_live: unchanged; do not promote replay or live gates on token save.
+- next_exact_step: inspect exact-commit provider build/CI status, then authenticated runtime identity.
 
 ## RECOVERY_CHECKPOINT — Unsaved Diagnosis Recovered; Provider Login Blocked
 

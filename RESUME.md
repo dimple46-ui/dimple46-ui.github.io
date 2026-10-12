@@ -1,7 +1,7 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- updated_at_kst: `2026-10-13 06:54 KST`
-- recovery_verified_remote_head: `1eff5d59ccb3cc4478d3740e24c11bad7ec613e2` (before this documentation checkpoint)
+- updated_at_kst: `2026-10-13 08:58 KST`
+- recovery_verified_remote_head: `4ac1895cd19a6f87bed686e3aef428759f0be956` (before this documentation checkpoint)
 - current_milestone: `M2 — Operational / Storage Architecture Stabilization`
 - current_branch: `feature/m2-operational-storage`
 - verified_head_sha: `7a7ea50db1d7be701422275f07c817d213ccc090` (candidate pre-deploy regression gate)
@@ -65,12 +65,13 @@
 - credential_scope_status: API-token UI has no Worker selector per user report. Account-wide edit
   authority was NOT approved or provisioned. This does not prove automatic deployment impossible.
   Existing Cloudflare Builds must be inspected before proposing another deployer or broader token.
-- next_exact_step: open the existing intelligence candidate Settings > Build > Build Configuration
-  API token selector and inspect available token names/options without saving or exposing values.
-  The selected build token is `Workers ビルド - 2026-10-08 09:41`; error diagnosis is COMPLETE.
-  Status BLOCKED_BY_USER_ACTION: Work has no authenticated provider credential to repair this link;
-  the cloud browser login attempt was rejected with HTTP 403. User-side inspection is required.
-  Do not blindly retry, replace runtime Secrets, or grant broader account permissions.
+- build_token_recovery: user screenshot confirms new `Workers 빌드 - 2026-10-13 08:57` selected;
+  user reported Save completed at 08:58 KST. No token value was read. Permission scope remains
+  unverified; selection/save is not proof of successful authentication or deployment.
+- next_exact_step: verify the existing Cloudflare Builds run triggered by this checkpoint commit,
+  then authenticated deployment identity if the build succeeds. This single retry follows the
+  user-reported build-token repair; runtime source/config are unchanged and regression gate remains.
+  Do not recreate any Worker, binding or runtime Secret. Direct Cloudflare browser/API access remains blocked.
   Separate validator deployment and program replay cutoff
   `1791778965346` remain pending; the intelligence deploy does not deploy the feature validator.
 
