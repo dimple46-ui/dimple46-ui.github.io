@@ -18,7 +18,7 @@
 - waiting_for_live: retain existing live-only gates; source-time program correction needs isolated validator deploy/replay (historical validation, not a live-only blocker); continuous v2 persistence not active; provider storage measurement needs planned 20-trading-day window.
 - prior_validation: real three-bucket Signal replay and exact D1/state snapshot comparison already passed Oct12; reuse details in PROJECT_STATUS.md. Do not repeat completed replay. Futures retain UNVERIFIED_TIME; unchanged bucket stays null.
 - approved_scope: isolated candidate code/tests/deploy/read-only validation. No main merge, production Worker/binding/Secret/routing change, destructive migration or history mutation.
-- next_exact_step: inspect CI and existing intelligence Builds for the commit containing the storage-null fix; consume authenticated receipt once after build success. Do not retry validator setup until deploy command evidence or management access changes.
+- next_exact_step: resolve validator deploy-command evidence only when new access/settings evidence is available; then use existing Builds for the isolated validator correction and historical replay1791778965346. No repeat intelligence auth/build.
 
 Detailed evidence: PROJECT_STATUS.md. Automation instructions: CANDIDATE_AUTOMATION.md.
 
@@ -32,7 +32,7 @@ Detailed evidence: PROJECT_STATUS.md. Automation instructions: CANDIDATE_AUTOMAT
 
 - VERIFIED_COMPLETE: intelligence auth/build path at 7d9d8c9; CI38350679737 and remote receipt115142149349 reused. Never rotate tokens or rerun this historical success. Only changed runtime code warrants a new check.
 - completed_this_checkpoint: storage measurements reject null/blank/boolean/array/object instead of coercing them to zero; numeric strings and measured zero preserved. Storage tests5/5 and related API tests9/9 PASS. Initial fixture incorrectly treated optional undefined retention policy as missing measurement; fixture corrected, only failed suite rerun.
-- code_status: LOCAL_TESTED; new CI/Build/runtime receipt PENDING, not yet DEPLOYED. Existing single intelligence Builds path will handle changed code. Validator remains disabled.
+- code_status: CANDIDATE_VALIDATED at8cdff91; production unchanged; validator disabled. See latest_verified_code.
 - blocker: VALIDATOR_DEPLOY_COMMAND_UNVERIFIED
 - last_attempt: 2026-10-13 14:42 KST Dashboard screenshots
 - failure_reason: saved Build section has repository/branch/disable toggle but no deploy-command field; Manage opens GitHub app permissions. Do not revisit that route.
@@ -41,3 +41,5 @@ Detailed evidence: PROJECT_STATUS.md. Automation instructions: CANDIDATE_AUTOMAT
 - blocked_actions: provider audit requires absent management credential; validator historical replay requires correct isolated deployment. No new API token requested this session.
 - production_impact: NONE; no main merge or production edits. Current production health not re-probed; earlier receipt is historical evidence.
 - waiting_for_live: unchanged; no synthetic result promoted. Continuous v2 persistence remains disabled/unverified.
+
+- latest_verified_code: `8cdff91dd8f6ddd4eb0efb0df18974a0a6a585a2`; node-tests115255644718 SUCCESS; local-checks115255617449 SUCCESS; existing Cloudflare Build115255779348 SUCCESS; remote-checks115255674512 SUCCESS, AUTHENTICATED_READ_ONLY_SMOKE PASS at2026-10-13T10:44:20Z. deploymentId2c437035-cbc9-4b6b-8b01-c7473733c2df. Provider audit/validator SKIPPED (not PASS). This supersedes pending status above. This checkpoint uses skip-ci to avoid redeployment.
