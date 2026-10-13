@@ -22,7 +22,7 @@ export function assertReadMeta(meta) {
 export async function checkCandidate({kind, token, expectedSha, expectedSourceHash, cutoffMs,
   fetcher = fetch, now = Date.now()}) {
   requireCheck(Object.hasOwn(ORIGINS, kind), 'INVALID_CANDIDATE');
-  requireCheck(typeof token === 'string' && token.length >= 32, 'TOKEN_UNAVAILABLE');
+  requireCheck(typeof token === 'string' && token.trim().length > 0, 'TOKEN_UNAVAILABLE');
   requireCheck(/^[a-f0-9]{40}$/.test(expectedSha || ''), 'EXPECTED_SHA_REQUIRED');
   if (kind === 'validator') {
     requireCheck(/^[a-f0-9]{64}$/.test(expectedSourceHash || ''), 'EXPECTED_SOURCE_HASH_REQUIRED');

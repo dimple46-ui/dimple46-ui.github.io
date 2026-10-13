@@ -7,7 +7,7 @@ import {auditCandidateAccess, summarizeSettings} from '../scripts/audit-candidat
 
 const token = 'synthetic-automation-token-not-a-real-secret';
 const sha = 'a'.repeat(40);
-function fixture({wrongSha = false, rowsWritten = 0} = {}) {
+function fixture({wrongSha = false, rowsWritten = 0, authToken = token} = {}) {
   const at = Date.now() - 100000;
   const row = {slot_ms: Math.floor(at / 120000) * 120000, observed_at_ms: at, available_at_ms: at,
     trading_day: '20261012', schema_version: 1, pipeline_status: 'DEGRADED', quality_version: 'fixture',
@@ -28,7 +28,7 @@ function fixture({wrongSha = false, rowsWritten = 0} = {}) {
     calls.push({url, method: options.method});
     assert.equal(options.redirect, 'error');
     return worker.fetch(new Request(url, options), {MARKET_HISTORY: db,
-      INTELLIGENCE_READ_TOKEN: token, INTELLIGENCE_WORKER_GIT_SHA: wrongSha ? 'b'.repeat(40) : sha,
+      INTELLIGENCE_READ_TOKEN: authToken, INTELLIGENCE_WORKER_GIT_SHA: wrongSha ? 'b'.repeat(40) : sha,
       INTELLIGENCE_RATE_LIMIT_PER_MINUTE: '1000', INTELLIGENCE_RATE_LIMITER: {limit: async () => ({success: true})}});
   }};
 }
@@ -104,4 +104,16 @@ test('intelligence checks do not require management or validator credentials and
   assert.match(workflow, /vars.VALIDATOR_CHECKS_ENABLED == 'true'/);
   assert.match(workflow, /vars.CANDIDATE_ACCESS_AUDIT_ENABLED == 'true'/);
   assert.doesNotMatch(workflow, /continue-on-error:\s*true/);
+});
+
+test('existing short tokens are authenticated by server, never approved by length alone', async () => {
+  const shortToken = 'fixture-short';
+  const f = fixture({authToken: shortToken});
+  const result = await checkCandidate({kind: 'intelligence', token: shortToken, expectedSha: sha, fetcher: f.fetcher});
+  assert.equal(result.status, 'PASS');
+  assert.ok(!JSON.stringify(result).includes(shortToken));
+  await assert.rejects(checkCandidate({kind: 'intelligence', token: 'wrong-short', expectedSha: sha,
+    fetcher: fixture({authToken: shortToken}).fetcher}), /HTTP_STATUS_401_EXPECTED_200/);
+  for (const empty of ['', '   ']) await assert.rejects(checkCandidate({kind: 'intelligence', token: empty,
+    expectedSha: sha, fetcher: () => assert.fail('no network')}), /TOKEN_UNAVAILABLE/);
 });
