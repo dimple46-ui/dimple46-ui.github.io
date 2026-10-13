@@ -117,3 +117,22 @@ test('existing short tokens are authenticated by server, never approved by lengt
   for (const empty of ['', '   ']) await assert.rejects(checkCandidate({kind: 'intelligence', token: empty,
     expectedSha: sha, fetcher: () => assert.fail('no network')}), /TOKEN_UNAVAILABLE/);
 });
+
+test('validator write-disabled evidence must be explicit and readable', () => {
+  const inspect = bindings => summarizeSettings('market-feature-validation', {bindings});
+  for (const bindings of [undefined, [], [{name: 'FEATURE_V2_WRITE_ENABLED', type: 'secret_text'}],
+    [{name: 'FEATURE_V2_WRITE_ENABLED', type: 'plain_text'}],
+    [{name: 'FEATURE_V2_WRITE_ENABLED', type: 'plain_text', text: 'FALSE'}],
+    [{name: 'FEATURE_V2_WRITE_ENABLED', type: 'plain_text', text: 'false'},
+     {name: 'FEATURE_V2_WRITE_ENABLED', type: 'plain_text', text: 'true'}]]) {
+    const result = inspect(bindings);
+    assert.equal(result.writeState, 'UNVERIFIED');
+    assert.equal(result.writeEnabled, null);
+    assert.equal(result.writeDisabledVerified, false);
+  }
+  for (const enabled of [true, false]) {
+    const result = inspect([{name: 'FEATURE_V2_WRITE_ENABLED', type: 'plain_text', text: String(enabled)}]);
+    assert.equal(result.writeEnabled, enabled);
+    assert.equal(result.writeDisabledVerified, !enabled);
+  }
+});

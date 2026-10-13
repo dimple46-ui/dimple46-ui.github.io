@@ -1504,3 +1504,12 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Validated health/state/features/history, no/wrong token rejection, parameter bounds, cutoff, quality, freshness, zero D1 writes. Feature version 2; cutoff1791350328109 and STALE_INPUT preserved. Observation age105754ms; collection DEGRADED. No promotion of stale feature or continuous persistence.
 - production impact none; no main merge, production config, Secret, binding or D1 mutation. Provider/validator checks skipped independently.
 - next_exact_step: inspect existing validator deployment/write-disabled configuration before isolated correction deployment and historical replay1791778965346. No repeat of completed intelligence authentication setup.
+
+
+## CHECKPOINT — 2026-10-13 14:23 KST — validator preflight safety
+
+- Recovered remote a855b0e; PR4 Draft/Open. Reused successful exact-SHA provider check115142221101, CI38350679737 and remote smoke115142149349. No repeated runtime validation.
+- Found provider audit false-negative: missing or secret/redacted write flag previously yielded writeEnabled=false. Added UNVERIFIED/null state and explicit writeDisabledVerified; only readable plain_text false qualifies. Duplicate/malformed flags remain unverified. No Secret values emitted.
+- Related tests 11/11 PASS. Existing Worker behavior/auth unchanged; audit is TESTED_NOT_EXECUTED_REMOTELY. No extra deployment, no production changes, no D1 writes or live-gate promotion.
+- Current validator deployment configuration remains BLOCKED_BY_EXTERNAL_CONFIGURATION_EVIDENCE. Existing management audit requires credential availability; no second deployer or new token.
+- next_exact_step: check only GitHub Repository secret name CLOUDFLARE_API_TOKEN presence. Then verify account ID and activate existing read-only provider audit if available. Otherwise one Dashboard inspection, not token recreation. Source-time replay1791778965346 remains pending.

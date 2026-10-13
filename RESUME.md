@@ -1,6 +1,6 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: `2026-10-13T14:18:31+09:00`
+- timestamp_kst: `2026-10-13T14:23:00+09:00`
 - milestone: `M2 — Operational / Storage Architecture Stabilization`
 - branch: `feature/m2-operational-storage`
 - verified_head_sha: `7d9d8c9de08a10339ec7e7d991984a70994688df` (tested and deployed code; checkpoint commit contains this file)
@@ -18,6 +18,8 @@
 - waiting_for_live: retain existing live-only gates; source-time program correction needs isolated validator deploy/replay (historical validation, not a live-only blocker); continuous v2 persistence not active; provider storage measurement needs planned 20-trading-day window.
 - prior_validation: real three-bucket Signal replay and exact D1/state snapshot comparison already passed Oct12; reuse details in PROJECT_STATUS.md. Do not repeat completed replay. Futures retain UNVERIFIED_TIME; unchanged bucket stays null.
 - approved_scope: isolated candidate code/tests/deploy/read-only validation. No main merge, production Worker/binding/Secret/routing change, destructive migration or history mutation.
-- next_exact_step: inspect existing validator deployment configuration and verify write-disabled settings before deploying already-tested source-identity correction; replay cutoff 1791778965346 afterward. Do not repeat intelligence Secret setup or successful smoke.
+- next_exact_step: confirm GitHub Repository secret CLOUDFLARE_API_TOKEN exists (name only); do not recreate or reveal it. If present, verify account ID availability and enable only existing provider read-audit. If unavailable, inspect existing validator settings through one user Dashboard step. Do not deploy validator until writeState DISABLED and configuration evidence are verified.
 
 Detailed evidence: PROJECT_STATUS.md. Automation instructions: CANDIDATE_AUTOMATION.md.
+
+- latest_local_change: provider settings audit now returns UNVERIFIED/null for missing, redacted, malformed or duplicate write flags; only explicit plain-text false proves write-disabled settings. Targeted tests 11/11 PASS. TESTED_NOT_EXECUTED_REMOTELY; checkpoint skips CI/Builds to avoid unrelated intelligence redeploy. Management access still unverified; no repeated login.

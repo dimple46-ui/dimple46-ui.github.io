@@ -3,7 +3,15 @@ import {pathToFileURL} from 'node:url';
 export const CANDIDATES = ['market-feature-validation', 'market-intelligence-read-candidate'];
 export function summarizeSettings(worker, settings) {
   if (!CANDIDATES.includes(worker)) throw new Error('PRODUCTION_TARGET_FORBIDDEN');
-  const bindings = settings.bindings || [];
+  const bindingsKnown = Array.isArray(settings?.bindings);
+  const bindings = bindingsKnown ? settings.bindings : [];
+  const flags = bindings.filter(b => b.name === 'FEATURE_V2_WRITE_ENABLED');
+  // Missing/redacted/duplicate flags cannot prove the deployed validator is write-disabled.
+  const flag = flags.length === 1 ? flags[0] : null;
+  const knownWriteFlag = bindingsKnown && flag?.type === 'plain_text' &&
+    (flag.text === 'true' || flag.text === 'false');
+  const writeState = worker !== CANDIDATES[0] ? 'NOT_APPLICABLE' :
+    !knownWriteFlag ? 'UNVERIFIED' : flag.text === 'true' ? 'ENABLED' : 'DISABLED';
   return {worker, compatibilityDate: settings.compatibility_date ?? null,
     bindings: bindings.map(b => ({name: b.name, type: b.type,
       ...(b.type === 'd1' ? {databaseId: b.id ?? b.database_id ?? null} : {})})),
@@ -12,8 +20,9 @@ export function summarizeSettings(worker, settings) {
       b.name === (worker === CANDIDATES[0] ? 'VALIDATION_TOKEN' : 'INTELLIGENCE_READ_TOKEN')),
     historyBindingPresent: bindings.some(b => b.name === 'MARKET_HISTORY' && b.type === 'd1'),
     rateLimitBindingPresent: bindings.some(b => b.type === 'ratelimit'),
-    writeEnabled: worker === CANDIDATES[0] ?
-      bindings.some(b => b.name === 'FEATURE_V2_WRITE_ENABLED' && b.text === 'true') : null};
+    bindingsKnown, writeState,
+    writeEnabled: writeState === 'UNVERIFIED' || writeState === 'NOT_APPLICABLE' ? null : writeState === 'ENABLED',
+    writeDisabledVerified: writeState === 'DISABLED'};
 }
 export async function auditCandidateAccess({accountId, token, fetcher = fetch}) {
   if (!/^[a-f0-9]{32}$/i.test(accountId || '') || !token) throw new Error('CLOUDFLARE_CREDENTIALS_UNAVAILABLE');
