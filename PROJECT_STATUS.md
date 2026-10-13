@@ -1493,3 +1493,14 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Candidate run 38345817449 remote job 115126894468 FAILED: TOKEN_UNAVAILABLE before HTTP requests. Means missing value or length below 32; not proof of API token mismatch. No authenticated runtime success claimed for new SHA.
 - Provider audit/validator SKIPPED. Production unchanged. No new deployer or D1 writes; live gates unchanged.
 - next_exact_step: confirm Repository secrets placement/name. Then check existing token length privately if needed. Repair and rerun failed job only; do not rebuild or regenerate tokens. Checkpoint commit skips CI/Builds.
+
+
+## CHECKPOINT — 2026-10-13 14:18 KST — authenticated automation PASS
+
+- branch feature/m2-operational-storage; code commit 7d9d8c9de08a10339ec7e7d991984a70994688df; M2.
+- Root cause: checker imposed length >=32 on an existing shorter runtime credential. Removed client length policy only; Worker authentication unchanged. Missing/blank values fail before network; wrong short token fails server authentication. Secret unchanged/not exposed.
+- targeted tests 10/10 PASS; Tests CI 38350679737 SUCCESS. Candidate checks 38350676875 SUCCESS, remote job 115142149349 PASS.
+- Existing Cloudflare Builds check 115142221101 SUCCESS; authenticated runtime SHA matches code; deploymentId 3fe848a3-bb0c-49a2-83da-60c083aaa7d2. Artifact 11790232429 retains receipts for 7 days.
+- Validated health/state/features/history, no/wrong token rejection, parameter bounds, cutoff, quality, freshness, zero D1 writes. Feature version 2; cutoff1791350328109 and STALE_INPUT preserved. Observation age105754ms; collection DEGRADED. No promotion of stale feature or continuous persistence.
+- production impact none; no main merge, production config, Secret, binding or D1 mutation. Provider/validator checks skipped independently.
+- next_exact_step: inspect existing validator deployment/write-disabled configuration before isolated correction deployment and historical replay1791778965346. No repeat of completed intelligence authentication setup.
