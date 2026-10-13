@@ -1,16 +1,16 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: 2026-10-14T08:00:00+09:00
+- timestamp_kst: 2026-10-14T07:59:00+09:00
 - milestone: M2 — Operational / Storage Architecture Stabilization
 - branch: feature/m2-operational-storage
 - active_pr: #4 Draft/Open; PR #3 merged. No main merge authorized.
-- verified_head_sha: f9521ee668a5039565dcf72854ec8774b57dec15 (last deployed/authenticated intelligence; new Signal guard local-tested only)
+- verified_head_sha: 5dc82e5d819a135bcf4832a588066d507350962f (authenticated candidate)
 - completed: /health exposes separate Feature input-cutoff age and observation age; missing/invalid/future times return null age with explicit status, never zero freshness. New candidate check verifies feature age arithmetic.
 - last_successful_test: changed API12/12 PASS and actual-handler automation1/1 PASS; prior Signal11/11 reused. Invalid metadata cutoff serialization found by fixtures and fixed before commit.
-- last_successful_ci: node-tests115568585821/local-checks115568351806 SUCCESS at41647c237818dd0aabb7161c637f73a43140710c.
-- last_successful_build: intelligence Builds115568514758 SUCCESS at41647c237818dd0aabb7161c637f73a43140710c.
-- authenticated_validation: remote-checks115285505021 PASS 2026-10-13T12:02:35Z; runtime SHA f9521ee exact; deploymentIdef1c612e-3a8c-4891-91ac-fe6deb7bf1b9; healthQueryCount2/storageGrowthStatus NOT_REQUESTED/d1Writes0; artifact11810834075. Reused receipt, no remote rerun.
-- candidate_status: 41647c build/deployment SUCCESS, authenticated validation FAILED (job115568413421 HTTP_STATUS_504_EXPECTED_200). Runtime age evidence UNVERIFIED; last successful authenticated runtime remains f9521ee. Artifact11853827102 records failure.
+- last_successful_ci: node-tests115584120675/local-checks115584094195 SUCCESS at5dc82e5.
+- last_successful_build: existing intelligence Builds115584344473 SUCCESS at5dc82e5.
+- authenticated_validation: remote115584158240 PASS at2026-10-13T22:58:54Z; runtime5dc82e5; deploymentId8cd941c5-130a-42d0-a46e-805318b11035; artifact11857104159; healthQueryCount2, d1Writes0, feature age582005351ms. Age/quality retained, not live PASS.
+- candidate_status: CANDIDATE_VALIDATED including Feature age; prior504 did not recur, original endpoint/root cause remain unknown. Do not claim underlying timeout cause fixed.
 - production_impact: NONE. No production Worker/Secret/binding/route change or D1 mutation.
 - quality: stored Feature2 cutoff1791350328109 remains STALE_INPUT; continuous v2 persistence not enabled. Historical receipts are not current health.
 - blocked: VALIDATOR_DEPLOY_COMMAND_UNVERIFIED. Existing Git connection, MARKET_HISTORY binding, VALIDATION_TOKEN existence, write=false, compatibility_date2026-10-02 verified; Disable builds ON.
@@ -19,13 +19,13 @@
 - waiting_for_live: preserve existing live-only gates; historical source-time correction replay1791778965346 pending validator deployment, not live-only. Provider storage measurement needs20-day sample.
 - verified_complete_lock: existing intelligence auth/build/receipt pipeline; prior Oct12 real three-bucket Signal replay and D1/state comparison. Do not repeat without changed input/code/environment.
 - approved_scope: isolated candidate code/tests/deploy/read-only validation. No production changes, main merge, destructive migration or history rewrite.
-- next_exact_step: run existing push validation with improved endpoint/auth-stage diagnostic once. If504 recurs, record exact stage and stop; no timeout increase or blind retry.
+- next_exact_step: review M2 remaining acceptance gates from existing docs only, separate provider-only blockers from independent M3 gaps, and choose one unfinished item; do not repeat successful health/build/auth. Recommended GPT-6.1 Sol Medium.
 
 Detailed history: PROJECT_STATUS.md. Deployment instructions: CANDIDATE_AUTOMATION.md.
 
 - query_plan_evidence: existing GROUP BY/ORDER BY/LIMIT5 uses shipped indexes and stops after five groups locally. 10→100 days has identical VM steps (observations29807, features28164 at330 rows/day); test verifies identical aggregate payload evaluations at20 rows/day, mixed versions and correct totals. These are local SQLite metrics, not Cloudflare CPU/rows_read evidence. No SQL/schema changes justified.
 
-- new_blocker: CANDIDATE_READ_TIMEOUT_504; last_attempt2026-10-14T07:15:40KST; endpoint unknown because generic checker error omits path. Retry only after diagnostic change or identified provider recovery. No unchanged auth retry or automatic production action. Live gates unchanged.
+- prior_timeout: 41647c remote504 endpoint unknown; changed diagnostic validation5dc82e5 succeeded. Retain incident, no blind retries; future failures now identify endpoint/auth stage.
 
 - diagnostic_change: fixed endpoint/auth-stage labels for HTTP, network/timeout and invalid JSON failures; no URL parameters/token/body/native errors recorded. Targeted automation12/12 PASS. Runtime code unchanged; existing Builds is sole push path, no manual rerun.
 - recommended_next_model: GPT-6.1 Sol, Medium for bounded diagnosis/tests; separate High only if evidence indicates cross-service consistency/design issue.

@@ -1608,3 +1608,10 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Parent8aa52b3. Prior504 lacked endpoint; no identical auth retry. Checker now reports fixed endpoint and NO_TOKEN/WRONG_TOKEN/AUTHENTICATED stage. Network/timeout and invalid JSON classified without raw errors/body/token/URL parameters.
 - Targeted automation12/12 PASS including each authenticated endpoint504, single attempt, network/JSON privacy. Runtime Worker unchanged; only existing push workflow will exercise changed diagnostic once. No separate deployer or timeout increase. If504 repeats, record stage and stop.
 - Production unaffected, validator unchanged. Recommended next GPT-6.1 Sol Medium; no model-switch claim.
+
+
+## CHECKPOINT — 2026-10-14 07:59 KST — diagnostic validation succeeded
+
+- Code5dc82e5d819a135bcf4832a588066d507350962f. CI115584120675/115584094195 and existing Build115584344473 SUCCESS; remote115584158240 PASS. Runtime SHA exact, deploymentId8cd941c5-130a-42d0-a46e-805318b11035; artifact11857104159. Health2 queries, Feature input age582005351ms, zero D1 writes. This supplies prior missing runtime Feature age evidence.
+- Old504 did not recur with improved diagnostics. Root cause/old failed endpoint still unknown; not claimed fixed. No extra retry. Validator/provider audit skipped, live gates unchanged, production untouched.
+- Next: brief M2 remaining-gate review using existing docs, isolate external blockers and select independent M3 gap. GPT-6.1 Sol Medium; High only if actual complex redesign needed. Receipt skip-ci prevents redundant deploy.
