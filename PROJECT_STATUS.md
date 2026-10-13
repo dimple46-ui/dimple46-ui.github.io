@@ -1483,3 +1483,13 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - remaining: verify GitHub Secret name presence before enabling intelligence checks. Provider audit and validator remain separate opt-ins. Automatic rollback not activated without provider version/settings evidence.
 - waiting_for_live: unchanged; stored v2 still stale 20261007, no continuous v2 claim, no synthetic-to-live promotion.
 - next_exact_step: GitHub repository Actions Secrets list: confirm INTELLIGENCE_READ_TOKEN name exists, without displaying its value or creating a new token. Then enable existing minimum-credential remote check path.
+
+
+## CHECKPOINT — 2026-10-13 13:19 KST — first authenticated CI activation
+
+- commit: 9c4638d0eec70a947a2005b01b65de8521d080c4; branch feature/m2-operational-storage; M2.
+- user registered GitHub INTELLIGENCE_READ_TOKEN and CANDIDATE_CHECKS_ENABLED=true; values never read.
+- Tests run 38345820943 SUCCESS, local-checks SUCCESS. Existing Cloudflare check 115126956596 SUCCESS; exact-SHA waiter SUCCESS.
+- Candidate run 38345817449 remote job 115126894468 FAILED: TOKEN_UNAVAILABLE before HTTP requests. Means missing value or length below 32; not proof of API token mismatch. No authenticated runtime success claimed for new SHA.
+- Provider audit/validator SKIPPED. Production unchanged. No new deployer or D1 writes; live gates unchanged.
+- next_exact_step: confirm Repository secrets placement/name. Then check existing token length privately if needed. Repair and rerun failed job only; do not rebuild or regenerate tokens. Checkpoint commit skips CI/Builds.
