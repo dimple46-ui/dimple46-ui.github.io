@@ -1554,3 +1554,11 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Changed annual projections to exclude current/future KST days; raw five-day totals stay unchanged. Reports exclusion count and sampleCompleteness NOT_VERIFIED: earlier dates are not proof of full collection. No query expansion, D1 writes, retention deletion or production edits.
 - Targeted storage6/API10 tests=16/16 PASS, including KST midnight boundary, current/future exclusions, empty sample null, raw count preservation. Synthetic correctness only; live gates unchanged.
 - New code deployment/CI pending existing automation. RESUME normalized to remove superseded duplicate status. next_exact_step: verify new exact-SHA receipt; then independent retention measurement gaps.
+
+
+## CHECKPOINT — 2026-10-13 20:53 KST — partial-day projection candidate receipt
+
+- Code5493ed8ef6b1a16427fe5c9636ba89078e14580e. CI node-tests115281746432/local-checks115281735976 SUCCESS. Existing Cloudflare Build115281977620 SUCCESS. Authenticated smoke115281804200 PASS; exact runtime SHA; deploymentId1831bd54-624a-41c0-9ab4-24675d4377a7; artifact11811181758; D1 writes0. Stored cutoff1791350328109/STALE_INPUT unchanged.
+- New projection edge cases covered by16 targeted local tests; remote smoke covers identity/auth/read API, not independent proof of every new projection field. No live-gate promotion. Validator/provider checks skipped.
+- Next exact step: inspect D1 indexes and bound health storage-growth aggregation to latest five trading days before grouping; compare query plans/totals with SQLite fixtures. Existing GROUP BY ... LIMIT5 can scan all history. No production migration, no repeated Validator UI.
+- Receipt-only checkpoint skips CI/Builds. Production unchanged.
