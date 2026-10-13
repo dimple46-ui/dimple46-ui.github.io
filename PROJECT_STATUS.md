@@ -1,7 +1,27 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-13 08:58 KST
+Last updated: 2026-10-13 09:01 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## CHECKPOINT — Existing Candidate Builds Succeeded After Token Repair
+
+- timestamp: `2026-10-13 09:01 KST`; branch: `feature/m2-operational-storage`; milestone: M2
+- commit: `c6cc50c69f6cf5d6e793c407aeab12d034f0a35e`; documentation-only trigger; runtime/config unchanged
+- completed: Work reused existing branch integration after user selected/saved new build token.
+- CI: `38325024034`, node-tests SUCCESS, completed `2026-10-13T00:00:13Z` at exact commit.
+- deployment: Workers Builds check `115061581355` SUCCESS; build
+  `78d97dcd-c63d-4499-9599-11fc3f3cb773`, completed `2026-10-13T00:00:33Z` at exact commit.
+  Prior stale-token failure did not recur. Provider success is not authenticated endpoint evidence.
+- tests: reuse local 72/72 PASS; configured regression gate runs before Wrangler upload;
+  no manual duplicate local test, synthetic replay or production validation claim.
+- validation: `BUILD_SUCCEEDED_RUNTIME_UNVERIFIED`; expected runtime SHA `c6cc50c...`.
+  No secret values were obtained. Existing API tokens at runtime remain user-held.
+- direct endpoint checks: no token and deliberately invalid token both returned HTTP 401/UNAUTHORIZED
+  from candidate GET /health after build success. Correct-token/D1 checks remain pending.
+- production_impact: no production Worker, binding, Secret, route, D1 mutation or main merge requested.
+- waiting_for_live: unchanged; separate feature-validator deployment/replay remains pending.
+- next_exact_step: authenticated candidate GET /health using existing Secret; verify expected SHA,
+  metadata/quality/freshness and zero writes. Work lacks endpoint credentials; user tester needed.
 
 ## CHECKPOINT — New Build Token Selected; Existing Builds Retry Pending
 

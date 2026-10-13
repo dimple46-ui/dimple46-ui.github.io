@@ -1,21 +1,27 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- updated_at_kst: `2026-10-13 08:58 KST`
-- recovery_verified_remote_head: `4ac1895cd19a6f87bed686e3aef428759f0be956` (before this documentation checkpoint)
+- updated_at_kst: `2026-10-13 09:01 KST`
+- recovery_verified_remote_head: `c6cc50c69f6cf5d6e793c407aeab12d034f0a35e` (before this documentation checkpoint)
 - current_milestone: `M2 — Operational / Storage Architecture Stabilization`
 - current_branch: `feature/m2-operational-storage`
 - verified_head_sha: `7a7ea50db1d7be701422275f07c817d213ccc090` (candidate pre-deploy regression gate)
 - main_sha_at_checkpoint: `f4570a7d1aff08206d70934a4bb9bbaaf33e96d0` (live snapshot commit; expected to advance)
 - active_pr: `#4`, Draft/Open, not merged
 - last_successful_test: local full regression `72/72 PASS`; new automation tests `8/8 PASS` (synthetic only)
-- last_successful_ci: full regression `38255370075` SUCCESS at `7a7ea50...`;
+- last_successful_ci: full regression `38325024034` SUCCESS at `c6cc50c...`;
+  prior full regression `38255370075` SUCCESS at `7a7ea50...`;
   candidate-check workflow `38208466333` SUCCESS at `08b32931...`;
   remote-check job disabled/not run. Full regression CI `38208469640` SUCCESS at `08b32931...`;
   prior full-suite CI `38206167262` SUCCESS at `102672c...` remains valid for unchanged runtime code.
-- last_successful_deployment: isolated candidate build `3dd74257-284b-4129-8969-26520b85d8e9`, SUCCESS
-- deployed_commit_sha: `d8d51330ce70b90f1f3530a0dacda2f8aa7b56cf`, exactly verified by authenticated `/health`
-- latest_candidate_build: `1417e3bb-f29b-4600-aca2-004612cea6a7`, FAILED before cloning at `7a7ea50...`;
-  last authenticated runtime evidence remains `d8d51330...`, not a current deployment verification
+- last_successful_deployment: provider Workers Builds check SUCCESS for isolated build
+  `78d97dcd-c63d-4499-9599-11fc3f3cb773`, exact SHA `c6cc50c69f6cf5d6e793c407aeab12d034f0a35e`,
+  completed `2026-10-13T00:00:33Z`; authenticated post-deploy validation is pending
+- deployed_commit_sha: expected `c6cc50c69f6cf5d6e793c407aeab12d034f0a35e` from successful build;
+  last authenticated `/health` SHA remains `d8d51330ce70b90f1f3530a0dacda2f8aa7b56cf` (old evidence)
+- latest_candidate_build: `78d97dcd-c63d-4499-9599-11fc3f3cb773`, SUCCESS;
+  `BUILD_SUCCEEDED_RUNTIME_UNVERIFIED`, not authenticated D1/API validation
+- latest_unauthenticated_validation: direct candidate GET /health with no token and deliberately
+  invalid token both returned HTTP 401 with UNAUTHORIZED after build success; no D1 write requested
 - last_successful_validation: replay at input cutoff `2026-10-12T04:22:45.140Z` had verified program
   quality and a real 30-minute delta of `-78,889,655,137`; it exposed the observation/source-time
   alignment gap while preserving zero D1 writes and all safety checks
@@ -45,33 +51,30 @@
 - blocked_actions: main merge, production Worker/binding/Secret/route changes and destructive D1 work require
   separate approval; authenticated candidate/validator requests require the existing Dashboard-held Secrets
 - approved_scope: isolated read-only candidate code, tests, candidate deploys, documentation and validation
-- automation_status: existing intelligence Cloudflare Builds branch and complete deploy command confirmed
-  from user screenshot/text; candidate-only Wrangler config now runs the full regression suite before
-  upload. Local 72/72 PASS and GitHub CI SUCCESS. Cloudflare Build `1417e3bb-f29b-4600-aca2-004612cea6a7`
-  FAILED for `7a7ea50...`; supplied provider screenshot now shows a stale build-token error before
-  repository cloning. The new test gate/deploy command did not execute. Provider reports the selected
-  token was deleted or rolled; its actual token lifecycle is not independently verified.
-  Latest runtime identity remains unverified; last successful deployment evidence is unchanged.
+- automation_status: existing branch integration reused successfully after user saved a new build token.
+  Build `78d97dcd...` and GitHub CI both SUCCESS at exact `c6cc50c...`; no new deployer was installed.
+  The configured pre-upload regression gate remains enabled. The earlier stale-token build failed
+  before cloning; this retry succeeded. Authenticated runtime identity/D1 checks remain pending.
   Direct API deployment, migration and rollback are NOT activated. See `CANDIDATE_AUTOMATION.md`.
 - access_status: on `2026-10-13 06:54 KST`, Work token/account ID and endpoint tokens remain absent;
   GitHub Secrets existence is UNVERIFIED (connector excludes Secrets APIs). Cloudflare secure login
   was attempted; the site returned `API Request Failed` with HTTP 403. Authentication is not verified.
   Automated login stopped after this site error; no credential values were read or logged.
   Do not create/reissue existing tokens or copy credential values into chat/checkpoints.
-- recovery_status: `BLOCKED_BY_USER_ACTION`; remote HEAD still `1eff5d59...`, PR #4 Draft/Open.
-  Recovered the unsaved local stale-build-token diagnosis: previous GitHub write was not executed
-  because automatic approval review hit a usage limit. Exact `7a7ea50...` checks rechecked:
-  node-tests SUCCESS, Workers Builds FAILURE. Unchanged tests were not rerun.
+- recovery_status: prior unsaved diagnosis persisted at `4ac1895...`; PR #4 remains Draft/Open.
+  User repaired the build token and Work triggered/verified one existing Builds run via `c6cc50c...`.
+  No local regression rerun; existing local evidence reused, remote CI/predeploy gate run automatically.
 - credential_scope_status: API-token UI has no Worker selector per user report. Account-wide edit
   authority was NOT approved or provisioned. This does not prove automatic deployment impossible.
   Existing Cloudflare Builds must be inspected before proposing another deployer or broader token.
 - build_token_recovery: user screenshot confirms new `Workers 빌드 - 2026-10-13 08:57` selected;
   user reported Save completed at 08:58 KST. No token value was read. Permission scope remains
   unverified; selection/save is not proof of successful authentication or deployment.
-- next_exact_step: verify the existing Cloudflare Builds run triggered by this checkpoint commit,
-  then authenticated deployment identity if the build succeeds. This single retry follows the
-  user-reported build-token repair; runtime source/config are unchanged and regression gate remains.
-  Do not recreate any Worker, binding or runtime Secret. Direct Cloudflare browser/API access remains blocked.
+- next_exact_step: authenticated GET /health on the existing intelligence candidate using its existing
+  runtime Secret; verify release.workerGitSha equals `c6cc50c69f6cf5d6e793c407aeab12d034f0a35e`,
+  feature version, real ages/quality and zero D1 writes. Do not send token values to Work.
+  User-held authenticated HTTP tester is needed: Work has no endpoint credential and cloud login failed.
+  Do not retry a successful build or recreate any Worker, binding or runtime Secret.
   Separate validator deployment and program replay cutoff
   `1791778965346` remain pending; the intelligence deploy does not deploy the feature validator.
 

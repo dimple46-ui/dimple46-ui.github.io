@@ -1,5 +1,14 @@
 # Candidate automation — staged activation
 
+## Latest result (2026-10-13)
+
+After the user saved a new build token, Work triggered the existing branch integration with
+documentation commit `c6cc50c69f6cf5d6e793c407aeab12d034f0a35e`. GitHub CI `38325024034` and
+Cloudflare Build `78d97dcd-c63d-4499-9599-11fc3f3cb773` both succeeded at that exact commit.
+No duplicate deployer or runtime/config change was introduced. The pre-upload test gate remains enabled.
+Authenticated `/health` identity must still confirm this SHA; build success does not prove D1/API
+correctness or complete live validation. Existing endpoint tokens are not available in Work.
+
 ## Existing Cloudflare Builds reused (2026-10-12)
 
 User-provided candidate Settings screenshot and complete deploy command confirm:
