@@ -1593,3 +1593,11 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Parentac5b479. Add latestFeatureRun.freshness(age_ms,basis,status), input-cutoff based, not generated_at; observation freshness independently reported. Null/invalid/future timestamps retain unknown age, no clamped zero. Age alone is not exchange-time verification or live quality. Invalid metadata cutoff serialization guarded after failure fixture exposed it.
 - API12/12 and checker integration1/1 PASS. Missing run remains null; old feature/recent observation tested. Existing quality preserved; no live-gate promotion. Checker now verifies actual Feature age and records it.
 - Existing Builds new release pending. No production Worker/Secret/binding/route/D1 mutation. Validator remains blocked. Next: verify exact-SHA receipt once.
+
+
+## CHECKPOINT — 2026-10-14 07:17 KST — deployment passed, remote verification blocked
+
+- Code41647c237818dd0aabb7161c637f73a43140710c. CI node-tests115568585821/local-checks115568351806 SUCCESS; existing Builds115568514758 SUCCESS.
+- Remote115568413421 FAILED at22:15:40Z with HTTP_STATUS_504_EXPECTED_200, after build waiter PASS. Artifact11853827102. Do not call this authenticated runtime PASS or claim actual feature-age evidence. Last successful authenticated runtime f9521ee retained.
+- No retry, timeout increase, token change, production rollback or second deploy. Generic checker error lacks endpoint attribution, so root cause unresolved; could not establish which API timed out.
+- Next exact step: fixed endpoint stage in safe error receipts and targeted test; then changed diagnostics can isolate failure. Retry condition: improved diagnostic path or independently established recovery. Validator separately blocked, live gates unchanged. Receipt-only skip-ci.
