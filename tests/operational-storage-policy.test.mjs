@@ -28,3 +28,33 @@ test('retention gate requires measurements and never authorizes deletion',()=>{
  const required=retentionGate({measuredDatabaseBytes:450,databaseLimitBytes:500,projectedDailyBytes:2});
  assert.equal(required.status,'ARCHIVE_PLAN_REQUIRED');assert.equal(required.automatedDeletionAllowed,false);
 });
+
+test('unknown measurements cannot become zero growth or a healthy retention result',()=>{
+ for (const missing of [null,undefined,'','  ',false,true,[],{},NaN,Infinity,-1]) {
+  const growth=summarizeJsonGrowth([{trading_day:'20261012',row_count:330,json_bytes:missing}]);
+  assert.equal(growth.status,'INSUFFICIENT_DATA');
+  assert.equal(growth.projectedAnnualJsonBytes,null);
+  assert.equal(snapshotCommitPressure({commitsPerTradingDay:missing}).status,'INSUFFICIENT_DATA');
+  for (const field of ['measuredDatabaseBytes','databaseLimitBytes','projectedDailyBytes','minimumHotTradingDays']) {
+   // Omitted optional policy uses the documented 60-day default, not a measurement.
+   if (field === 'minimumHotTradingDays' && missing === undefined) continue;
+   const gate=retentionGate({measuredDatabaseBytes:100,databaseLimitBytes:1000,projectedDailyBytes:2,minimumHotTradingDays:60,[field]:missing});
+   assert.equal(gate.status,'INSUFFICIENT_MEASUREMENT');
+   assert.equal(gate.utilizationRatio,null);
+   assert.equal(gate.automatedDeletionAllowed,false);
+  }
+ }
+});
+
+test('measured zero and numeric database strings remain valid; missing rows do not dilute averages',()=>{
+ const growth=summarizeJsonGrowth([
+  {trading_day:'20261012',row_count:null,json_bytes:null},
+  {trading_day:'20261013',row_count:'10',json_bytes:'200'}
+ ]);
+ assert.equal(growth.sampleTradingDays,1);
+ assert.equal(growth.averageJsonBytesPerTradingDay,200);
+ assert.equal(snapshotCommitPressure({commitsPerTradingDay:0}).projectedAnnualCommits,0);
+ const zero=retentionGate({measuredDatabaseBytes:0,databaseLimitBytes:1000,projectedDailyBytes:0});
+ assert.equal(zero.status,'MONITOR');assert.equal(zero.utilizationRatio,0);
+ assert.equal(zero.estimatedDaysRemaining,null);
+});

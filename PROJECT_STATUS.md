@@ -1528,3 +1528,13 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 
 - Screenshot confirms sole D1 binding MARKET_HISTORY -> market-history. User confirms existing compatibility date2026-10-02; aligned validator TOML to preserve it. Write flag false previously confirmed. No runtime edits/tests rerun for a date-only config correction; syntax/field comparison verified. NOT_DEPLOYED.
 - Next: configure existing Worker Git connection with branch feature/m2-operational-storage, explicit validator config, Disable builds ON until saved settings reviewed. Main/default deploy command forbidden. No production changes. Checkpoint skips unrelated builds.
+
+
+## CHECKPOINT — 2026-10-13 19:45 KST — bounded recovery and storage correctness
+
+- Parent e211b62cc4ec09e9166a14e1d0a543611fdb0727; PR4 confirmed Draft/Open. Reused verified intelligence runtime7d9d8c9, CI38350679737 SUCCESS, authenticated receipt115142149349. No repeated auth/deployment/login.
+- User screenshots confirm validator Git connection, correct branch, Disable builds ON, existing VALIDATION_TOKEN and sole MARKET_HISTORY binding, write=false. Saved deploy command still unverified. Manage leads to GitHub permissions; do not repeat. Retry only after command evidence or management access changes.
+- Implemented local M2 fix: finiteNonNegative no longer treats null, blank, booleans, arrays or objects as measured zero. Unknown measurements cannot imply healthy retention or dilute growth averages. Measured zero/numeric DB strings remain supported; deletion always disabled.
+- Tests: related API9/9 passed on changed module; storage5/5 passed after correcting optional-undefined-policy test expectation. No whole-suite rerun. Synthetic correctness only.
+- Deployment: pending existing CI/Build/runtime validation for this code commit. No competing deployer or new credentials. This code change warrants a build; checkpoint is bundled with code to avoid documentation-only build.
+- Production impact none; live-only gates unchanged. next_exact_step: inspect this commit's existing CI/Build and authenticated receipt once. Validator remains independently blocked; do not repeat UI discovery without new evidence.

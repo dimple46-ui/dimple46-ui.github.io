@@ -1,6 +1,6 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: `2026-10-13T14:28:00+09:00`
+- timestamp_kst: `2026-10-13T19:45:00+09:00`
 - milestone: `M2 — Operational / Storage Architecture Stabilization`
 - branch: `feature/m2-operational-storage`
 - verified_head_sha: `7d9d8c9de08a10339ec7e7d991984a70994688df` (tested and deployed code; checkpoint commit contains this file)
@@ -18,12 +18,26 @@
 - waiting_for_live: retain existing live-only gates; source-time program correction needs isolated validator deploy/replay (historical validation, not a live-only blocker); continuous v2 persistence not active; provider storage measurement needs planned 20-trading-day window.
 - prior_validation: real three-bucket Signal replay and exact D1/state snapshot comparison already passed Oct12; reuse details in PROJECT_STATUS.md. Do not repeat completed replay. Futures retain UNVERIFIED_TIME; unchanged bucket stays null.
 - approved_scope: isolated candidate code/tests/deploy/read-only validation. No main merge, production Worker/binding/Secret/routing change, destructive migration or history mutation.
-- next_exact_step: connect existing market-feature-validation to feature/m2-operational-storage with validator-specific deploy config; first keep Disable builds ON while reviewing connection. Do not use main/default command. Then inspect saved settings before enabling build.
+- next_exact_step: inspect CI and existing intelligence Builds for the commit containing the storage-null fix; consume authenticated receipt once after build success. Do not retry validator setup until deploy command evidence or management access changes.
 
 Detailed evidence: PROJECT_STATUS.md. Automation instructions: CANDIDATE_AUTOMATION.md.
 
 - latest_local_change: provider settings audit now returns UNVERIFIED/null for missing, redacted, malformed or duplicate write flags; only explicit plain-text false proves write-disabled settings. Targeted tests 11/11 PASS. TESTED_NOT_EXECUTED_REMOTELY; checkpoint skips CI/Builds to avoid unrelated intelligence redeploy. Management access still unverified; no repeated login.
 
-- validator_setup: user confirms write flag false; Git link dialog not yet connected (Cancel requested, acknowledged). GitHub CLOUDFLARE_API_TOKEN absent. Candidate-specific TOML prepared/parsed, fixed target/write=false/existing D1/no routes or migrations verified. No new secrets or deployer installed.
+- validator_setup: existing Git connection confirmed by screenshots; branch feature/m2-operational-storage; Disable builds ON. Sole D1 binding, VALIDATION_TOKEN existence, write flag false confirmed. Deployment command NOT_VERIFIED; no deploy attempted. Do not reconnect or recreate.
 
 - validator_preflight_20261013_1431: screenshot confirms sole D1 binding MARKET_HISTORY -> market-history; user confirms compatibility_date 2026-10-02 and write flag false. Config date aligned, no runtime code changes. Git connection pending; no deploy yet.
+
+## Execution locks — 2026-10-13 evening
+
+- VERIFIED_COMPLETE: intelligence auth/build path at 7d9d8c9; CI38350679737 and remote receipt115142149349 reused. Never rotate tokens or rerun this historical success. Only changed runtime code warrants a new check.
+- completed_this_checkpoint: storage measurements reject null/blank/boolean/array/object instead of coercing them to zero; numeric strings and measured zero preserved. Storage tests5/5 and related API tests9/9 PASS. Initial fixture incorrectly treated optional undefined retention policy as missing measurement; fixture corrected, only failed suite rerun.
+- code_status: LOCAL_TESTED; new CI/Build/runtime receipt PENDING, not yet DEPLOYED. Existing single intelligence Builds path will handle changed code. Validator remains disabled.
+- blocker: VALIDATOR_DEPLOY_COMMAND_UNVERIFIED
+- last_attempt: 2026-10-13 14:42 KST Dashboard screenshots
+- failure_reason: saved Build section has repository/branch/disable toggle but no deploy-command field; Manage opens GitHub app permissions. Do not revisit that route.
+- required_change: actual validator deploy-command settings evidence or authorized management API access.
+- retry_condition: new evidence/access only; no repeated login, token-presence request, connection, binding creation or same screenshots.
+- blocked_actions: provider audit requires absent management credential; validator historical replay requires correct isolated deployment. No new API token requested this session.
+- production_impact: NONE; no main merge or production edits. Current production health not re-probed; earlier receipt is historical evidence.
+- waiting_for_live: unchanged; no synthetic result promoted. Continuous v2 persistence remains disabled/unverified.

@@ -2,6 +2,9 @@ const DEFAULT_TRADING_DAYS_PER_YEAR = 250;
 const HIGH_COMMIT_PRESSURE_PER_YEAR = 25000;
 
 function finiteNonNegative(value) {
+  // Missing or non-numeric measurements are unknown, never measured zero.
+  if (typeof value !== "number" && typeof value !== "string") return null;
+  if (typeof value === "string" && !value.trim()) return null;
   const number = Number(value);
   return Number.isFinite(number) && number >= 0 ? number : null;
 }
