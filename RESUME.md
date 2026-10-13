@@ -21,3 +21,6 @@
 - next_exact_step: verify existence only of GitHub repository Actions Secret `INTELLIGENCE_READ_TOKEN`; do not reveal/recreate its value. Then activate only the existing intelligence check path when credential availability is verified. Separate validator deployment requires existing Builds/settings inspection, write-disabled confirmation, then replay cutoff `1791778965346`.
 
 Detailed evidence: PROJECT_STATUS.md. Automation instructions: CANDIDATE_AUTOMATION.md.
+
+## Activation receipt — 2026-10-13 13:17 KST
+User reports GitHub INTELLIGENCE_READ_TOKEN registered and CANDIDATE_CHECKS_ENABLED=true saved. Values not read. First branch-triggered end-to-end verification pending; registration is not authentication success. Existing Builds will run once for this activation commit. next_exact_step: inspect exact-SHA CI/provider build and authenticated remote-check result; do not ask for registration again.
