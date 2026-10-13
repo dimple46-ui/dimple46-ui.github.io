@@ -1570,3 +1570,11 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Added tests/storage-query-plan.test.mjs, actual Worker SQL/schema, latest-five exact totals, feature version isolation, index plan/no temporary sort, bounded payload-length evaluation as history grows. Node24 targeted1/1 PASS. Fixture setup placeholder counts corrected before measurement; no remote retries.
 - Not provider CPU or D1 rows_read measurement. Runtime SQL unchanged. Reuse deployed5493ed8 and all prior authenticated evidence; no CI/deploy triggered for test/checkpoint-only commit (skip ci). Test joins next normal regression via tests/*.test.mjs.
 - Production impact none; Validator blocker/live gates unchanged. Next: inspect /health storageGrowth consumers and consider opt-in growth diagnostics for routine health checks without breaking callers. Do not rewrite already bounded aggregation.
+
+
+## CHECKPOINT — 2026-10-13 21:02 KST — lightweight health
+
+- Parentc9fce880. Existing storage grouping already bounded: keep SQL/indexes intact. Add includeStorageGrowth=false to skip two aggregation queries; absent/true keeps legacy response. Skipped diagnostics explicitly NOT_REQUESTED; queryMeta only contains actual queries, not invented zero measurements.
+- Invalid/blank/duplicate option yields400 before D1. Latest observation/feature/quality/freshness remain. Existing checker uses lightweight path and verifies contract; receipt includes healthQueryCount/storageGrowthStatus.
+- Related API/automation/query-plan23/23 PASS; subsequent receipt fields integration1/1 PASS. No production/Secret/binding changes. No second deployer or Validator retry.
+- New CI/build/runtime pending existing Builds. Next: consume exact-SHA receipt and confirm two queries, NOT_REQUESTED. Existing /health clients need no change; frequent callers may opt in via false.

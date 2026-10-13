@@ -189,20 +189,24 @@ function withDeadline(promise, timeoutMs) {
   ]).finally(() => clearTimeout(timer));
 }
 
-async function health(db, now, env) {
+async function health(db, now, env, url) {
+  const values = url.searchParams.getAll("includeStorageGrowth");
+  if (values.length > 1 || (values.length && !["true", "false"].includes(values[0])))
+    throw new ApiError(400, "INVALID_STORAGE_GROWTH_OPTION");
+  const includeGrowth = values[0] !== "false";
   const growthOptions = {excludeOnOrAfterTradingDay:
     new Date(now + 9 * 60 * 60 * 1000).toISOString().slice(0, 10).replaceAll("-", "")};
   const [observation, feature, observationGrowth, featureGrowth] = await Promise.all([
     select(db, `SELECT slot_ms,observed_at_ms,available_at_ms,trading_day,schema_version,quality_version,
       pipeline_status,metrics_json,quality_json FROM market_observations ORDER BY slot_ms DESC LIMIT 1`),
     select(db, `SELECT * FROM feature_runs WHERE feature_version = ? ORDER BY slot_ms DESC LIMIT 1`, [SUPPORTED_FEATURE_VERSION]),
-    select(db, `SELECT trading_day,COUNT(*) AS row_count,
+    includeGrowth ? select(db, `SELECT trading_day,COUNT(*) AS row_count,
       SUM(length(metrics_json)+length(quality_json)+coalesce(length(features_json),0)) AS json_bytes
-      FROM market_observations GROUP BY trading_day ORDER BY trading_day DESC LIMIT 5`),
-    select(db, `SELECT trading_day,COUNT(*) AS row_count,
+      FROM market_observations GROUP BY trading_day ORDER BY trading_day DESC LIMIT 5`) : null,
+    includeGrowth ? select(db, `SELECT trading_day,COUNT(*) AS row_count,
       SUM(length(compact_features_json)+length(validation_json)) AS json_bytes
       FROM feature_runs WHERE feature_version = ? GROUP BY trading_day ORDER BY trading_day DESC LIMIT 5`,
-      [SUPPORTED_FEATURE_VERSION])
+      [SUPPORTED_FEATURE_VERSION]) : null
   ]);
   const raw = observation.rows[0];
   const run = feature.rows[0];
@@ -230,12 +234,12 @@ async function health(db, now, env) {
     latestFeatureRun: run ? {slotMs: run.slot_ms, featureVersion: run.feature_version,
       generationStatus: run.generation_status, qualityCeiling: run.quality_ceiling,
       inputCutoffMs: run.input_cutoff_ms, generatedAtMs: run.generated_at_ms} : null,
-    storageGrowth: {scope: "LATEST_FIVE_TRADING_DAYS_JSON_ONLY",
+    storageGrowth: includeGrowth ? {scope: "LATEST_FIVE_TRADING_DAYS_JSON_ONLY",
       observations: observationGrowth.rows, featureRuns: featureGrowth.rows,
       observationProjection: summarizeJsonGrowth(observationGrowth.rows, growthOptions),
-      featureRunProjection: summarizeJsonGrowth(featureGrowth.rows, growthOptions)},
+      featureRunProjection: summarizeJsonGrowth(featureGrowth.rows, growthOptions)} : {status: "NOT_REQUESTED"},
     queryMeta: {observation: observation.meta, feature: feature.meta,
-      observationGrowth: observationGrowth.meta, featureGrowth: featureGrowth.meta},
+      ...(includeGrowth ? {observationGrowth: observationGrowth.meta, featureGrowth: featureGrowth.meta} : {})},
     runtime: {...runtime, scope: "WORKER_ISOLATE_LIFETIME"},
     limitations: ["JSON byte totals exclude SQLite pages, indexes and replication overhead",
       "Annual JSON projections exclude the current KST day; earlier sample completeness is not verified",
@@ -321,7 +325,7 @@ export default {
       const providerRate = await enforceProviderRateLimit(url, env);
       const cutoffMs = cutoffFrom(url, now);
       let operation;
-      if (url.pathname === "/health") operation = health(env.MARKET_HISTORY, now, env);
+      if (url.pathname === "/health") operation = health(env.MARKET_HISTORY, now, env, url);
       else if (url.pathname === "/state") operation = state(env.MARKET_HISTORY, cutoffMs, now, tickerScope(url));
       else if (url.pathname === "/features") operation = features(env.MARKET_HISTORY, url, cutoffMs, now, tickerScope(url));
       else if (url.pathname === "/history") operation = history(env.MARKET_HISTORY, url, cutoffMs, now,

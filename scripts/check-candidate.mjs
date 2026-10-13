@@ -53,7 +53,10 @@ export async function checkCandidate({kind, token, expectedSha, expectedSourceHa
       signalVersion: result.signalVersion, inputCutoff: result.inputCutoff,
       checks: result.checks, liveMarketGate: 'UNCHANGED', deployment: 'NOT_PERFORMED'};
   }
-  const health = await request('/health');
+  const health = await request('/health?includeStorageGrowth=false');
+  if (health.storageGrowth?.status !== 'NOT_REQUESTED' ||
+      Object.keys(health.queryMeta || {}).sort().join(',') !== 'feature,observation')
+    throw new Error('HEALTH_LIGHTWEIGHT_CONTRACT_FAILED');
   requireCheck(health.service === 'market-intelligence-read-candidate' && health.readOnly === true, 'SERVICE_MISMATCH');
   requireCheck(health.release?.workerGitSha === expectedSha, 'DEPLOYMENT_SHA_MISMATCH');
   requireCheck(health.release?.supportedFeatureVersion === 2, 'FEATURE_VERSION_MISMATCH');
@@ -83,6 +86,8 @@ export async function checkCandidate({kind, token, expectedSha, expectedSourceHa
     runtimeReportedSha: health.release.workerGitSha,
     deploymentId: health.release.deploymentId ?? null,
     identityEvidence: 'RUNTIME_REPORTED_SHA_NOT_PROVIDER_CODE_ATTESTATION',
+    healthQueryCount: Object.keys(health.queryMeta).length,
+    storageGrowthStatus: health.storageGrowth.status,
     collectionHealth: health.collectionHealth, latestObservation: health.latestObservation?.observedAtMs,
     featureVersion: features.feature.featureVersion, featureInputCutoff: features.feature.inputCutoffMs,
     quality: features.feature.qualityCeiling, freshness: state.metadata.freshness,

@@ -172,3 +172,26 @@ test('health projection cutoff uses KST midnight and preserves read-only source 
   }
  } finally {Date.now=originalNow;}
 });
+
+test('lightweight health skips both growth queries while preserving quality and default diagnostics',async()=>{
+ const database=db();
+ const result=await worker.fetch(request('/health?includeStorageGrowth=false',{ip:'192.0.2.81'}),env(database));
+ assert.equal(result.status,200);const body=await result.json();
+ assert.equal(database.statements.length,2);
+ assert.ok(database.statements.every(sql=>!sql.includes('GROUP BY')));
+ assert.deepEqual(body.storageGrowth,{status:'NOT_REQUESTED'});
+ assert.deepEqual(Object.keys(body.queryMeta).sort(),['feature','observation']);
+ assert.equal(body.latestFeatureRun.qualityCeiling,'UNVERIFIED_TIME');
+ assert.equal(body.latestObservation.slotMs,observation.slot_ms);
+ const full=db();
+ const fullResult=await worker.fetch(request('/health?includeStorageGrowth=true',{ip:'192.0.2.82'}),env(full));
+ assert.equal(fullResult.status,200);assert.equal(full.statements.length,4);
+ assert.equal((await fullResult.json()).storageGrowth.observations[0].row_count,10);
+ for(const query of ['includeStorageGrowth=','includeStorageGrowth=0','includeStorageGrowth=FALSE','includeStorageGrowth=false&includeStorageGrowth=true']) {
+  const invalid=db();
+  const res=await worker.fetch(request('/health?'+query,{ip:'192.0.2.83'}),env(invalid));
+  assert.equal(res.status,400);
+  assert.equal((await res.json()).error,'INVALID_STORAGE_GROWTH_OPTION');
+  assert.equal(invalid.statements.length,0);
+ }
+});
