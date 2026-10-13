@@ -1623,3 +1623,10 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Found common Signal constructor could turn STALE_INPUT categorical futures/divergence into ACTIVE LOW-confidence states. Suppress stale/missing/unusable at common construction; unaffected verified/unverified valid inputs keep previous semantics.
 - Signal/replay12/12 PASS; synthetic fixtures only, new code LOCAL_TESTED_NOT_DEPLOYED/CI_NOT_RUN. No new historical/live PASS. Skip-ci avoids unrelated intelligence deployment. No production change or Validator retry.
 - Next: finite-result audit of relative-strength and abnormal-volume score inputs in pure function. GPT-6.1 Sol Medium; separate High only if core algorithm redesign becomes necessary.
+
+
+## CHECKPOINT — 2026-10-14 08:13 KST — M3 finite numeric evidence
+
+- Parentd9baf64. Relative-strength inputs finite individually could overflow on subtraction; skip nonfinite result. Abnormal-volume score comparisons previously accepted Infinity/strings and out-of-range percentile. Require finite percentile0..100 or finite zScore; reject negative volume; invalid auxiliary score maps to explicit null, never zero.
+- Signal/replay14/14 PASS: both stocks, nonnumeric/nonfinite values, percentile ranges, thresholds95/2, null auxiliary values and normal signals preserved. Synthetic correctness only; LOCAL_TESTED_NOT_DEPLOYED/CI_NOT_RUN. Reuse existing5dc82e5 deployment/auth evidence.
+- Skip-ci prevents unrelated intelligence deploy. Production unchanged; validator external blocker and live gates unchanged. Next: replay validator nonfinite numeric evidence gate for categorical outputs. GPT-6.1 Sol Medium.

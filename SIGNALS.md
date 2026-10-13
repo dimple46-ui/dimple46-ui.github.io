@@ -31,3 +31,8 @@ Safety correction (2026-10-14): the common signal constructor suppresses STALE_I
 MISSING_INPUT and UNUSABLE_INPUT for categorical futures/divergence as well as numeric signals.
 UNVERIFIED_TIME remains explicitly capped at MEDIUM, not promoted to verified. This correction is
 locally tested, not deployed or newly validated with live/historical production input.
+
+Numeric safety (2026-10-14): relative momentum subtraction overflow emits no signal. Abnormal
+volume uses a finite percentile within0..100 or finite z-score; missing/invalid auxiliary statistics
+remain null in evidence. Negative volume is unusable. Thresholds95/2 and quality ceiling unchanged.
+Local correctness validated; no new production historical/live validation implied.

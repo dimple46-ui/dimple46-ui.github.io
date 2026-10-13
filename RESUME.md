@@ -1,12 +1,12 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: 2026-10-14T08:07:00+09:00
+- timestamp_kst: 2026-10-14T08:13:00+09:00
 - milestone: M2 — Operational / Storage Architecture Stabilization
 - branch: feature/m2-operational-storage
 - active_pr: #4 Draft/Open; PR #3 merged. No main merge authorized.
 - verified_head_sha: 5dc82e5d819a135bcf4832a588066d507350962f (authenticated candidate)
-- completed: remaining M2 acceptance gates separated from external/approval blockers; common Signal constructor suppresses stale/missing/unusable categorical futures and divergence.
-- last_successful_test: Signal/replay12/12 PASS for stale categorical safety correction; prior deployed API/automation evidence reused. New Signal code LOCAL_TESTED_NOT_DEPLOYED/CI_NOT_RUN.
+- completed: M3 rejects relative-strength subtraction overflow; abnormal volume accepts only finite percentile0..100 or finite z-score, negative volume rejected, unusable auxiliary score remains null in evidence.
+- last_successful_test: Signal/replay14/14 PASS locally; no new CI/deploy. Existing intelligence5dc82e5 CI/Build/auth reused. New Signal changes LOCAL_TESTED_NOT_DEPLOYED.
 - last_successful_ci: node-tests115584120675/local-checks115584094195 SUCCESS at5dc82e5.
 - last_successful_build: existing intelligence Builds115584344473 SUCCESS at5dc82e5.
 - authenticated_validation: remote115584158240 PASS at2026-10-13T22:58:54Z; runtime5dc82e5; deploymentId8cd941c5-130a-42d0-a46e-805318b11035; artifact11857104159; healthQueryCount2, d1Writes0, feature age582005351ms. Age/quality retained, not live PASS.
@@ -19,7 +19,7 @@
 - waiting_for_live: preserve existing live-only gates; historical source-time correction replay1791778965346 pending validator deployment, not live-only. Provider storage measurement needs20-day sample.
 - verified_complete_lock: existing intelligence auth/build/receipt pipeline; prior Oct12 real three-bucket Signal replay and D1/state comparison. Do not repeat without changed input/code/environment.
 - approved_scope: isolated candidate code/tests/deploy/read-only validation. No production changes, main merge, destructive migration or history rewrite.
-- next_exact_step: audit finite-result safety of relative-strength difference and abnormal-volume percentile/z-score in existing M3 pure function; modify only proven gaps, targeted tests, no unrelated intelligence deploy. Recommended GPT-6.1 Sol Medium.
+- next_exact_step: extend replay safety validator to reject nonfinite numeric supporting/contrary evidence, and test malformed categorical futures/divergence evidence using existing fixtures. No new Worker or live PASS. Recommended GPT-6.1 Sol Medium.
 
 Detailed history: PROJECT_STATUS.md. Deployment instructions: CANDIDATE_AUTOMATION.md.
 

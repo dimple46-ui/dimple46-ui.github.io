@@ -114,3 +114,34 @@ test('stale categorical futures and divergence never become active low-confidenc
  assert.equal(signal.confidence.ceiling,'MEDIUM');
  assert.equal(signal.data_quality.ceiling,'UNVERIFIED_TIME');
 });
+
+test('relative-strength subtraction overflow emits no signal or nonfinite evidence',()=>{
+ const features={version:2,inputCutoff:cutoff,windows:{'5m':{momentumAcceleration:{
+  samsung:metric(Number.MAX_VALUE),skHynix:metric(-Number.MAX_VALUE)}}}};
+ assert.deepEqual(generated(features),[]);
+ features.windows['5m'].momentumAcceleration={samsung:metric(2),skHynix:metric(-1)};
+ assert.equal(generated(features)[0].signal_type,'RELATIVE_STRENGTH_IMPROVING');
+});
+
+test('abnormal volume requires a finite percentile in range or finite z-score without coercion',()=>{
+ for(const stock of ['samsung','skHynix']) {
+  const ticker=stock==='samsung'?'005930':'000660';
+  const make=(percentile,zScore,value=100)=>({version:2,inputCutoff:cutoff,
+   sameTimeHistorical:{windows:{'5d':{metrics:{[`${stock}.volume`]:metric(value,{status:'VALID',percentile,zScore})}}}}});
+  for(const invalid of [NaN,Infinity,-Infinity,null,undefined,'99',true]) {
+   assert.deepEqual(generated(make(invalid,null)),[]);
+   assert.deepEqual(generated(make(null,invalid)),[]);
+  }
+  for(const invalid of [-1,101]) assert.deepEqual(generated(make(invalid,null)),[]);
+  assert.deepEqual(generated(make(94.9,1.99)),[]);
+  assert.deepEqual(generated(make(99,3,-1)),[]);
+  for(const [percentile,zScore] of [[95,null],[null,2],[Infinity,2],[95,Infinity]]) {
+   const signal=generated(make(percentile,zScore))[0];
+   assert.equal(signal.ticker,ticker);assert.equal(signal.signal_type,'ABNORMAL_VOLUME');
+   assert.ok(signal.supporting_evidence.every(e=>e.value===null||Number.isFinite(e.value)));
+   const evidence=Object.fromEntries(signal.supporting_evidence.map(e=>[e.metric,e.value]));
+   if(!Number.isFinite(percentile))assert.equal(evidence.sameTimePercentile,null);
+   if(!Number.isFinite(zScore))assert.equal(evidence.sameTimeZScore,null);
+  }
+ }
+});

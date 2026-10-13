@@ -175,7 +175,7 @@ function addRelativeStrengthSignal(signals, features, context, horizon) {
   const hynix = window?.momentumAcceleration?.skHynix;
   if (!usableMetric(samsung) || !usableMetric(hynix)) return;
   const difference = samsung.value - hynix.value;
-  if (difference === 0) return;
+  if (!Number.isFinite(difference) || difference === 0) return;
   signals.push(createSignal(context, {
     ticker: "005930/000660", horizon,
     signalType: difference > 0 ? "RELATIVE_STRENGTH_IMPROVING" : "RELATIVE_STRENGTH_WEAKENING",
@@ -206,12 +206,16 @@ function addAbnormalVolumeSignals(signals, features, context) {
   const window = features.sameTimeHistorical?.windows?.["5d"];
   for (const [stock, identity] of Object.entries(STOCKS)) {
     const metric = window?.metrics?.[`${stock}.volume`];
-    if (!usableMetric(metric, ["VALID"]) || !((metric.percentile ?? 0) >= 95 || (metric.zScore ?? 0) >= 2)) continue;
+    if (!usableMetric(metric, ["VALID"]) || metric.value < 0) continue;
+    const percentile = Number.isFinite(metric.percentile) && metric.percentile >= 0 && metric.percentile <= 100
+      ? metric.percentile : null;
+    const zScore = Number.isFinite(metric.zScore) ? metric.zScore : null;
+    if (!((percentile != null && percentile >= 95) || (zScore != null && zScore >= 2))) continue;
     signals.push(createSignal(context, {
       ticker: identity.ticker, horizon: "SAME_TIME_5D", signalType: "ABNORMAL_VOLUME", strength: "STRONG",
       qualityInputs: [metric], supportingEvidence: [
-        {metric: `${stock}.volume`, value: metric.value}, {metric: "sameTimePercentile", value: metric.percentile},
-        {metric: "sameTimeZScore", value: metric.zScore}
+        {metric: `${stock}.volume`, value: metric.value}, {metric: "sameTimePercentile", value: percentile},
+        {metric: "sameTimeZScore", value: zScore}
       ], contraryEvidence: [], invalidation: ["SAME_TIME_PERCENTILE_FALLS_BELOW_95_AND_ZSCORE_BELOW_2"]
     }));
   }
