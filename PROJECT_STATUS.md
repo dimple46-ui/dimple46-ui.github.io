@@ -1,7 +1,54 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-Last updated: 2026-10-13 09:01 KST
+Last updated: 2026-10-13 12:07 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
+
+## RECOVERY_CHECKPOINT — Preserve Uncommitted Identity Fix Before Automation Work
+
+- timestamp: `2026-10-13 12:07 KST`; branch: `feature/m2-operational-storage`; M2
+- verified_remote_head: `20e28d990f21225d34c20d71bf8288563d5b78e2`; PR #4 Draft/Open, unmerged.
+- recovered local work: authenticated c6cc50c /health receipt, matched production quality diagnosis,
+  generated validator source-hash correction and its 9/9 targeted test result. No duplicate run.
+- code impact: generated validator hash header only plus new source-identity regression test;
+  production relay/core unchanged, validator still TESTED_NOT_DEPLOYED.
+- market: regular session; calendar trading/open day Y. Main snapshot `2026-10-13T03:06:42.790Z`
+  schema 3, sourceErrors empty, DEGRADED from program STALE. No collection-time quality promotion.
+- automation finding: existing remote-checks job requires provider settings audit before intelligence
+  smoke and then validator replay. These independently authenticated read-only checks should be
+  separately gated so missing management/validator credentials do not block intelligence validation.
+- authentication: existing Work access limitation retained; no repeated login or Secret request.
+- commit policy: skip CI/Builds for this recovered change to avoid redeploying unchanged intelligence;
+  targeted validator test evidence already valid. Live gates unchanged.
+- next_exact_step: split existing read-only workflow jobs/flags, add focused regression guards,
+  validate locally and checkpoint. No new deployer or production change.
+
+## CHECKPOINT — Authenticated Candidate Health; Validator Source Identity Repaired
+
+- timestamp: `2026-10-13 09:10 KST`; milestone: M2; branch: `feature/m2-operational-storage`
+- remote_head_before_checkpoint: `20e28d990f21225d34c20d71bf8288563d5b78e2`; PR #4 unmerged
+- authenticated evidence: user /health generated at `2026-10-13T00:09:27.598Z` reports exact
+  `c6cc50c69f6cf5d6e793c407aeab12d034f0a35e`, matching successful build `78d97dcd...`.
+  Release 2, supported Feature 2; all four D1 queries rowsWritten=0 and changes=0.
+- latest observation: slot 1791850080000, observedAt 1791850123305, age 44,293 ms, day 20261013,
+  sourceErrors empty. /health metadata freshness describes this observation, not the old Feature run.
+- cross-check: main snapshot commit `b301759c2dc8701f3b334e74a1d46c2e96aa3513` evaluated at
+  `2026-10-13T00:08:43.305Z` exactly matches D1 observation time. DEGRADED is program MISSING;
+  stock prices LIVE, estimated stock flows NOT_DUE, index/futures time unverified. No fake zero/live.
+- stored v2: still slot 1791350280000 from 20261007, SUCCESS with STALE_INPUT, 3 rows total;
+  current-day Feature v2 persistence is not verified. Latest observation success is not v2 freshness.
+- observability: deployment ID/tag null and sentinel timestamp; runtime.startedAtMs=0 is unavailable
+  start-time evidence. Aggregate duration is D1 query time, not Worker CPU. Provider memory/CPU unknown.
+- next-stage inspection found generated validator core current but CANDIDATE_SHA256 header stale.
+  Existing builder regenerated it to `b28192c567c764f5868e01bb6f5f376161be4e36929a1628b6126c584d7c0733`.
+  Only header changed; no production relay or Feature core rewrite.
+- tests: new source-identity/core guard failed before regeneration; validator targeted suite 9/9 PASS
+  afterward (authentication, read-only GET, cutoff, opt-in writes and failure isolation). Full suite not
+  rerun; previous 72/72 evidence applies to unchanged logic. Commit skips CI/unrelated Builds trigger.
+- deployment: intelligence DEPLOYED_HEALTH_VALIDATED; regenerated validator TESTED_NOT_DEPLOYED.
+- production_impact: no production Worker/binding/Secret/route, main merge, or D1 modification.
+- waiting_for_live: unchanged; historical replay does not certify new live data.
+- next_exact_step: inspect existing market-feature-validation Settings > Build connection/branch/deploy
+  command, then verify write disabled/bindings before reusing its separate deployment path.
 
 ## CHECKPOINT — Existing Candidate Builds Succeeded After Token Repair
 
