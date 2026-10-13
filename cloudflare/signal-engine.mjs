@@ -68,6 +68,7 @@ function flowSignalType(prefix, currentDelta, acceleration) {
 
 function createSignal(context, definition) {
   const quality = worstQuality(definition.qualityInputs || []);
+  if (["STALE_INPUT", "MISSING_INPUT", "UNUSABLE_INPUT"].includes(quality)) return null;
   const baseConfidence = definition.supportingEvidence.length >= 3 && definition.contraryEvidence.length === 0 ? "HIGH" :
     definition.supportingEvidence.length >= 2 ? "MEDIUM" : "LOW";
   const signal = {

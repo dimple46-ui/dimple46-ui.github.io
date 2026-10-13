@@ -96,3 +96,21 @@ test('nonfinite stock-flow acceleration and overflow cannot create reversal evid
   assert.deepEqual(generated(overflow),[]);
  }
 });
+
+test('stale categorical futures and divergence never become active low-confidence signals',()=>{
+ for(const quality of ['STALE_INPUT','MISSING_INPUT','UNUSABLE_INPUT']) {
+  const features=fixture();
+  for(const window of Object.values(features.windows)) {
+   window.futuresPosition.quality=quality;
+   for(const divergence of Object.values(window.divergences)) divergence.quality=quality;
+  }
+  const types=generated(features).map(signal=>signal.signal_type);
+  assert.ok(!types.some(type=>type.startsWith('OI_')||type.startsWith('FUTURES_')||type.includes('DIVERGENCE')));
+  assert.ok(types.includes('PROGRAM_BUYING_ACCELERATING'));
+ }
+ const recent=fixture();
+ recent.windows['5m'].futuresPosition.quality='UNVERIFIED_TIME';
+ const signal=generated(recent).find(signal=>signal.horizon==='5m'&&signal.signal_type==='OI_NEW_LONG_CANDIDATE');
+ assert.equal(signal.confidence.ceiling,'MEDIUM');
+ assert.equal(signal.data_quality.ceiling,'UNVERIFIED_TIME');
+});

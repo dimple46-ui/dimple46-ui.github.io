@@ -1,12 +1,12 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: 2026-10-14T07:59:00+09:00
+- timestamp_kst: 2026-10-14T08:07:00+09:00
 - milestone: M2 — Operational / Storage Architecture Stabilization
 - branch: feature/m2-operational-storage
 - active_pr: #4 Draft/Open; PR #3 merged. No main merge authorized.
 - verified_head_sha: 5dc82e5d819a135bcf4832a588066d507350962f (authenticated candidate)
-- completed: /health exposes separate Feature input-cutoff age and observation age; missing/invalid/future times return null age with explicit status, never zero freshness. New candidate check verifies feature age arithmetic.
-- last_successful_test: changed API12/12 PASS and actual-handler automation1/1 PASS; prior Signal11/11 reused. Invalid metadata cutoff serialization found by fixtures and fixed before commit.
+- completed: remaining M2 acceptance gates separated from external/approval blockers; common Signal constructor suppresses stale/missing/unusable categorical futures and divergence.
+- last_successful_test: Signal/replay12/12 PASS for stale categorical safety correction; prior deployed API/automation evidence reused. New Signal code LOCAL_TESTED_NOT_DEPLOYED/CI_NOT_RUN.
 - last_successful_ci: node-tests115584120675/local-checks115584094195 SUCCESS at5dc82e5.
 - last_successful_build: existing intelligence Builds115584344473 SUCCESS at5dc82e5.
 - authenticated_validation: remote115584158240 PASS at2026-10-13T22:58:54Z; runtime5dc82e5; deploymentId8cd941c5-130a-42d0-a46e-805318b11035; artifact11857104159; healthQueryCount2, d1Writes0, feature age582005351ms. Age/quality retained, not live PASS.
@@ -19,7 +19,7 @@
 - waiting_for_live: preserve existing live-only gates; historical source-time correction replay1791778965346 pending validator deployment, not live-only. Provider storage measurement needs20-day sample.
 - verified_complete_lock: existing intelligence auth/build/receipt pipeline; prior Oct12 real three-bucket Signal replay and D1/state comparison. Do not repeat without changed input/code/environment.
 - approved_scope: isolated candidate code/tests/deploy/read-only validation. No production changes, main merge, destructive migration or history rewrite.
-- next_exact_step: review M2 remaining acceptance gates from existing docs only, separate provider-only blockers from independent M3 gaps, and choose one unfinished item; do not repeat successful health/build/auth. Recommended GPT-6.1 Sol Medium.
+- next_exact_step: audit finite-result safety of relative-strength difference and abnormal-volume percentile/z-score in existing M3 pure function; modify only proven gaps, targeted tests, no unrelated intelligence deploy. Recommended GPT-6.1 Sol Medium.
 
 Detailed history: PROJECT_STATUS.md. Deployment instructions: CANDIDATE_AUTOMATION.md.
 
@@ -29,3 +29,5 @@ Detailed history: PROJECT_STATUS.md. Deployment instructions: CANDIDATE_AUTOMATI
 
 - diagnostic_change: fixed endpoint/auth-stage labels for HTTP, network/timeout and invalid JSON failures; no URL parameters/token/body/native errors recorded. Targeted automation12/12 PASS. Runtime code unchanged; existing Builds is sole push path, no manual rerun.
 - recommended_next_model: GPT-6.1 Sol, Medium for bounded diagnosis/tests; separate High only if evidence indicates cross-service consistency/design issue.
+
+- M2_remaining: consumer/fallback PARTIAL; provider CPU/memory/database bytes BLOCKED_BY_ACCESS;20-day database-byte history pending; production transition/main merge approval required. Candidate success does not complete these gates.

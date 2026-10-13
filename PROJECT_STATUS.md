@@ -1615,3 +1615,11 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Code5dc82e5d819a135bcf4832a588066d507350962f. CI115584120675/115584094195 and existing Build115584344473 SUCCESS; remote115584158240 PASS. Runtime SHA exact, deploymentId8cd941c5-130a-42d0-a46e-805318b11035; artifact11857104159. Health2 queries, Feature input age582005351ms, zero D1 writes. This supplies prior missing runtime Feature age evidence.
 - Old504 did not recur with improved diagnostics. Root cause/old failed endpoint still unknown; not claimed fixed. No extra retry. Validator/provider audit skipped, live gates unchanged, production untouched.
 - Next: brief M2 remaining-gate review using existing docs, isolate external blockers and select independent M3 gap. GPT-6.1 Sol Medium; High only if actual complex redesign needed. Receipt skip-ci prevents redundant deploy.
+
+
+## CHECKPOINT — 2026-10-14 08:07 KST — M2 gate review / M3 stale safety
+
+- Parentb5df3d9; deployed intelligence5dc82e5 and prior CI/Build/auth retained without repeats. M2 acceptance gaps documented: consumer/fallback, measured20-day database bytes/provider metrics, approved production transition. D1 binding wording corrected: GET/fixed SELECT application enforcement, not provider readonly ACL; existing Secret reused.
+- Found common Signal constructor could turn STALE_INPUT categorical futures/divergence into ACTIVE LOW-confidence states. Suppress stale/missing/unusable at common construction; unaffected verified/unverified valid inputs keep previous semantics.
+- Signal/replay12/12 PASS; synthetic fixtures only, new code LOCAL_TESTED_NOT_DEPLOYED/CI_NOT_RUN. No new historical/live PASS. Skip-ci avoids unrelated intelligence deployment. No production change or Validator retry.
+- Next: finite-result audit of relative-strength and abnormal-volume score inputs in pure function. GPT-6.1 Sol Medium; separate High only if core algorithm redesign becomes necessary.

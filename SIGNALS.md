@@ -25,3 +25,9 @@ production endpoint or alert engine. In addition to synthetic correctness tests,
 stale program input emitted no program signal and unverified-time futures inputs capped confidence at
 `MEDIUM`. This is live-input correctness evidence, not an endpoint deployment, predictive-accuracy
 claim or permission to generate investment actions.
+
+
+Safety correction (2026-10-14): the common signal constructor suppresses STALE_INPUT,
+MISSING_INPUT and UNUSABLE_INPUT for categorical futures/divergence as well as numeric signals.
+UNVERIFIED_TIME remains explicitly capped at MEDIUM, not promoted to verified. This correction is
+locally tested, not deployed or newly validated with live/historical production input.

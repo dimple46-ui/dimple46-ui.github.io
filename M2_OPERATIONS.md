@@ -31,8 +31,9 @@ cadence or D1 retention change.
 ## Additive migration gates
 
 1. Merge code and tests without changing production deployment.
-2. Deploy a separate read-only candidate only after approval, with a new token, read-only D1 binding,
-   provider-level rate limit and release metadata.
+2. Deploy a separate read-only candidate only after approval, reusing the existing runtime Secret, D1 binding,
+   provider-level rate limit and release metadata. D1 binding is not a SELECT-only permission;
+   the application enforces GET and fixed SELECT queries.
 3. Validate state equivalence against `market-live.json` at multiple live timestamps, including honest
    freshness/quality degradation and bounded D1 query cost.
 4. Opt in one non-critical consumer while GitHub remains unchanged.
@@ -97,3 +98,12 @@ credential, no scheduled trigger and no D1 mutation handler. Its provider rate l
 the Worker fails closed before D1 when the binding is absent. The candidate template points only to the
 existing `market-history` database and contains no token value. The Bearer token is always created as a
 Cloudflare Secret and never committed.
+
+## Remaining acceptance gates — 2026-10-14
+
+- VERIFIED_COMPLETE: isolated candidate build, exact-SHA/authenticated read API, bounded queries and zero writes. Reuse latest RESUME receipts.
+- PARTIAL: latest-state consumer migration/fallback; no consumer cutover or reduced GitHub cadence approved.
+- BLOCKED: provider CPU/memory and actual D1 page/index bytes; management credential unavailable. No repeated login/token requests.
+- WAITING_FOR_MEASURED_HISTORY: at least20-day database-byte samples; five-day JSON estimates are not this evidence.
+- APPROVAL_REQUIRED: production transition/cadence, retention/archive and main merge. No destructive change planned.
+- Validator deploy command remains independently unverified. It does not block pure-function M3 correctness work.
