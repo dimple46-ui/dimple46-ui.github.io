@@ -1630,3 +1630,11 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Parentd9baf64. Relative-strength inputs finite individually could overflow on subtraction; skip nonfinite result. Abnormal-volume score comparisons previously accepted Infinity/strings and out-of-range percentile. Require finite percentile0..100 or finite zScore; reject negative volume; invalid auxiliary score maps to explicit null, never zero.
 - Signal/replay14/14 PASS: both stocks, nonnumeric/nonfinite values, percentile ranges, thresholds95/2, null auxiliary values and normal signals preserved. Synthetic correctness only; LOCAL_TESTED_NOT_DEPLOYED/CI_NOT_RUN. Reuse existing5dc82e5 deployment/auth evidence.
 - Skip-ci prevents unrelated intelligence deploy. Production unchanged; validator external blocker and live gates unchanged. Next: replay validator nonfinite numeric evidence gate for categorical outputs. GPT-6.1 Sol Medium.
+
+
+## CHECKPOINT — 2026-10-14 08:34 KST — replay finite evidence gate
+
+- Parent9ca8f75. Replay safety checks reject NaN/Infinity/-Infinity recursively within supporting/contrary arrays (including categorical futures/divergence), malformed non-array evidence. Null preserved. Added machine-readable finiteNumericEvidence:true only after checks pass.
+- Targeted replay4/4 PASS, valid null and deterministic baseline retained. New correctness fixtures not production/live validation. Prior real replay/auth not repeated.
+- LOCAL_TESTED_NOT_DEPLOYED/CI_NOT_RUN; skip-ci avoids unrelated Worker build. Production unchanged, no D1 writes/Validator retry.
+- Next: one full regression on exact remote branch for accumulated M3 guards, then PR4 validation/gate summary. GPT-6.1 Sol Medium.

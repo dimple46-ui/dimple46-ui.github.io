@@ -60,3 +60,25 @@ test('validator rejects non-replay and unsupported Feature payloads', () => {
   const wrongVersion = replay(); wrongVersion.features.version = 1;
   assert.throws(() => validateSignalReplay(wrongVersion, {engineGitSha: 'abcdef0'}), /FEATURE_VERSION_MISMATCH/);
 });
+
+test('replay cannot PASS with nonfinite supporting or contrary categorical evidence',()=>{
+ const options={engineGitSha:'abcdef0',generatedAt:'2026-10-08T02:27:00Z'};
+ for(const invalid of [NaN,Infinity,-Infinity]) {
+  for(const kind of ['futures','divergence']) for(const field of ['supportingEvidence','contraryEvidence']) {
+   const input=replay();
+   const window=input.features.windows['5m'];
+   const target=kind==='futures'?window.futuresPosition:
+    (window.divergences.samsungPriceVsForeignFlow={state:'PRICE_UP_FLOW_DOWN',status:'VALID',quality:'VERIFIED',
+     supportingEvidence:[{metric:'price',value:1}],contraryEvidence:[]});
+   target[field]=[{metric:'fixture',details:{values:[1,invalid]}}];
+   assert.throws(()=>validateSignalReplay(input,options),/NONFINITE_SIGNAL_EVIDENCE/);
+  }
+ }
+ const malformed=replay();malformed.features.windows['5m'].futuresPosition.supportingEvidence={value:1};
+ assert.throws(()=>validateSignalReplay(malformed,options),/INVALID_SIGNAL_EVIDENCE_SHAPE/);
+ const valid=replay();
+ valid.features.windows['5m'].futuresPosition.contraryEvidence=[{metric:'basis',value:null,reason:'MISSING'}];
+ const result=validateSignalReplay(valid,options);
+ assert.equal(result.status,'PASS');assert.equal(result.checks.finiteNumericEvidence,true);
+ assert.equal(valid.features.windows['5m'].futuresPosition.contraryEvidence[0].value,null);
+});

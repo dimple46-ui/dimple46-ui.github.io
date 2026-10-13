@@ -42,8 +42,20 @@ function stockFlowSummary(features) {
   return result;
 }
 
+function assertFiniteEvidence(value) {
+  if (typeof value === 'number') {
+    assertCondition(Number.isFinite(value), 'NONFINITE_SIGNAL_EVIDENCE');
+  } else if (value && typeof value === 'object') {
+    for (const child of Object.values(value)) assertFiniteEvidence(child);
+  }
+}
+
 function assertSignalSafety(signals, features) {
   for (const signal of signals) {
+    assertCondition(Array.isArray(signal.supporting_evidence) && Array.isArray(signal.contrary_evidence),
+      'INVALID_SIGNAL_EVIDENCE_SHAPE');
+    assertFiniteEvidence(signal.supporting_evidence);
+    assertFiniteEvidence(signal.contrary_evidence);
     assertCondition(!('probability' in signal), 'PREDICTIVE_PROBABILITY_NOT_ALLOWED');
     assertCondition(!('action' in signal), 'TRADING_ACTION_NOT_ALLOWED');
     assertCondition(!['BUY', 'SELL'].includes(signal.state), 'BUY_SELL_STATE_NOT_ALLOWED');
@@ -100,6 +112,7 @@ export function validateSignalReplay(replay, {engineGitSha, generatedAt} = {}) {
       d1RowsWrittenZero: true,
       deterministic: true,
       confidenceCeiling: true,
+      finiteNumericEvidence: true,
       staleNullSuppression: true,
       descriptiveOnly: true
     }

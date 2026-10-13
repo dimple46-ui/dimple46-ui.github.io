@@ -36,3 +36,7 @@ Numeric safety (2026-10-14): relative momentum subtraction overflow emits no sig
 volume uses a finite percentile within0..100 or finite z-score; missing/invalid auxiliary statistics
 remain null in evidence. Negative volume is unusable. Thresholds95/2 and quality ceiling unchanged.
 Local correctness validated; no new production historical/live validation implied.
+
+Replay validation now requires supporting/contrary evidence arrays with finite numeric leaves.
+Nested NaN/Infinity is rejected before PASS; null remains unknown. The finiteNumericEvidence gate
+is local correctness evidence until a new authenticated real-data replay is validated.
