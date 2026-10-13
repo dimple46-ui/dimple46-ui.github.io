@@ -189,6 +189,12 @@ function withDeadline(promise, timeoutMs) {
   ]).finally(() => clearTimeout(timer));
 }
 
+function healthAge(timestamp, now, basis) {
+  const status = !Number.isSafeInteger(timestamp) || timestamp < 0 ? "INVALID_OR_MISSING_TIME"
+    : timestamp > now ? "FUTURE_TIME" : "AGE_AVAILABLE";
+  return {age_ms: status === "AGE_AVAILABLE" ? now - timestamp : null, basis, status};
+}
+
 async function health(db, now, env, url) {
   const values = url.searchParams.getAll("includeStorageGrowth");
   if (values.length > 1 || (values.length && !["true", "false"].includes(values[0])))
@@ -210,6 +216,8 @@ async function health(db, now, env, url) {
   ]);
   const raw = observation.rows[0];
   const run = feature.rows[0];
+  const observationAge = healthAge(raw?.observed_at_ms, now, "AS_OF_MINUS_OBSERVED_AT");
+  const featureAge = healthAge(run?.input_cutoff_ms, now, "AS_OF_MINUS_FEATURE_INPUT_CUTOFF");
   const quality = raw ? storedJson(raw.quality_json) : null;
   const deploymentId = env.CF_VERSION_METADATA?.id || null;
   const deploymentTag = env.CF_VERSION_METADATA?.tag || null;
@@ -218,22 +226,24 @@ async function health(db, now, env, url) {
     env.INTELLIGENCE_WORKER_GIT_SHA : null;
   return {
     service: "market-intelligence-read-candidate", apiSchemaVersion: API_SCHEMA_VERSION, readOnly: true,
-    metadata: responseMetadata({schemaVersion: raw?.schema_version ?? API_SCHEMA_VERSION,
+    metadata: {...responseMetadata({schemaVersion: raw?.schema_version ?? API_SCHEMA_VERSION,
       featureVersion: run?.feature_version ?? null, generatedAtMs: now,
-      inputCutoffMs: run?.input_cutoff_ms ?? raw?.available_at_ms ?? null,
+      inputCutoffMs: run ? (featureAge.status === "AGE_AVAILABLE" ? run.input_cutoff_ms : null)
+        : (healthAge(raw?.available_at_ms, now, "AVAILABLE_AT").status === "AGE_AVAILABLE" ? raw.available_at_ms : null),
       observedAtMs: raw?.observed_at_ms ?? null, freshnessReferenceMs: now,
       quality: run?.quality_ceiling ?? null,
-      pipelineStatus: raw?.pipeline_status ?? "NO_OBSERVATIONS"}),
+      pipelineStatus: raw?.pipeline_status ?? "NO_OBSERVATIONS"}), freshness: observationAge},
     release: {serviceReleaseVersion: SERVICE_RELEASE_VERSION,
       supportedFeatureVersion: SUPPORTED_FEATURE_VERSION, workerGitSha, deploymentId,
       deploymentTag, deploymentTimestamp},
     nowMs: now, collectionHealth: raw ? raw.pipeline_status : "NO_OBSERVATIONS",
     latestObservation: raw ? {slotMs: raw.slot_ms, observedAtMs: raw.observed_at_ms,
-      ageMs: Math.max(0, now - raw.observed_at_ms), tradingDay: raw.trading_day,
+      ageMs: observationAge.age_ms, freshness: observationAge, tradingDay: raw.trading_day,
       schemaVersion: raw.schema_version, sourceErrors: quality?.sourceErrors || []} : null,
     latestFeatureRun: run ? {slotMs: run.slot_ms, featureVersion: run.feature_version,
       generationStatus: run.generation_status, qualityCeiling: run.quality_ceiling,
-      inputCutoffMs: run.input_cutoff_ms, generatedAtMs: run.generated_at_ms} : null,
+      inputCutoffMs: run.input_cutoff_ms, generatedAtMs: run.generated_at_ms,
+      freshness: featureAge} : null,
     storageGrowth: includeGrowth ? {scope: "LATEST_FIVE_TRADING_DAYS_JSON_ONLY",
       observations: observationGrowth.rows, featureRuns: featureGrowth.rows,
       observationProjection: summarizeJsonGrowth(observationGrowth.rows, growthOptions),
@@ -241,7 +251,8 @@ async function health(db, now, env, url) {
     queryMeta: {observation: observation.meta, feature: feature.meta,
       ...(includeGrowth ? {observationGrowth: observationGrowth.meta, featureGrowth: featureGrowth.meta} : {})},
     runtime: {...runtime, scope: "WORKER_ISOLATE_LIFETIME"},
-    limitations: ["JSON byte totals exclude SQLite pages, indexes and replication overhead",
+    limitations: ["Age is elapsed time only, not proof of live source data or verified exchange time",
+      "JSON byte totals exclude SQLite pages, indexes and replication overhead",
       "Annual JSON projections exclude the current KST day; earlier sample completeness is not verified",
       "Failure count is per Worker isolate; provider-level and isolate fallback rate limiting are configured"]
   };

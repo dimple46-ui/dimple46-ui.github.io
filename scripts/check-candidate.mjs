@@ -61,6 +61,11 @@ export async function checkCandidate({kind, token, expectedSha, expectedSourceHa
   requireCheck(health.release?.workerGitSha === expectedSha, 'DEPLOYMENT_SHA_MISMATCH');
   requireCheck(health.release?.supportedFeatureVersion === 2, 'FEATURE_VERSION_MISMATCH');
   assertReadMeta(health.queryMeta);
+  const run = health.latestFeatureRun;
+  if (run) requireCheck(run.freshness?.basis === "AS_OF_MINUS_FEATURE_INPUT_CUTOFF" &&
+    run.freshness.status === "AGE_AVAILABLE" &&
+    run.freshness.age_ms === health.nowMs - run.inputCutoffMs && run.freshness.age_ms >= 0,
+    "FEATURE_AGE_MISMATCH");
   const state = await request('/state');
   assertReadMeta(state.queryMeta);
   requireCheck(state.state?.observedAtMs <= state.inputCutoffMs &&
@@ -87,6 +92,7 @@ export async function checkCandidate({kind, token, expectedSha, expectedSourceHa
     deploymentId: health.release.deploymentId ?? null,
     identityEvidence: 'RUNTIME_REPORTED_SHA_NOT_PROVIDER_CODE_ATTESTATION',
     healthQueryCount: Object.keys(health.queryMeta).length,
+    featureAge: health.latestFeatureRun?.freshness ?? null,
     storageGrowthStatus: health.storageGrowth.status,
     collectionHealth: health.collectionHealth, latestObservation: health.latestObservation?.observedAtMs,
     featureVersion: features.feature.featureVersion, featureInputCutoff: features.feature.inputCutoffMs,

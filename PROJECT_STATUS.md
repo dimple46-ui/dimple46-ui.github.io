@@ -1586,3 +1586,10 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Found Signal stock-flow acceleration accepted Infinity by typeof number, allowing invalid reversal/Infinity evidence. Require finite acceleration and finite reconstructed previous delta. Both stocks, foreign/institution, NaN/Infinity/null/string/overflow fixtures; Signal/replay11/11 PASS. Correctness only; no real replay repeated or live gate promoted.
 - Signal guard LOCAL_TESTED_NOT_DEPLOYED/CI_NOT_RUN. Skip-ci avoids unrelated intelligence redeployment; normal future CI includes test. Production unchanged, no token/Worker/binding changes. Validator retry condition unchanged.
 - next_exact_step: explicit Feature age in /health independently from observation age; test missing/old/future timestamps before candidate release.
+
+
+## CHECKPOINT — 2026-10-14 07:17 KST — separate Feature age
+
+- Parentac5b479. Add latestFeatureRun.freshness(age_ms,basis,status), input-cutoff based, not generated_at; observation freshness independently reported. Null/invalid/future timestamps retain unknown age, no clamped zero. Age alone is not exchange-time verification or live quality. Invalid metadata cutoff serialization guarded after failure fixture exposed it.
+- API12/12 and checker integration1/1 PASS. Missing run remains null; old feature/recent observation tested. Existing quality preserved; no live-gate promotion. Checker now verifies actual Feature age and records it.
+- Existing Builds new release pending. No production Worker/Secret/binding/route/D1 mutation. Validator remains blocked. Next: verify exact-SHA receipt once.

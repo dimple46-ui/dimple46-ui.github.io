@@ -17,7 +17,7 @@ const feature={slot_ms:slot,feature_version:2,observed_at_ms:slot+1000,trading_d
  quality_ceiling:'UNVERIFIED_TIME',generation_status:'SUCCESS',compact_features_json:JSON.stringify(compact),
  validation_json:JSON.stringify(validation)};
 
-function db({badFeature=false,fail=false,pending=false}={}){
+function db({badFeature=false,fail=false,pending=false,featureRow=feature,observationRow=observation}={}){
  const statements=[];
  return {statements,prepare(sql){statements.push(sql);assert.match(sql.trim(),/^SELECT\b/);
   const execute=async()=>{
@@ -26,8 +26,8 @@ function db({badFeature=false,fail=false,pending=false}={}){
    let results=[];
    if(sql.includes('FROM feature_runs')&&sql.includes('GROUP BY')) results=[{trading_day:'20261007',row_count:1,json_bytes:14000}];
    else if(sql.includes('FROM market_observations')&&sql.includes('GROUP BY')) results=[{trading_day:'20261007',row_count:10,json_bytes:100000}];
-   else if(sql.includes('FROM feature_runs')) results=[badFeature?{...feature,feature_version:3}:feature];
-   else if(sql.includes('FROM market_observations')) results=[observation];
+   else if(sql.includes('FROM feature_runs')) results=featureRow==null?[]:[badFeature?{...featureRow,feature_version:3}:featureRow];
+   else if(sql.includes('FROM market_observations')) results=observationRow==null?[]:[observationRow];
    return {success:true,results,meta:{duration:0.25,rows_read:results.length,rows_written:0,served_by:'local-test'}};
   };
   return {all:execute,bind(){return {all:execute};}};
@@ -194,4 +194,32 @@ test('lightweight health skips both growth queries while preserving quality and 
   assert.equal((await res.json()).error,'INVALID_STORAGE_GROWTH_OPTION');
   assert.equal(invalid.statements.length,0);
  }
+});
+
+test('health distinguishes old feature input from recent observation and rejects invalid ages',async()=>{
+ const originalNow=Date.now,fixed=Date.parse('2026-10-14T00:00:00Z');
+ Date.now=()=>fixed;
+ try {
+  const recent={...observation,observed_at_ms:fixed-1000};
+  const old={...feature,input_cutoff_ms:fixed-7*86400000,generated_at_ms:fixed-100};
+  const get=async(featureRow,observationRow=recent)=>{
+   const res=await worker.fetch(request('/health?includeStorageGrowth=false',{ip:'192.0.2.90'}),env(db({featureRow,observationRow})));
+   assert.equal(res.status,200);return res.json();
+  };
+  const body=await get(old);
+  assert.equal(body.latestObservation.ageMs,1000);
+  assert.equal(body.latestFeatureRun.freshness.age_ms,7*86400000);
+  assert.equal(body.latestFeatureRun.freshness.basis,'AS_OF_MINUS_FEATURE_INPUT_CUTOFF');
+  assert.equal(body.latestFeatureRun.qualityCeiling,'UNVERIFIED_TIME');
+  for(const timestamp of [null,undefined,'0',-1,NaN,fixed+1]) {
+   const result=await get({...old,input_cutoff_ms:timestamp},{...recent,observed_at_ms:timestamp});
+   assert.equal(result.latestFeatureRun.freshness.age_ms,null);
+   assert.equal(result.latestObservation.ageMs,null);
+   assert.equal(result.metadata.freshness.age_ms,null);
+   assert.notEqual(result.latestFeatureRun.freshness.status,'AGE_AVAILABLE');
+  }
+  const missing=await get(null,null);
+  assert.equal(missing.latestFeatureRun,null);assert.equal(missing.latestObservation,null);
+  assert.equal(missing.metadata.freshness.age_ms,null);
+ } finally {Date.now=originalNow;}
 });
