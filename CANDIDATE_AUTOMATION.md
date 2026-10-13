@@ -142,3 +142,28 @@ Official references:
 - https://developers.cloudflare.com/workers/wrangler/configuration/
 - https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/
 - https://developers.cloudflare.com/d1/tutorials/build-an-api-to-access-d1/
+
+
+## Validator Builds preparation — 2026-10-13 14:28 KST
+
+User confirms FEATURE_V2_WRITE_ENABLED=false. Screenshot shows a repository-connection dialog
+with main/default `npx wrangler deploy`, not a completed Git link; instructed Cancel, user acknowledged.
+GitHub CLOUDFLARE_API_TOKEN is absent per user. Do not request token recreation or use intelligence
+credentials to manage provider settings.
+
+Prepared `wrangler.feature-validation.example.toml`: fixed existing validator target, generated entry,
+write flag false, existing market-history database ID, full pre-upload tests. TOML parsed and safety
+fields checked locally. NOT_DEPLOYED; this template is not proof of current bindings/runtime date.
+Next inspect actual MARKET_HISTORY binding and additional bindings; compare compatibility date before
+using the template. Do not connect with main or the generic deploy command. Existing provider Secret
+VALIDATION_TOKEN is never copied into source. keep_vars preserves Dashboard variables, not arbitrary
+bindings; do not claim it prevents all configuration changes.
+
+After those checks, use the existing Worker Git integration (one deployer per Worker), branch
+feature/m2-operational-storage, root /, candidate-specific configuration. Planned command, NOT YET
+AUTHORIZED TO RUN BEFORE PREFLIGHT: `npx wrangler deploy --config wrangler.feature-validation.example.toml`.
+The write flag remains false; no FEATURE_ENGINE_GIT_SHA override is needed for read-only replay.
+Reusing the existing test gate also checks validator source hash. Successful upload must still be
+followed by authenticated read-only replay1791778965346 and zero-write evidence. Workflow validator
+checks remain disabled until existing VALIDATION_TOKEN is available in its GitHub Secret store.
+Reference: https://developers.cloudflare.com/workers/wrangler/configuration/#source-of-truth

@@ -1513,3 +1513,12 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Related tests 11/11 PASS. Existing Worker behavior/auth unchanged; audit is TESTED_NOT_EXECUTED_REMOTELY. No extra deployment, no production changes, no D1 writes or live-gate promotion.
 - Current validator deployment configuration remains BLOCKED_BY_EXTERNAL_CONFIGURATION_EVIDENCE. Existing management audit requires credential availability; no second deployer or new token.
 - next_exact_step: check only GitHub Repository secret name CLOUDFLARE_API_TOKEN presence. Then verify account ID and activate existing read-only provider audit if available. Otherwise one Dashboard inspection, not token recreation. Source-time replay1791778965346 remains pending.
+
+
+## CHECKPOINT — 2026-10-13 14:28 KST — validator deployment preparation
+
+- User evidence: GitHub management token absent; validator FEATURE_V2_WRITE_ENABLED=false. Screenshot is an unsubmitted repository connection dialog, main/default deploy command; told Cancel, user acknowledged. No claim Git is connected.
+- Added wrangler.feature-validation.example.toml only: existing validator name and generated source; write false; existing D1 ID; full-suite preupload gate. No new Worker, Secret, migration, production route or cron.
+- validation: Python tomllib parse and fixed-target/write-flag/database-ID/absence-of-routes-migrations-secrets checks PASS. Existing code tests reused, no runtime source changed. NOT_DEPLOYED; provider binding/date evidence still required.
+- production impact none. Checkpoint skips CI/Builds to avoid unrelated intelligence deployment. PR4 remains unmerged.
+- next_exact_step: user inspect existing validator Bindings, confirm MARKET_HISTORY -> market-history and additional binding names/types; do not modify. Compatibility date must be compared before using prepared template; read-only replay1791778965346 remains pending.
