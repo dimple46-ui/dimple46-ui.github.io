@@ -1545,3 +1545,12 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Code8cdff91dd8f6ddd4eb0efb0df18974a0a6a585a2; node-tests115255644718/local-checks115255617449 SUCCESS. Existing intelligence Cloudflare Build115255779348 SUCCESS. Remote-checks115255674512 AUTHENTICATED_READ_ONLY_SMOKE PASS; runtime SHA exact match; deploymentId2c437035-cbc9-4b6b-8b01-c7473733c2df. Artifact11805451177. D1 writes0; stored Feature2 cutoff1791350328109 and STALE_INPUT retained. CollectionHealth OK at receipt, not a live gate PASS.
 - Provider audit/validator SKIPPED, not PASS. Production unchanged. Prior pending status superseded for intelligence only. No new tokens/deployer.
 - next_exact_step: validator deploy-command evidence or management access must change before retry. No reconnect, binding creation, Manage-link loop or repeated intelligence auth. Then isolated validator deploy/historical replay1791778965346. Receipt-only commit uses skip-ci.
+
+
+## CHECKPOINT — 2026-10-13 20:52 KST — partial-day storage projections
+
+- Parent61b480a; verified8cdff91 CI/Build/auth reused, no repeated runtime call. Validator blocked with unchanged retry condition; no Dashboard requests.
+- Problem: five-day JSON projection included a partially collected current day, understating daily/annual storage at session start. Existing past examples included just5 rows in today's sample.
+- Changed annual projections to exclude current/future KST days; raw five-day totals stay unchanged. Reports exclusion count and sampleCompleteness NOT_VERIFIED: earlier dates are not proof of full collection. No query expansion, D1 writes, retention deletion or production edits.
+- Targeted storage6/API10 tests=16/16 PASS, including KST midnight boundary, current/future exclusions, empty sample null, raw count preservation. Synthetic correctness only; live gates unchanged.
+- New code deployment/CI pending existing automation. RESUME normalized to remove superseded duplicate status. next_exact_step: verify new exact-SHA receipt; then independent retention measurement gaps.

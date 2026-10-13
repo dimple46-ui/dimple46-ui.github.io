@@ -1,45 +1,24 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: `2026-10-13T19:45:00+09:00`
-- milestone: `M2 — Operational / Storage Architecture Stabilization`
-- branch: `feature/m2-operational-storage`
-- verified_head_sha: `7d9d8c9de08a10339ec7e7d991984a70994688df` (tested and deployed code; checkpoint commit contains this file)
-- active_pr: `#4`, Draft/Open; PR #3 already merged
-- last_successful_test: full local regression `79/79 PASS`; targeted automation `14/14 PASS`; validator `9/9 PASS`. Synthetic tests are not live validation.
-- last_successful_ci: Tests `38350679737` SUCCESS; candidate checks `38350676875` remote job `115142149349` SUCCESS.
-- last_successful_build: existing Cloudflare Builds exact-SHA check `115142221101` SUCCESS.
-- deployed_sha: `7d9d8c9de08a10339ec7e7d991984a70994688df`; authenticated runtime matches; deploymentId `3fe848a3-bb0c-49a2-83da-60c083aaa7d2`.
-- authenticated_validation: `AUTHENTICATED_READ_ONLY_SMOKE` PASS at 14:18:31 KST; no/wrong token rejection, four endpoints, cutoff/quality/freshness, bounded history and invalid inputs; D1 writes zero. Artifact 11790232429 in run 38350676875.
-- production_status: snapshot `2026-10-13T03:06:42.790Z` schema 3, sourceErrors empty, DEGRADED due to program STALE. No production changes. Regular session at recovery.
-- candidate_status: existing intelligence candidate retained. Provider deploymentId now returned; runtime start/CPU remain separate unverified evidence. Stored v2 remains 20261007, three rows, STALE_INPUT. Continuous v2 persistence disabled/unverified.
-- completed: recovered validator source identity guard and regenerated header in `7040feea...`; source digest `b28192c567c764f5868e01bb6f5f376161be4e36929a1628b6126c584d7c0733`; validator TESTED_NOT_DEPLOYED.
-- completed_automation: existing Builds → exact-SHA waiter → authenticated smoke → receipt artifact now VERIFIED. No second deployer. Short existing token accepted only after real server authentication; empty/wrong credentials still fail.
-- blocked: intelligence auth blocker resolved without Secret changes. Provider audit and validator remain separately disabled; Cloudflare management access unverified.
-- waiting_for_live: retain existing live-only gates; source-time program correction needs isolated validator deploy/replay (historical validation, not a live-only blocker); continuous v2 persistence not active; provider storage measurement needs planned 20-trading-day window.
-- prior_validation: real three-bucket Signal replay and exact D1/state snapshot comparison already passed Oct12; reuse details in PROJECT_STATUS.md. Do not repeat completed replay. Futures retain UNVERIFIED_TIME; unchanged bucket stays null.
-- approved_scope: isolated candidate code/tests/deploy/read-only validation. No main merge, production Worker/binding/Secret/routing change, destructive migration or history mutation.
-- next_exact_step: resolve validator deploy-command evidence only when new access/settings evidence is available; then use existing Builds for the isolated validator correction and historical replay1791778965346. No repeat intelligence auth/build.
+- timestamp_kst: 2026-10-13T20:52:00+09:00
+- milestone: M2 — Operational / Storage Architecture Stabilization
+- branch: feature/m2-operational-storage
+- active_pr: #4 Draft/Open; PR #3 merged. No main merge authorized.
+- verified_head_sha: 8cdff91dd8f6ddd4eb0efb0df18974a0a6a585a2 (last authenticated runtime; new change pending)
+- completed: storage missing-measurement fix candidate validated. New change excludes current/future KST day from annual JSON growth projections, keeps raw totals, reports excluded count and NOT_VERIFIED sample completeness.
+- last_successful_test: changed storage policy/API tests 16/16 PASS; correctness fixtures, not live validation.
+- last_successful_ci: 8cdff91 node-tests115255644718 and local-checks115255617449 SUCCESS.
+- last_successful_build: intelligence Cloudflare Builds115255779348 SUCCESS at8cdff91.
+- authenticated_validation: remote-checks115255674512 PASS, exact runtime8cdff91; deploymentId2c437035-cbc9-4b6b-8b01-c7473733c2df; artifact11805451177; D1 writes0.
+- candidate_status: new partial-day projection correction LOCAL_TESTED; CI/build/runtime pending. Single existing Builds deployer reused.
+- production_impact: NONE. No production Worker/Secret/binding/route change or D1 mutation.
+- quality: stored Feature2 cutoff1791350328109 remains STALE_INPUT; continuous v2 persistence not enabled. Historical receipts are not current health.
+- blocked: VALIDATOR_DEPLOY_COMMAND_UNVERIFIED. Existing Git connection, MARKET_HISTORY binding, VALIDATION_TOKEN existence, write=false, compatibility_date2026-10-02 verified; Disable builds ON.
+- last_attempt: validator Dashboard2026-10-13 14:42KST. Build section lacks command; Manage leads to GitHub permissions.
+- retry_condition: new deploy-command evidence or authorized management access only. No repeated screenshots/login/token lookup/reconnection. Provider audit lacks management credential; no new token requested.
+- waiting_for_live: preserve existing live-only gates; historical source-time correction replay1791778965346 pending validator deployment, not live-only. Provider storage measurement needs20-day sample.
+- verified_complete_lock: existing intelligence auth/build/receipt pipeline; prior Oct12 real three-bucket Signal replay and D1/state comparison. Do not repeat without changed input/code/environment.
+- approved_scope: isolated candidate code/tests/deploy/read-only validation. No production changes, main merge, destructive migration or history rewrite.
+- next_exact_step: inspect CI/Build/authenticated receipt for this projection correction once; after success lock it and review remaining retention measurement gaps independently of Validator.
 
-Detailed evidence: PROJECT_STATUS.md. Automation instructions: CANDIDATE_AUTOMATION.md.
-
-- latest_local_change: provider settings audit now returns UNVERIFIED/null for missing, redacted, malformed or duplicate write flags; only explicit plain-text false proves write-disabled settings. Targeted tests 11/11 PASS. TESTED_NOT_EXECUTED_REMOTELY; checkpoint skips CI/Builds to avoid unrelated intelligence redeploy. Management access still unverified; no repeated login.
-
-- validator_setup: existing Git connection confirmed by screenshots; branch feature/m2-operational-storage; Disable builds ON. Sole D1 binding, VALIDATION_TOKEN existence, write flag false confirmed. Deployment command NOT_VERIFIED; no deploy attempted. Do not reconnect or recreate.
-
-- validator_preflight_20261013_1431: screenshot confirms sole D1 binding MARKET_HISTORY -> market-history; user confirms compatibility_date 2026-10-02 and write flag false. Config date aligned, no runtime code changes. Git connection pending; no deploy yet.
-
-## Execution locks — 2026-10-13 evening
-
-- VERIFIED_COMPLETE: intelligence auth/build path at 7d9d8c9; CI38350679737 and remote receipt115142149349 reused. Never rotate tokens or rerun this historical success. Only changed runtime code warrants a new check.
-- completed_this_checkpoint: storage measurements reject null/blank/boolean/array/object instead of coercing them to zero; numeric strings and measured zero preserved. Storage tests5/5 and related API tests9/9 PASS. Initial fixture incorrectly treated optional undefined retention policy as missing measurement; fixture corrected, only failed suite rerun.
-- code_status: CANDIDATE_VALIDATED at8cdff91; production unchanged; validator disabled. See latest_verified_code.
-- blocker: VALIDATOR_DEPLOY_COMMAND_UNVERIFIED
-- last_attempt: 2026-10-13 14:42 KST Dashboard screenshots
-- failure_reason: saved Build section has repository/branch/disable toggle but no deploy-command field; Manage opens GitHub app permissions. Do not revisit that route.
-- required_change: actual validator deploy-command settings evidence or authorized management API access.
-- retry_condition: new evidence/access only; no repeated login, token-presence request, connection, binding creation or same screenshots.
-- blocked_actions: provider audit requires absent management credential; validator historical replay requires correct isolated deployment. No new API token requested this session.
-- production_impact: NONE; no main merge or production edits. Current production health not re-probed; earlier receipt is historical evidence.
-- waiting_for_live: unchanged; no synthetic result promoted. Continuous v2 persistence remains disabled/unverified.
-
-- latest_verified_code: `8cdff91dd8f6ddd4eb0efb0df18974a0a6a585a2`; node-tests115255644718 SUCCESS; local-checks115255617449 SUCCESS; existing Cloudflare Build115255779348 SUCCESS; remote-checks115255674512 SUCCESS, AUTHENTICATED_READ_ONLY_SMOKE PASS at2026-10-13T10:44:20Z. deploymentId2c437035-cbc9-4b6b-8b01-c7473733c2df. Provider audit/validator SKIPPED (not PASS). This supersedes pending status above. This checkpoint uses skip-ci to avoid redeployment.
+Detailed history: PROJECT_STATUS.md. Deployment instructions: CANDIDATE_AUTOMATION.md.

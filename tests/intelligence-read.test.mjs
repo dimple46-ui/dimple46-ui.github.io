@@ -153,3 +153,22 @@ test('D1 failures, deadlines and per-isolate limits fail closed',async()=>{
  assert.equal(response.status,429);assert.equal((await response.json()).error,'RATE_LIMITED');
  assert.equal(database.statements.length,1);
 });
+
+test('health projection cutoff uses KST midnight and preserves read-only source counts',async()=>{
+ const originalNow=Date.now;
+ try {
+  for(const [iso,day] of [['2026-10-13T14:59:59Z','20261013'],['2026-10-13T15:00:00Z','20261014']]) {
+   Date.now=()=>Date.parse(iso);
+   const database=db();
+   const response=await worker.fetch(request('/health',{ip:'192.0.2.80'}),env(database));
+   assert.equal(response.status,200);
+   const body=await response.json();
+   for(const key of ['observationProjection','featureRunProjection']) {
+    assert.equal(body.storageGrowth[key].excludeOnOrAfterTradingDay,day);
+    assert.equal(body.storageGrowth[key].sampleCompleteness,'NOT_VERIFIED');
+   }
+   assert.equal(body.storageGrowth.observations[0].row_count,10);
+   assert.ok(database.statements.every(sql=>sql.trim().startsWith('SELECT')));
+  }
+ } finally {Date.now=originalNow;}
+});

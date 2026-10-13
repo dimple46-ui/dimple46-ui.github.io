@@ -58,3 +58,23 @@ test('measured zero and numeric database strings remain valid; missing rows do n
  assert.equal(zero.status,'MONITOR');assert.equal(zero.utilizationRatio,0);
  assert.equal(zero.estimatedDaysRemaining,null);
 });
+
+test('annual projections exclude current and future days without changing source totals',()=>{
+ const rows=[
+  {trading_day:'20261012',row_count:330,json_bytes:6600000},
+  {trading_day:'20261013',row_count:5,json_bytes:100000},
+  {trading_day:'20261014',row_count:330,json_bytes:6600000}
+ ];
+ const copy=structuredClone(rows);
+ const result=summarizeJsonGrowth(rows,{excludeOnOrAfterTradingDay:'20261013'});
+ assert.equal(result.sampleTradingDays,1);
+ assert.equal(result.excludedCurrentOrFutureDays,2);
+ assert.equal(result.averageJsonBytesPerTradingDay,6600000);
+ assert.equal(result.projectedAnnualJsonBytes,1650000000);
+ assert.equal(result.sampleCompleteness,'NOT_VERIFIED');
+ assert.deepEqual(rows,copy);
+ const empty=summarizeJsonGrowth(rows.slice(1),{excludeOnOrAfterTradingDay:'20261013'});
+ assert.equal(empty.status,'INSUFFICIENT_DATA');
+ assert.equal(empty.projectedAnnualJsonBytes,null);
+ assert.equal(empty.excludedCurrentOrFutureDays,2);
+});

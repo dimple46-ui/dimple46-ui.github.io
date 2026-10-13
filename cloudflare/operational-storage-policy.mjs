@@ -13,15 +13,20 @@ function rounded(value) {
   return Math.round(value * 100) / 100;
 }
 
-export function summarizeJsonGrowth(rows, {tradingDaysPerYear = DEFAULT_TRADING_DAYS_PER_YEAR} = {}) {
-  const days = Array.isArray(rows) ? rows.map(row => ({
+export function summarizeJsonGrowth(rows, {tradingDaysPerYear = DEFAULT_TRADING_DAYS_PER_YEAR,
+  excludeOnOrAfterTradingDay = null} = {}) {
+  const validDays = Array.isArray(rows) ? rows.map(row => ({
     tradingDay: String(row?.trading_day || ""),
     rowCount: finiteNonNegative(row?.row_count),
     jsonBytes: finiteNonNegative(row?.json_bytes)
   })).filter(day => /^\d{8}$/.test(day.tradingDay) && day.rowCount != null && day.jsonBytes != null) : [];
+  const days = excludeOnOrAfterTradingDay == null ? validDays
+    : validDays.filter(day => day.tradingDay < excludeOnOrAfterTradingDay);
+  const sample = {excludedCurrentOrFutureDays: validDays.length - days.length,
+    excludeOnOrAfterTradingDay, sampleCompleteness: "NOT_VERIFIED"};
 
   if (!days.length) return {
-    status: "INSUFFICIENT_DATA", sampleTradingDays: 0, averageRowsPerTradingDay: null,
+    ...sample, status: "INSUFFICIENT_DATA", sampleTradingDays: 0, averageRowsPerTradingDay: null,
     averageJsonBytesPerTradingDay: null, maximumJsonBytesPerTradingDay: null,
     projectedAnnualJsonBytes: null, projectionTradingDays: tradingDaysPerYear
   };
@@ -29,6 +34,7 @@ export function summarizeJsonGrowth(rows, {tradingDaysPerYear = DEFAULT_TRADING_
   const averageRows = days.reduce((sum, day) => sum + day.rowCount, 0) / days.length;
   const averageBytes = days.reduce((sum, day) => sum + day.jsonBytes, 0) / days.length;
   return {
+    ...sample,
     status: days.length >= 3 ? "MEASURED_SAMPLE" : "LIMITED_SAMPLE",
     sampleTradingDays: days.length,
     averageRowsPerTradingDay: rounded(averageRows),

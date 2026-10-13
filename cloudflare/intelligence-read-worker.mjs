@@ -190,6 +190,8 @@ function withDeadline(promise, timeoutMs) {
 }
 
 async function health(db, now, env) {
+  const growthOptions = {excludeOnOrAfterTradingDay:
+    new Date(now + 9 * 60 * 60 * 1000).toISOString().slice(0, 10).replaceAll("-", "")};
   const [observation, feature, observationGrowth, featureGrowth] = await Promise.all([
     select(db, `SELECT slot_ms,observed_at_ms,available_at_ms,trading_day,schema_version,quality_version,
       pipeline_status,metrics_json,quality_json FROM market_observations ORDER BY slot_ms DESC LIMIT 1`),
@@ -230,12 +232,13 @@ async function health(db, now, env) {
       inputCutoffMs: run.input_cutoff_ms, generatedAtMs: run.generated_at_ms} : null,
     storageGrowth: {scope: "LATEST_FIVE_TRADING_DAYS_JSON_ONLY",
       observations: observationGrowth.rows, featureRuns: featureGrowth.rows,
-      observationProjection: summarizeJsonGrowth(observationGrowth.rows),
-      featureRunProjection: summarizeJsonGrowth(featureGrowth.rows)},
+      observationProjection: summarizeJsonGrowth(observationGrowth.rows, growthOptions),
+      featureRunProjection: summarizeJsonGrowth(featureGrowth.rows, growthOptions)},
     queryMeta: {observation: observation.meta, feature: feature.meta,
       observationGrowth: observationGrowth.meta, featureGrowth: featureGrowth.meta},
     runtime: {...runtime, scope: "WORKER_ISOLATE_LIFETIME"},
     limitations: ["JSON byte totals exclude SQLite pages, indexes and replication overhead",
+      "Annual JSON projections exclude the current KST day; earlier sample completeness is not verified",
       "Failure count is per Worker isolate; provider-level and isolate fallback rate limiting are configured"]
   };
 }
