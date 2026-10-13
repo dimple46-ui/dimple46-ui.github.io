@@ -30,13 +30,21 @@ export async function checkCandidate({kind, token, expectedSha, expectedSourceHa
   }
   async function request(path, auth = token, expectedStatus = 200) {
     // Fixed origins, no redirects or user-controlled SQL/host. Token never enters a URL or output.
-    const response = await fetcher(ORIGINS[kind] + path, {
-      method: 'GET', redirect: 'error', signal: AbortSignal.timeout(15000),
-      headers: auth == null ? {} : {Authorization: `Bearer ${auth}`}
-    });
-    requireCheck(response.status === expectedStatus, `HTTP_STATUS_${response.status}_EXPECTED_${expectedStatus}`);
-    const payload = await response.json();
-    return payload;
+    const route = path.split('?')[0];
+    const endpoint = route.startsWith('/replay/') ? 'REPLAY'
+      : ({'/':'ROOT','/health':'HEALTH','/state':'STATE','/features':'FEATURES','/history':'HISTORY'}[route] || 'UNKNOWN');
+    const stage = auth == null ? 'NO_TOKEN' : auth === token ? 'AUTHENTICATED' : 'WRONG_TOKEN';
+    const fail = code => { throw new Error(`${code}_AT_${endpoint}_${stage}`); };
+    let response;
+    try {
+      response = await fetcher(ORIGINS[kind] + path, {
+        method: 'GET', redirect: 'error', signal: AbortSignal.timeout(15000),
+        headers: auth == null ? {} : {Authorization: `Bearer ${auth}`}
+      });
+    } catch { fail('NETWORK_OR_TIMEOUT_FAILURE'); }
+    if (response.status !== expectedStatus) fail(`HTTP_STATUS_${response.status}_EXPECTED_${expectedStatus}`);
+    try { return await response.json(); }
+    catch { fail('INVALID_JSON_RESPONSE'); }
   }
   const authPath = kind === 'intelligence' ? '/health' : '/';
   await request(authPath, null, 401);

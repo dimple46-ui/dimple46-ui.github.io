@@ -1601,3 +1601,10 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Remote115568413421 FAILED at22:15:40Z with HTTP_STATUS_504_EXPECTED_200, after build waiter PASS. Artifact11853827102. Do not call this authenticated runtime PASS or claim actual feature-age evidence. Last successful authenticated runtime f9521ee retained.
 - No retry, timeout increase, token change, production rollback or second deploy. Generic checker error lacks endpoint attribution, so root cause unresolved; could not establish which API timed out.
 - Next exact step: fixed endpoint stage in safe error receipts and targeted test; then changed diagnostics can isolate failure. Retry condition: improved diagnostic path or independently established recovery. Validator separately blocked, live gates unchanged. Receipt-only skip-ci.
+
+
+## CHECKPOINT — 2026-10-14 08:00 KST — actionable safe validation errors
+
+- Parent8aa52b3. Prior504 lacked endpoint; no identical auth retry. Checker now reports fixed endpoint and NO_TOKEN/WRONG_TOKEN/AUTHENTICATED stage. Network/timeout and invalid JSON classified without raw errors/body/token/URL parameters.
+- Targeted automation12/12 PASS including each authenticated endpoint504, single attempt, network/JSON privacy. Runtime Worker unchanged; only existing push workflow will exercise changed diagnostic once. No separate deployer or timeout increase. If504 repeats, record stage and stop.
+- Production unaffected, validator unchanged. Recommended next GPT-6.1 Sol Medium; no model-switch claim.

@@ -1,6 +1,6 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: 2026-10-14T07:17:00+09:00
+- timestamp_kst: 2026-10-14T08:00:00+09:00
 - milestone: M2 — Operational / Storage Architecture Stabilization
 - branch: feature/m2-operational-storage
 - active_pr: #4 Draft/Open; PR #3 merged. No main merge authorized.
@@ -19,10 +19,13 @@
 - waiting_for_live: preserve existing live-only gates; historical source-time correction replay1791778965346 pending validator deployment, not live-only. Provider storage measurement needs20-day sample.
 - verified_complete_lock: existing intelligence auth/build/receipt pipeline; prior Oct12 real three-bucket Signal replay and D1/state comparison. Do not repeat without changed input/code/environment.
 - approved_scope: isolated candidate code/tests/deploy/read-only validation. No production changes, main merge, destructive migration or history rewrite.
-- next_exact_step: add fixed-endpoint stage to candidate checker error receipts (no token/body), test it locally, then use a changed diagnostic path to identify which read timed out. Do not blindly rerun or extend query timeout.
+- next_exact_step: run existing push validation with improved endpoint/auth-stage diagnostic once. If504 recurs, record exact stage and stop; no timeout increase or blind retry.
 
 Detailed history: PROJECT_STATUS.md. Deployment instructions: CANDIDATE_AUTOMATION.md.
 
 - query_plan_evidence: existing GROUP BY/ORDER BY/LIMIT5 uses shipped indexes and stops after five groups locally. 10→100 days has identical VM steps (observations29807, features28164 at330 rows/day); test verifies identical aggregate payload evaluations at20 rows/day, mixed versions and correct totals. These are local SQLite metrics, not Cloudflare CPU/rows_read evidence. No SQL/schema changes justified.
 
 - new_blocker: CANDIDATE_READ_TIMEOUT_504; last_attempt2026-10-14T07:15:40KST; endpoint unknown because generic checker error omits path. Retry only after diagnostic change or identified provider recovery. No unchanged auth retry or automatic production action. Live gates unchanged.
+
+- diagnostic_change: fixed endpoint/auth-stage labels for HTTP, network/timeout and invalid JSON failures; no URL parameters/token/body/native errors recorded. Targeted automation12/12 PASS. Runtime code unchanged; existing Builds is sole push path, no manual rerun.
+- recommended_next_model: GPT-6.1 Sol, Medium for bounded diagnosis/tests; separate High only if evidence indicates cross-service consistency/design issue.

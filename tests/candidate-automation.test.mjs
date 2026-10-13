@@ -136,3 +136,28 @@ test('validator write-disabled evidence must be explicit and readable', () => {
     assert.equal(result.writeDisabledVerified, !enabled);
   }
 });
+
+test('failure codes identify endpoint and auth stage without secrets, bodies or retries',async()=>{
+ for (const endpoint of ['/health','/state','/features','/history']) {
+  const f=fixture();let failures=0;
+  const fetcher=async(url,options)=>{
+   if(new URL(url).pathname===endpoint && options.headers.Authorization===`Bearer ${token}`) {
+    failures++;return new Response('private upstream response',{status:504});
+   }
+   return f.fetcher(url,options);
+  };
+  await assert.rejects(checkCandidate({kind:'intelligence',token,expectedSha:sha,fetcher}),
+   new RegExp(`HTTP_STATUS_504_EXPECTED_200_AT_${endpoint.slice(1).toUpperCase()}_AUTHENTICATED`));
+  assert.equal(failures,1);
+ }
+ for(const scenario of ['network','json']) {
+  const fetcher=async()=>{
+   if(scenario==='network')throw new Error(token+' private transport error');
+   return new Response('private invalid JSON',{status:401});
+  };
+  await assert.rejects(checkCandidate({kind:'intelligence',token,expectedSha:sha,fetcher}),error=>{
+   assert.match(error.message,scenario==='network'?/NETWORK_OR_TIMEOUT_FAILURE_AT_HEALTH_NO_TOKEN/:/INVALID_JSON_RESPONSE_AT_HEALTH_NO_TOKEN/);
+   assert.ok(!error.message.includes(token));assert.ok(!error.message.includes('private'));return true;
+  });
+ }
+});
