@@ -1522,3 +1522,9 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - validation: Python tomllib parse and fixed-target/write-flag/database-ID/absence-of-routes-migrations-secrets checks PASS. Existing code tests reused, no runtime source changed. NOT_DEPLOYED; provider binding/date evidence still required.
 - production impact none. Checkpoint skips CI/Builds to avoid unrelated intelligence deployment. PR4 remains unmerged.
 - next_exact_step: user inspect existing validator Bindings, confirm MARKET_HISTORY -> market-history and additional binding names/types; do not modify. Compatibility date must be compared before using prepared template; read-only replay1791778965346 remains pending.
+
+
+## CHECKPOINT — 2026-10-13 14:31 KST — validator provider settings matched
+
+- Screenshot confirms sole D1 binding MARKET_HISTORY -> market-history. User confirms existing compatibility date2026-10-02; aligned validator TOML to preserve it. Write flag false previously confirmed. No runtime edits/tests rerun for a date-only config correction; syntax/field comparison verified. NOT_DEPLOYED.
+- Next: configure existing Worker Git connection with branch feature/m2-operational-storage, explicit validator config, Disable builds ON until saved settings reviewed. Main/default deploy command forbidden. No production changes. Checkpoint skips unrelated builds.

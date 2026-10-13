@@ -18,10 +18,12 @@
 - waiting_for_live: retain existing live-only gates; source-time program correction needs isolated validator deploy/replay (historical validation, not a live-only blocker); continuous v2 persistence not active; provider storage measurement needs planned 20-trading-day window.
 - prior_validation: real three-bucket Signal replay and exact D1/state snapshot comparison already passed Oct12; reuse details in PROJECT_STATUS.md. Do not repeat completed replay. Futures retain UNVERIFIED_TIME; unchanged bucket stays null.
 - approved_scope: isolated candidate code/tests/deploy/read-only validation. No main merge, production Worker/binding/Secret/routing change, destructive migration or history mutation.
-- next_exact_step: inspect market-feature-validation Bindings: verify MARKET_HISTORY -> market-history and identify any additional binding names/types; do not add/change bindings. Then confirm compatibility date before Git connection. Prepared validator config is NOT_DEPLOYED.
+- next_exact_step: connect existing market-feature-validation to feature/m2-operational-storage with validator-specific deploy config; first keep Disable builds ON while reviewing connection. Do not use main/default command. Then inspect saved settings before enabling build.
 
 Detailed evidence: PROJECT_STATUS.md. Automation instructions: CANDIDATE_AUTOMATION.md.
 
 - latest_local_change: provider settings audit now returns UNVERIFIED/null for missing, redacted, malformed or duplicate write flags; only explicit plain-text false proves write-disabled settings. Targeted tests 11/11 PASS. TESTED_NOT_EXECUTED_REMOTELY; checkpoint skips CI/Builds to avoid unrelated intelligence redeploy. Management access still unverified; no repeated login.
 
 - validator_setup: user confirms write flag false; Git link dialog not yet connected (Cancel requested, acknowledged). GitHub CLOUDFLARE_API_TOKEN absent. Candidate-specific TOML prepared/parsed, fixed target/write=false/existing D1/no routes or migrations verified. No new secrets or deployer installed.
+
+- validator_preflight_20261013_1431: screenshot confirms sole D1 binding MARKET_HISTORY -> market-history; user confirms compatibility_date 2026-10-02 and write flag false. Config date aligned, no runtime code changes. Git connection pending; no deploy yet.

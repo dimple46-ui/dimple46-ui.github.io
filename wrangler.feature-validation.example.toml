@@ -1,8 +1,8 @@
 # Prepared candidate template, NOT a record of current provider configuration.
-# Confirm the existing validator binding and compatibility date before first connection.
+# User verified existing binding/name and compatibility date on 2026-10-13.
 name = "market-feature-validation"
 main = "cloudflare/feature-validation-worker.js"
-compatibility_date = "2026-10-07"
+compatibility_date = "2026-10-02"
 workers_dev = true
 # Preserve other Dashboard variables; this does not preserve/verify arbitrary bindings.
 keep_vars = true
