@@ -1562,3 +1562,11 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - New projection edge cases covered by16 targeted local tests; remote smoke covers identity/auth/read API, not independent proof of every new projection field. No live-gate promotion. Validator/provider checks skipped.
 - Next exact step: inspect D1 indexes and bound health storage-growth aggregation to latest five trading days before grouping; compare query plans/totals with SQLite fixtures. Existing GROUP BY ... LIMIT5 can scan all history. No production migration, no repeated Validator UI.
 - Receipt-only checkpoint skips CI/Builds. Production unchanged.
+
+
+## CHECKPOINT — 2026-10-13 20:58 KST — query optimization hypothesis rejected
+
+- Existing health SELECTs tested with shipped migrations. SQLite10 vs100 days at330 rows/day: observation29807 VM instructions both; feature28164 both. Existing indexes allow early stop after five groups; SCAN label alone does not mean full-history traversal. Prior proposed rewrite is unnecessary and cancelled.
+- Added tests/storage-query-plan.test.mjs, actual Worker SQL/schema, latest-five exact totals, feature version isolation, index plan/no temporary sort, bounded payload-length evaluation as history grows. Node24 targeted1/1 PASS. Fixture setup placeholder counts corrected before measurement; no remote retries.
+- Not provider CPU or D1 rows_read measurement. Runtime SQL unchanged. Reuse deployed5493ed8 and all prior authenticated evidence; no CI/deploy triggered for test/checkpoint-only commit (skip ci). Test joins next normal regression via tests/*.test.mjs.
+- Production impact none; Validator blocker/live gates unchanged. Next: inspect /health storageGrowth consumers and consider opt-in growth diagnostics for routine health checks without breaking callers. Do not rewrite already bounded aggregation.
