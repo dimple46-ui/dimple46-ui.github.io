@@ -85,3 +85,14 @@ test('invalid feature versions, engine revisions and times are rejected',()=>{
  assert.throws(()=>generateDescriptiveSignals(fixture(),{engineGitSha:sha,generatedAt:'2026-10-07T02:00:00Z'}),/INVALID_SIGNAL_TIME/);
 });
 
+
+test('nonfinite stock-flow acceleration and overflow cannot create reversal evidence',()=>{
+ for(const stock of ['samsung','skHynix']) for(const flow of ['foreignFlow','institutionFlow']) {
+  for(const acceleration of [NaN,Infinity,-Infinity,null,'50']) {
+   const features={version:2,inputCutoff:cutoff,bucketChanges:{[stock]:{[flow]:metric(100,{status:'BUCKET_DELTA',acceleration})}}};
+   assert.deepEqual(generated(features),[]);
+  }
+  const overflow={version:2,inputCutoff:cutoff,bucketChanges:{[stock]:{[flow]:metric(Number.MAX_VALUE,{status:'BUCKET_DELTA',acceleration:-Number.MAX_VALUE})}}};
+  assert.deepEqual(generated(overflow),[]);
+ }
+});

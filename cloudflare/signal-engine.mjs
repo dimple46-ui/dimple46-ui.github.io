@@ -96,7 +96,8 @@ function addStockFlowSignals(signals, features, context) {
   for (const [stock, identity] of Object.entries(STOCKS)) {
     for (const [flowName, prefix] of [["foreignFlow", "FOREIGN"], ["institutionFlow", "INSTITUTION"]]) {
       const flow = features.bucketChanges?.[stock]?.[flowName];
-      if (!usableMetric(flow, ["BUCKET_DELTA"]) || typeof flow.acceleration !== "number") continue;
+      if (!usableMetric(flow, ["BUCKET_DELTA"]) || !Number.isFinite(flow.acceleration)) continue;
+      if (!Number.isFinite(flow.value - flow.acceleration)) continue;
       const signalType = flowSignalType(prefix, flow.value, flow.acceleration);
       if (!signalType) continue;
       const previousDelta = flow.value - flow.acceleration;

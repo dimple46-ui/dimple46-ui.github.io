@@ -1578,3 +1578,11 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Invalid/blank/duplicate option yields400 before D1. Latest observation/feature/quality/freshness remain. Existing checker uses lightweight path and verifies contract; receipt includes healthQueryCount/storageGrowthStatus.
 - Related API/automation/query-plan23/23 PASS; subsequent receipt fields integration1/1 PASS. No production/Secret/binding changes. No second deployer or Validator retry.
 - New CI/build/runtime pending existing Builds. Next: consume exact-SHA receipt and confirm two queries, NOT_REQUESTED. Existing /health clients need no change; frequent callers may opt in via false.
+
+
+## CHECKPOINT — 2026-10-14 06:53 KST — finish prior receipt and independent Signal guard
+
+- Recovered HEADf9521ee; no repeated build/auth/test. Prior successful receipt now persisted: CI115285475735/115285450765 and Build115285876850 SUCCESS; remote115285505021 PASS, runtimef9521ee, deploymentIdef1c612e-3a8c-4891-91ac-fe6deb7bf1b9, artifact11810834075. Lightweight health2 queries, NOT_REQUESTED growth, zero writes.
+- Found Signal stock-flow acceleration accepted Infinity by typeof number, allowing invalid reversal/Infinity evidence. Require finite acceleration and finite reconstructed previous delta. Both stocks, foreign/institution, NaN/Infinity/null/string/overflow fixtures; Signal/replay11/11 PASS. Correctness only; no real replay repeated or live gate promoted.
+- Signal guard LOCAL_TESTED_NOT_DEPLOYED/CI_NOT_RUN. Skip-ci avoids unrelated intelligence redeployment; normal future CI includes test. Production unchanged, no token/Worker/binding changes. Validator retry condition unchanged.
+- next_exact_step: explicit Feature age in /health independently from observation age; test missing/old/future timestamps before candidate release.
