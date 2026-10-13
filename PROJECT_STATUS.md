@@ -1467,3 +1467,19 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - waiting_for_live: 2026-10-08 live state/Feature/flow/program/futures/OI/basis/relative-strength/divergence/acceleration/quality/Signal checks remain open
 - next_exact_step: verify the Cloudflare build, then add `INTELLIGENCE_READ_TOKEN` only as a candidate Secret
 
+
+
+## CHECKPOINT — independent candidate verification automation (2026-10-13T12:16:49+09:00)
+
+- branch: feature/m2-operational-storage
+- verified parent commit: 7040feea5ef13d4b111172dcdd705674939cf0cc; automation commit is the commit containing this checkpoint.
+- milestone: M2
+- completed: split intelligence smoke, validator replay and provider settings audit into independently authorized jobs. Intelligence no longer requires Cloudflare management token. Added fixed-provider exact-SHA build waiter with bounded GET-only polling; only successful newest matching provider check advances to authenticated smoke. Added non-secret Actions receipt artifacts.
+- tests: targeted automation 14/14 PASS; full local regression 79/79 PASS. YAML parsed and four independent jobs checked. No unchanged reruns.
+- CI: previous c6cc50c run 38325024034 SUCCESS reused only for its deployed code; this checkpoint skips CI/Builds to avoid unchanged Worker redeployment. New automation TESTED_NOT_ACTIVATED.
+- deployment: unchanged intelligence c6cc50c, existing Cloudflare Build 78d97dcd-c63d-4499-9599-11fc3f3cb773 SUCCESS. No new deployer.
+- validation: authenticated health already verified from user receipt 2026-10-13T00:09:27.598Z; no repeat requested. Full automated remote smoke BLOCKED_BY_AUTH, GitHub Secret existence UNVERIFIED.
+- production_impact: none; no binding, Secret, route, D1 data or production source changed.
+- remaining: verify GitHub Secret name presence before enabling intelligence checks. Provider audit and validator remain separate opt-ins. Automatic rollback not activated without provider version/settings evidence.
+- waiting_for_live: unchanged; stored v2 still stale 20261007, no continuous v2 claim, no synthetic-to-live promotion.
+- next_exact_step: GitHub repository Actions Secrets list: confirm INTELLIGENCE_READ_TOKEN name exists, without displaying its value or creating a new token. Then enable existing minimum-credential remote check path.

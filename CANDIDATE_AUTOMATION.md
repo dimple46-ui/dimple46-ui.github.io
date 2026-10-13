@@ -6,8 +6,11 @@ After the user saved a new build token, Work triggered the existing branch integ
 documentation commit `c6cc50c69f6cf5d6e793c407aeab12d034f0a35e`. GitHub CI `38325024034` and
 Cloudflare Build `78d97dcd-c63d-4499-9599-11fc3f3cb773` both succeeded at that exact commit.
 No duplicate deployer or runtime/config change was introduced. The pre-upload test gate remains enabled.
-Authenticated `/health` identity must still confirm this SHA; build success does not prove D1/API
-correctness or complete live validation. Existing endpoint tokens are not available in Work.
+Authenticated `/health` supplied at 2026-10-13 09:09:27.598 KST confirms this exact SHA,
+Feature version 2 and zero writes in all four query metadata entries. This is DEPLOYED_HEALTH_VALIDATED,
+not full route/live validation. Provider deployment ID/tag remain null and its timestamp is a sentinel.
+Stored v2 remains the stale 2026-10-07 run; continuous v2 persistence is not enabled.
+Existing endpoint tokens are not available in Work.
 
 ## Existing Cloudflare Builds reused (2026-10-12)
 
@@ -58,15 +61,34 @@ It reports Secret names/presence, never their values, and only proves read acces
 prove deployment permission. Unknown/missing credentials fail closed. API rejection is not retried
 with broader authority. Production is not an allowed target.
 
-`.github/workflows/candidate-check.yml` runs synthetic local tests on the M2 branch. Remote checks
-are disabled unless repository variable `CANDIDATE_CHECKS_ENABLED=true`. Disabled checks are **not**
-remote PASS. Existing `test.yml` remains the full regression gate. The remote job uses existing
-secret names `CLOUDFLARE_API_TOKEN`, `INTELLIGENCE_READ_TOKEN`, `VALIDATION_TOKEN` and existing
-variable or Secret `CLOUDFLARE_ACCOUNT_ID`; `INTELLIGENCE_DEPLOYED_SHA` is a non-secret expected SHA.
-Do not enable it until these values' presence and intended scope are verified. Worker-held secrets
-are not automatically GitHub Secrets and cannot be recovered by reading their metadata.
-`workflow_dispatch` may require the workflow to exist on the default branch; the branch push
-trigger is provided without requiring or authorizing a main merge.
+`.github/workflows/candidate-check.yml` keeps independent opt-in jobs:
+
+| Job | Repository variable | Credential |
+| --- | --- | --- |
+| Intelligence smoke | `CANDIDATE_CHECKS_ENABLED=true` | Existing `INTELLIGENCE_READ_TOKEN` GitHub Secret |
+| Validator replay | `VALIDATOR_CHECKS_ENABLED=true` | Existing `VALIDATION_TOKEN` GitHub Secret |
+| Provider settings audit | `CANDIDATE_ACCESS_AUDIT_ENABLED=true` | Existing `CLOUDFLARE_API_TOKEN` and account ID |
+
+Intelligence smoke no longer depends on Cloudflare management access or validator credentials.
+On a branch push, `scripts/wait-candidate-build.mjs` uses the built-in read-only GitHub token to wait
+at most four minutes for the exact push SHA's existing Cloudflare check. Check name, provider app
+identity and SHA must match; the newest matching check must succeed. Failure, skipped check,
+403 or timeout cannot reuse an older successful build. Only then is authenticated smoke run against
+the same expected SHA. No second deployer is introduced. Non-secret receipts are retained for seven
+days as Actions artifacts. A failed smoke records failure; automatic rollback is not activated.
+
+Local automation tests: 14/14 PASS; integration regression: 79/79 PASS. This workflow change is
+TESTED_NOT_ACTIVATED. Remote credential existence and flags remain UNVERIFIED; disabled jobs are
+NOT_EXECUTED, not PASS. Do not enable a job until its existing credential availability is verified.
+Cloudflare runtime Secrets and GitHub Actions Secrets are separate stores; metadata does not reveal
+or transfer their values. The immediate next step is to check only whether the GitHub repository
+Secret name `INTELLIGENCE_READ_TOKEN` exists. No new token is requested.
+
+Existing `test.yml` and the Cloudflare pre-upload full-suite gate remain intact. `workflow_dispatch`
+requires default-branch availability; the branch push trigger avoids a main merge dependency.
+Manual dispatch uses `INTELLIGENCE_DEPLOYED_SHA`; push validation always uses `github.sha`.
+This checkpoint uses `[skip ci]` to avoid redeploying an unchanged intelligence Worker. No remote
+validation success or deployment is claimed for the new automation commit.
 
 ## Direct-access blocker
 
@@ -81,7 +103,8 @@ Feature validator deployment is still pending.
 
 On 2026-10-13, credential presence remained unchanged. A secure Cloudflare browser login was
 attempted, but the site returned HTTP 403 for its login API. No authenticated session was verified;
-automated sign-in stopped. Candidate build-token inspection therefore still needs user-side access.
+automated sign-in stopped. Direct provider-settings access remains blocked. The build-token repair and successful deployment
+were subsequently verified above; do not repeat that repair.
 
 ## Additional deployment controls (not activated)
 

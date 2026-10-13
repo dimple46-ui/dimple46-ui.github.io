@@ -94,3 +94,14 @@ test('workflow cannot deploy, migrate, change secrets or run on untrusted PR cod
   assert.match(workflow, /CANDIDATE_CHECKS_ENABLED == 'true'/);
   assert.match(workflow, /refs\/heads\/feature\/m2-operational-storage/);
 });
+test('intelligence checks do not require management or validator credentials and wait for the build', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/candidate-check.yml', import.meta.url), 'utf8');
+  const intelligence = workflow.split('  remote-checks:')[1].split('  validator-checks:')[0];
+  assert.doesNotMatch(intelligence, /CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID|VALIDATION_TOKEN|audit-candidate-access/);
+  assert.match(intelligence, /secrets.INTELLIGENCE_READ_TOKEN/);
+  assert.ok(intelligence.indexOf('wait-candidate-build.mjs') < intelligence.indexOf('check-candidate.mjs'));
+  assert.match(intelligence, /github.event_name == 'push' && github.sha/);
+  assert.match(workflow, /vars.VALIDATOR_CHECKS_ENABLED == 'true'/);
+  assert.match(workflow, /vars.CANDIDATE_ACCESS_AUDIT_ENABLED == 'true'/);
+  assert.doesNotMatch(workflow, /continue-on-error:\s*true/);
+});
