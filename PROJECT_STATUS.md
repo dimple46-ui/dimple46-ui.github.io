@@ -1638,3 +1638,11 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Targeted replay4/4 PASS, valid null and deterministic baseline retained. New correctness fixtures not production/live validation. Prior real replay/auth not repeated.
 - LOCAL_TESTED_NOT_DEPLOYED/CI_NOT_RUN; skip-ci avoids unrelated Worker build. Production unchanged, no D1 writes/Validator retry.
 - Next: one full regression on exact remote branch for accumulated M3 guards, then PR4 validation/gate summary. GPT-6.1 Sol Medium.
+
+
+## CHECKPOINT — 2026-10-14 08:47 KST — accumulated M3 regression and PR refreshed
+
+- Test sourcef8eddf438574c52213da79bc20391149f9c1d36d;24 code/scripts/tests/fixture Git blob hashes matched remote. Both migrations and candidate workflow (additional3 inputs) matched, covering file-loaded dependencies. Node24 full regression94/94 PASS, run once for accumulated changes.
+- PR4 description updated to final implementation/validation/gates. Draft/Open preserved; no merge. Removed obsolete63-test/deployment-ID-unavailable claims. Last deployed/authenticated code5dc82e5 retained; latest M3 modifications local integration only, not deployed/new CI/live PASS.
+- No Worker/config/Secret/binding/D1 changes. Checkpoint skip-ci prevents unrelated deploy.
+- Next: recover existing real authenticated Feature replay capture and run changed M3 guards once; if absent record missing capture, then next current-session read-only capture when available. GPT-6.1 Sol Medium.
