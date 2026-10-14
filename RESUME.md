@@ -1,15 +1,15 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: 2026-10-14T09:07:00+09:00
+- timestamp_kst: 2026-10-14T09:24:00+09:00
 - milestone: M2 — Operational / Storage Architecture Stabilization
 - branch: feature/m2-operational-storage
 - active_pr: #4 Draft/Open; PR #3 merged. No main merge authorized.
 - verified_head_sha: 5dc82e5d819a135bcf4832a588066d507350962f (authenticated candidate)
-- completed: current production snapshot2026-10-14T00:04:46.780Z read; OPEN stock source times/date/calendar valid, read-time age119447ms at00:06:46Z. DEGRADED cause program MISSING, stock estimates null; no quality promotion.
+- completed: user-approved single GET-only remote rerun PASS2026-10-14T00:22:20Z. Existing runtime5dc82e5 retained; latest D1 observation1791937252867 matches main relayUpdatedAt exactly. Timestamp equality only, not full payload equivalence.
 - last_successful_test: full regression94/94 PASS atf8eddf438574c52213da79bc20391149f9c1d36d;24 source/script/test blobs plus2 migrations and candidate workflow exactly matched GitHub. New M3 code LOCAL_INTEGRATION_VALIDATED_NOT_DEPLOYED.
 - last_successful_ci: node-tests115584120675/local-checks115584094195 SUCCESS at5dc82e5.
 - last_successful_build: existing intelligence Builds115584344473 SUCCESS at5dc82e5.
-- authenticated_validation: remote115584158240 PASS at2026-10-13T22:58:54Z; runtime5dc82e5; deploymentId8cd941c5-130a-42d0-a46e-805318b11035; artifact11857104159; healthQueryCount2, d1Writes0, feature age582005351ms. Age/quality retained, not live PASS.
+- authenticated_validation: job115611968326/run38481246040 attempt2 PASS today; deploymentId8cd941c5-130a-42d0-a46e-805318b11035; artifact11860559151; healthQueryCount2/d1Writes0; state age86832ms, stored Feature age587011275ms/cutoff1791350328109/STALE_INPUT.
 - candidate_status: CANDIDATE_VALIDATED including Feature age; prior504 did not recur, original endpoint/root cause remain unknown. Do not claim underlying timeout cause fixed.
 - production_impact: NONE. No production Worker/Secret/binding/route change or D1 mutation.
 - quality: stored Feature2 cutoff1791350328109 remains STALE_INPUT; continuous v2 persistence not enabled. Historical receipts are not current health.
@@ -19,7 +19,7 @@
 - waiting_for_live: preserve existing live-only gates; historical source-time correction replay1791778965346 pending validator deployment, not live-only. Provider storage measurement needs20-day sample.
 - verified_complete_lock: existing intelligence auth/build/receipt pipeline; prior Oct12 real three-bucket Signal replay and D1/state comparison. Do not repeat without changed input/code/environment.
 - approved_scope: isolated candidate code/tests/deploy/read-only validation. No production changes, main merge, destructive migration or history rewrite.
-- next_exact_step: request explicit approval for one existing read-only remote job rerun115584158240 to obtain today's authenticated D1/API receipt. Auto-review rejected old successful-job rerun; no workaround/new deploy/indirect execution. Continue public read-only observations only as needed. Recommended GPT-6.1 Sol Medium.
+- next_exact_step: inspect existing relay stock-flow schedule/availability rule to determine whether today's null estimates are expected before first bucket; compare a later snapshot only when the scheduled input should change. Do not repeat completed API authentication. GPT-6.1 Sol Medium.
 
 Detailed history: PROJECT_STATUS.md. Deployment instructions: CANDIDATE_AUTOMATION.md.
 
@@ -37,3 +37,6 @@ Detailed history: PROJECT_STATUS.md. Deployment instructions: CANDIDATE_AUTOMATI
 - real_replay_boundary: saved user-provided legacy Feature source39e39bb...; validates M3 codef8eddf4 on real historical inputs, not latest corrected Feature source or today live. No captures/tokens committed. Evidence hashes recorded in PROJECT_STATUS.
 
 - authenticated_live_blocker: AUTO_REVIEW_REJECTED_JOB_RERUN at2026-10-14 regular session. Review reason: reruns already-successful old-commit job, unnecessary external execution contrary to no-repeat instruction. Today's market input differs, but no bypass/retry performed. Required change: explicit user approval or approved fresh validation path. Old runtime receipt remains historical, not today PASS.
+
+- current_live_scope: endpoint read/auth/identity/quality-age contract PASS; continuous Feature2 persistence, today's changed bucket/acceleration/Signal remain waiting. Program source091000 stale at snapshot092052; stock estimates null; exchange times unverified.
+- auto_review_resolution: user answered next after scoped1-run approval request; rerun succeeded once. Prior rejection retained in history, not current access blocker. No deploy or indirect workaround.

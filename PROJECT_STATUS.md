@@ -1664,3 +1664,12 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Existing successful remote job115584158240 reexecution for changed current-day inputs rejected by automatic approval review. Reason: already-successful old commit rerun is unnecessary external execution and conflicts with repeated-work rule. No indirect dispatch, push-trigger workaround, deploy or repeated request attempted.
 - Last successful authenticated receipt5dc82e5 reused as historical evidence only. Today's D1/API/Feature-age live validation BLOCKED_BY_AUTO_REVIEW; user approval for one scoped GET-only job needed. New token/Cloudflare UI not requested.
 - Production impact none. Checkpoint skip-ci. Next exact step: explicit approval for scoped current-session read-only job, or keep blocked and work independently. GPT-6.1 Sol Medium.
+
+
+## CHECKPOINT — 2026-10-14 09:24 KST — approved current-session read validation
+
+- User next after explicit1-run request treated as scoped approval; single rerun115584158240 accepted. New job115611968326/run38481246040 attempt2 PASS at00:22:20Z, artifact11860559151. Existing5dc82e5 deployment unchanged, ID8cd941c5-130a-42d0-a46e-805318b11035. No deploy/Secret/binding/D1 mutation.
+- Authenticated current-day latest observation1791937252867 equals main relayUpdatedAt00:20:52.867Z. This proves timestamp alignment, not independent full metric equality. State age86832ms; query count2 and recorded writes0. Input Feature cutoff1791350328109, age587011275ms, STALE_INPUT retained (still20261007 controlled row).
+- Main snapshot DEGRADED because program091000 source stale at092052. Stock estimates null; index/futures times unverified. Today's endpoint contract PASS; today's Feature generation/persistence/changed bucket/Signal not PASS.
+- Prior auto-review rejection resolved by explicit scoped user continuation; historical failure reason retained. No further rerun. Checkpoint skip-ci.
+- Next: inspect existing stock-flow schedule/availability to classify null estimates, then later snapshot only after expected source change. GPT-6.1 Sol Medium.
