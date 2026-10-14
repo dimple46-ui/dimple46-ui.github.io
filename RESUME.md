@@ -1,11 +1,11 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: 2026-10-14T08:49:00+09:00
+- timestamp_kst: 2026-10-14T09:07:00+09:00
 - milestone: M2 — Operational / Storage Architecture Stabilization
 - branch: feature/m2-operational-storage
 - active_pr: #4 Draft/Open; PR #3 merged. No main merge authorized.
 - verified_head_sha: 5dc82e5d819a135bcf4832a588066d507350962f (authenticated candidate)
-- completed: latest M3 guards passed two recovered saved real20261012 Feature replays: changed bucket18 signals, unchanged bucket13 signals; finite evidence/determinism/quality/zero-write gates PASS.
+- completed: current production snapshot2026-10-14T00:04:46.780Z read; OPEN stock source times/date/calendar valid, read-time age119447ms at00:06:46Z. DEGRADED cause program MISSING, stock estimates null; no quality promotion.
 - last_successful_test: full regression94/94 PASS atf8eddf438574c52213da79bc20391149f9c1d36d;24 source/script/test blobs plus2 migrations and candidate workflow exactly matched GitHub. New M3 code LOCAL_INTEGRATION_VALIDATED_NOT_DEPLOYED.
 - last_successful_ci: node-tests115584120675/local-checks115584094195 SUCCESS at5dc82e5.
 - last_successful_build: existing intelligence Builds115584344473 SUCCESS at5dc82e5.
@@ -19,7 +19,7 @@
 - waiting_for_live: preserve existing live-only gates; historical source-time correction replay1791778965346 pending validator deployment, not live-only. Provider storage measurement needs20-day sample.
 - verified_complete_lock: existing intelligence auth/build/receipt pipeline; prior Oct12 real three-bucket Signal replay and D1/state comparison. Do not repeat without changed input/code/environment.
 - approved_scope: isolated candidate code/tests/deploy/read-only validation. No production changes, main merge, destructive migration or history rewrite.
-- next_exact_step: after2026-10-14 regular-session observations exist, use existing read-only automation for a new current-session state/Feature-age receipt; treat stale stored Feature as stale. New input date justifies validation, not a redeploy. Changed Feature source replay still requires blocked validator correction. Recommended GPT-6.1 Sol Medium.
+- next_exact_step: request explicit approval for one existing read-only remote job rerun115584158240 to obtain today's authenticated D1/API receipt. Auto-review rejected old successful-job rerun; no workaround/new deploy/indirect execution. Continue public read-only observations only as needed. Recommended GPT-6.1 Sol Medium.
 
 Detailed history: PROJECT_STATUS.md. Deployment instructions: CANDIDATE_AUTOMATION.md.
 
@@ -35,3 +35,5 @@ Detailed history: PROJECT_STATUS.md. Deployment instructions: CANDIDATE_AUTOMATI
 - pr_summary: PR4 refreshed with94-test exact source evidence, deployed5dc82e5/runtime identity and explicit M2/M3 external/live/approval gates; Draft/Open/unmerged preserved. No new CI or deployment for checkpoint.
 
 - real_replay_boundary: saved user-provided legacy Feature source39e39bb...; validates M3 codef8eddf4 on real historical inputs, not latest corrected Feature source or today live. No captures/tokens committed. Evidence hashes recorded in PROJECT_STATUS.
+
+- authenticated_live_blocker: AUTO_REVIEW_REJECTED_JOB_RERUN at2026-10-14 regular session. Review reason: reruns already-successful old-commit job, unnecessary external execution contrary to no-repeat instruction. Today's market input differs, but no bypass/retry performed. Required change: explicit user approval or approved fresh validation path. Old runtime receipt remains historical, not today PASS.
