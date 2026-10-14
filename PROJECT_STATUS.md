@@ -1682,3 +1682,11 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Program source092000/LIVE and pipelineOK now, after prior091000/STALE; recovery observed in later actual snapshot. Unverified index/futures times not upgraded.
 - No code/tests/build/auth rerun or production changes. Checkpoint skip-ci.
 - Next exact step: one new public main snapshot after0935; first0930 bucket for both stocks or honest delayed/MISSING. First bucket cannot yield delta/acceleration; second after1005 permits delta, third after1125 potentially acceleration if all three valid actual buckets exist. GPT-6.1 Sol Medium.
+
+
+## CHECKPOINT — 2026-10-14 09:38 KST — first live stock-flow bucket
+
+- Initial read at093608 had prior093447 snapshot, NOT_DUE; waited once for next scheduled publication (no auth/build retry). New093647.070 snapshot confirms both0930/row1/businessDate20261014, CURRENT_BUCKET, source market003000Z. Recorded raw values {"tradingDay":"20261014","bucket":"0930","sourceMarketTime":"2026-10-14T00:30:00.000Z","observedAt":"2026-10-14T00:36:47.070Z","status":"CURRENT_BUCKET","unit":"shares","isEstimate":true,"samsung":{"foreign":478000,"institution":0},"skHynix":{"foreign":-57000,"institution":0}}.
+- Source provided institution0 for both stocks; legitimate raw0, not fabricated delta/acceleration. No prior same-day bucket -> no difference/acceleration gate PASS. Provider estimate vs confirmed semantics retained.
+- Program STALE still causes DEGRADED; sourceErrors[] does not imply full quality. First estimate collection/time metadata PASS only; no authenticated D1 Feature writer/replay performed. Production untouched.
+- Next: actual1000 bucket eligible1005+next relay; compute signed deltas vs stored0930 baseline. Acceleration requires third valid1120 bucket eligible1125. No repeat first collection validation. GPT-6.1 Sol Medium. Checkpoint skip-ci.

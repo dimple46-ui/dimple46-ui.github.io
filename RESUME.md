@@ -1,11 +1,11 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: 2026-10-14T09:28:00+09:00
+- timestamp_kst: 2026-10-14T09:38:00+09:00
 - milestone: M2 — Operational / Storage Architecture Stabilization
 - branch: feature/m2-operational-storage
 - active_pr: #4 Draft/Open; PR #3 merged. No main merge authorized.
 - verified_head_sha: 5dc82e5d819a135bcf4832a588066d507350962f (authenticated candidate)
-- completed: production schedule and snapshot confirm stock estimates null/NOT_DUE before09:35. First0930 bucket eligible0935; subsequent1005/1125/1325/1435. Program0920 LIVE and pipelineOK recovered at09:24:47 snapshot.
+- completed: today's first0930 stock-flow estimates confirmed for both stocks in093647 snapshot, CURRENT_BUCKET/businessDate20261014. Before-due093447 snapshot not a collection failure.
 - last_successful_test: full regression94/94 PASS atf8eddf438574c52213da79bc20391149f9c1d36d;24 source/script/test blobs plus2 migrations and candidate workflow exactly matched GitHub. New M3 code LOCAL_INTEGRATION_VALIDATED_NOT_DEPLOYED.
 - last_successful_ci: node-tests115584120675/local-checks115584094195 SUCCESS at5dc82e5.
 - last_successful_build: existing intelligence Builds115584344473 SUCCESS at5dc82e5.
@@ -19,7 +19,7 @@
 - waiting_for_live: preserve existing live-only gates; historical source-time correction replay1791778965346 pending validator deployment, not live-only. Provider storage measurement needs20-day sample.
 - verified_complete_lock: existing intelligence auth/build/receipt pipeline; prior Oct12 real three-bucket Signal replay and D1/state comparison. Do not repeat without changed input/code/environment.
 - approved_scope: isolated candidate code/tests/deploy/read-only validation. No production changes, main merge, destructive migration or history rewrite.
-- next_exact_step: after09:35 read one new main snapshot; confirm first0930 estimate rows for both stocks and CURRENT_BUCKET/source dates or classify delayed/MISSING honestly. No API-auth rerun/deploy. Delta needs next bucket; acceleration needs three buckets (earliest1125). GPT-6.1 Sol Medium.
+- next_exact_step: after10:05 plus next relay publication, read one new snapshot; compare actual1000 bucket with saved0930 baseline, verify signed quantity deltas/direction. No acceleration PASS before third valid bucket after11:25. GPT-6.1 Sol Medium.
 
 Detailed history: PROJECT_STATUS.md. Deployment instructions: CANDIDATE_AUTOMATION.md.
 
@@ -42,3 +42,6 @@ Detailed history: PROJECT_STATUS.md. Deployment instructions: CANDIDATE_AUTOMATI
 - auto_review_resolution: user answered next after scoped1-run approval request; rerun succeeded once. Prior rejection retained in history, not current access blocker. No deploy or indirect workaround.
 
 - stock_flow_due_evidence: main code uses scheduled minute+5. Snapshot00:24:47.705Z both hasValuefalse/statusNOT_DUE, errors[], no issues. No missing-source bug established. Due bucket cached only after expected inputTime matches; delayed/empty result retried next relay, not frozen.
+
+- first_bucket_baseline: {"tradingDay":"20261014","bucket":"0930","sourceMarketTime":"2026-10-14T00:30:00.000Z","observedAt":"2026-10-14T00:36:47.070Z","status":"CURRENT_BUCKET","unit":"shares","isEstimate":true,"samsung":{"foreign":478000,"institution":0},"skHynix":{"foreign":-57000,"institution":0}}
+- bucket_validation_scope: first bucket collection/time/metadata PASS from main snapshot, not D1 Feature2 persistence/Signal PASS. Program STALE -> DEGRADED at093647; raw institutional0 differs from fabricated unchanged-delta0.
