@@ -1673,3 +1673,12 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Main snapshot DEGRADED because program091000 source stale at092052. Stock estimates null; index/futures times unverified. Today's endpoint contract PASS; today's Feature generation/persistence/changed bucket/Signal not PASS.
 - Prior auto-review rejection resolved by explicit scoped user continuation; historical failure reason retained. No further rerun. Checkpoint skip-ci.
 - Next: inspect existing stock-flow schedule/availability to classify null estimates, then later snapshot only after expected source change. GPT-6.1 Sol Medium.
+
+
+## CHECKPOINT — 2026-10-14 09:28 KST — stock-flow NOT_DUE explained
+
+- Main source ESTIMATE_SLOTS0930/1000/1120/1320/1430; estimateSlot adds5min availability buffer. Effective starts0935/1005/1125/1325/1435. No KIS estimate query before first due slot. Complete expected bucket cached; delayed/empty bucket retried next relay.
+- Actual09:24:47.705 snapshot both estimates null with metadataNOT_DUE/hasValuefalse; sourceErrors[]/issues[]. This confirms expected pre-bucket behavior, not a collection failure or numeric0.
+- Program source092000/LIVE and pipelineOK now, after prior091000/STALE; recovery observed in later actual snapshot. Unverified index/futures times not upgraded.
+- No code/tests/build/auth rerun or production changes. Checkpoint skip-ci.
+- Next exact step: one new public main snapshot after0935; first0930 bucket for both stocks or honest delayed/MISSING. First bucket cannot yield delta/acceleration; second after1005 permits delta, third after1125 potentially acceleration if all three valid actual buckets exist. GPT-6.1 Sol Medium.
