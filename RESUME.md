@@ -1,6 +1,6 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: 2026-10-16T21:42:00+09:00
+- timestamp_kst: 2026-10-16T21:40:46+09:00
 - milestone: M2/M3 retained; parallel first Work × research-project handoff unit LOCAL_INTEGRATION_VALIDATED.
 - branch: feature/research-handoff (active executable source). M2/cash branch RESUME entries may mirror this routing pointer; switch to this branch before inspecting current source.
 - active_pr: #6 Draft/Open, base feature/m2-operational-storage. PR4/PR5 Draft/Open/unmerged preserved. No main merge approved.

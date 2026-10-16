@@ -2149,7 +2149,7 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - next_exact_step: explicit project DRAFT → local --draft validation and human source/privacy/contrary-evidence review bound to returned exact revision/hash. Do not invent real package or replace actual approval with synthetic verifier. Astra Medium for real report/thesis evidence; Sol Medium for local mechanics; High only for bounded durable approval consistency design.
 
 
-## CHECKPOINT — 2026-10-16T21:42:00+09:00 — actual input review boundary
+## CHECKPOINT — 2026-10-16T21:40:46+09:00 — actual input review boundary
 
 - branch: feature/research-handoff; source afda438a7d9f89884d2ce035ecb0f345b8a9bbf2 unchanged; parent checkpoint29ab8216f1e1173549d8d40558192d17b06d728a.
 - completed: user requested continuation after separate project completed its DRAFT. Resolved existing non-personal file through Library; two copies byte-identical, processed once. Existing explicit --draft CLI validation passed. Core claim numerical/unit/period values compared to official issuer web text; additional event schedule checked separately without editing original package. Actual research and detailed review receipt retained outside public repository.
