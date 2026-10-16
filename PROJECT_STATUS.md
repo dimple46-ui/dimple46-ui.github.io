@@ -1744,3 +1744,17 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - remaining/blocker: VALIDATOR_DEPLOY_COMMAND_UNVERIFIED and provider measurements unchanged; no retry without new evidence/access. Continuous v2 persistence remains disabled/unverified.
 - next_exact_step:Implement a local-only M2 consumer/fallback selection helper and targeted tests for candidate failure, stale/null/future inputs, and honest GitHub fallback quality. Reuse existing response schemas; no network, consumer opt-in, cadence change or deployment.
 - reasoning:Medium. Existing M2 architecture retained; actual consumer opt-in is not authorized by local contract work.
+
+
+## CHECKPOINT — 2026-10-16T12:24:46.206713+09:00: M2 consumer/fallback local contract
+
+- parent:25f49b3c4f1479741905b1468f85a4d8301a0872; PR4 remains Draft/Open/unmerged. Code identity is the commit containing this checkpoint; helper SHA256 7b1229e54dd276cd413e5b6c8931963713b7f8a90f8f1565821994b444d082f6; tests SHA256 3296aa0eec9a1caf951176765dae945e1c5b2a6ec63ae1be8c425d62439fda41.
+- completed: cloudflare/consumer-fallback.mjs and5 targeted tests. Candidate failure/old or future input falls back to valid GitHub price/volume only. Stale/missing/unsupported/future Feature unavailable; own cutoff/age never inherited from observation. Null/zero/source degradation preserved; no full analysis-success status. Empty/null-only data cannot satisfy observation availability.
+- tests: node --test tests/consumer-fallback.test.mjs5/5 PASS after final change. Prior full107/107 at b9e7adf reused; no full suite rerun or112-test claim. Local tests only; no new CI/auth/D1/market runtime evidence.
+- documentation: CONSUMER_CONTRACT.md records real candidate/public paths, separate authentication stores, source freshness limitations, unavailable output delivery, and independent asset-management track priorities. No real personal asset values, token or report text recorded.
+- state: IMPLEMENTED / LOCAL_VALIDATED / NOT_DEPLOYED / NOT_OPERATIONALLY_VALIDATED / NOT_CONNECTED_TO_SCHEDULED_TASKS.
+- production_impact:NONE. No network consumer activation, operational cadence/production/Secret/binding/main/D1 changes. Existing deployment automation retained. Parent25f49b3 Cloudflare exact check actually skipped; new commit trigger evidence pending.
+- blockers/retry conditions: unchanged Validator command evidence/authorized management access required; provider metrics unavailable. Private data store connection and actual scheduler access require explicit safe setup, not inferred from Work access.
+- roadmap: no renumbering/rebuild. Parallel priorities: fictional private asset-ledger/risk contract; one accessible report change-to-thesis-to-decision record; minimal holding/new-candidate comparison; actual scheduled result access. No predictive accuracy/completion percentage invented.
+- next_exact_step:Define a local-only private asset-ledger/risk input contract with fictional fixtures: distinguish valuation, net assets, withdrawable cash and investable cash; reject missing holdings/cash/debt inputs. Do not connect a private store or record actual personal assets.
+- recommended_reasoning:Medium.

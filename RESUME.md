@@ -1,40 +1,25 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: 2026-10-16T12:04:17+09:00
-- milestone: M2 — Operational / Storage Architecture Stabilization; independent M3 correctness work
+- timestamp_kst: 2026-10-16T12:24:46.206713+09:00
+- milestone: M2 Operational / Storage Architecture Stabilization; independent M3 and asset-management tracks preserved.
 - branch: feature/m2-operational-storage
-- active_pr: #4 Draft/Open/unmerged; PR #3 merged. No main merge approval.
-- recovered_parent: 9ba45e27765b219aa567bc5645f335e139f54a30; no branch changes since20261014 before this work.
-- verified_code_sha: f8eddf438574c52213da79bc20391149f9c1d36d (M3 full local94/94); new offline snapshot auditor targeted3/3 PASS, CI_NOT_RUN.
-- last_successful_ci: Tests38481252849 and candidate38481246040 SUCCESS at5dc82e5; reused, not today live evidence.
-- last_successful_deployment_sha: 5dc82e5d819a135bcf4832a588066d507350962f; Cloudflare Build115584344473; existing single Builds deployer.
-- authenticated_validation: historical2026-10-14 job115611968326/run38481246040 attempt2 PASS, D1 writes0; no authenticated check repeated this session.
-- live_validation: PUBLIC_SNAPSHOT_BUCKET_ARITHMETIC_ONLY PASS on2026-10-16T02:28:46.739Z; both stocks0930/1000/1120, businessDate20261016, CURRENT_BUCKET. Does not prove D1/Feature/Signal runtime.
-- completed: separate opt-in generateStockFlowSignalsV3 adapter implemented; computes kinematics-v1 internally from3 source buckets, returns suppression diagnostics when basis/quality/time invalid, never falls back to legacy acceleration.
-- public_evidence: samsung foreign deltas[51000,181000], deltaDifference130000; institution[111000,-219000], deltaDifference-330000. Hynix foreign[-145000,-157000], deltaDifference-12000; institution[58000,-85000], deltaDifference-143000. Intervals30/80min.
-- time_basis_gate: CONTRACT_AND_PURE_FUNCTION_VALIDATED, integration still pending. Normalized acceleration=(delta1/h1-delta0/h0)/((h0+h1)/2), shares/minute squared; no v2 semantic rewrite.
-- quality: snapshot pipelineDEGRADED/programSTALE/sourceErrors[]; user earlier112446 OK receipt is older. KIS flows are cumulative intraday estimates in shares; raw institution0 legitimate. Historical stored Feature2 remains20261007 STALE_INPUT; continuous persistence disabled/unverified.
-- candidate_status: existing intelligence candidate historical validated; newest M3 guards and new auditor not deployed. Validator Builds disabled.
-- blocked: VALIDATOR_DEPLOY_COMMAND_UNVERIFIED; provider CPU/database bytes unavailable. No new evidence/access, so no login/Dashboard/token/binding retry.
-- retry_condition: validator command evidence or authorized management access must change. Prior auto-review rerun issue resolved by scoped20261014 approval; not current authentication evidence.
-- build_trigger_evidence: checkpoint9ba45e2 Cloudflare check115616776743 actually skipped; reason not exposed, so skip-ci alone is not assumed to guarantee skipping. New commit check pending.
-- production_impact: NONE; no Worker/Secret/binding/route/migration/history/main changes.
-- waiting_for_live: current D1/Feature2 persistence/latest corrected Feature replay/Signal-runtime gates unchanged. Public source arithmetic PASS is narrower.
-- next_exact_step: Implement a local-only M2 consumer/fallback selection helper and targeted tests for candidate failure, stale/null/future inputs, and honest GitHub fallback quality. Reuse existing response schemas; no network, consumer opt-in, cadence change or deployment.
-- recommended_next_reasoning: Medium for bounded v3 replay validator and saved-input integration; High only for changed time-basis/version contract.
+- active_pr: #4 Draft/Open/unmerged, verified at parent 25f49b3c4f1479741905b1468f85a4d8301a0872; PR #3 merged. No main merge approval.
+- verified_parent_sha: 25f49b3c4f1479741905b1468f85a4d8301a0872; new helper/test code commit is the commit containing this checkpoint (avoid self-reference).
+- completed: local-only consumer/fallback pure helper with fixed public projection; separate observation/Feature age; GitHub stock price/volume-only fallback; explicit unavailable Feature/Signal/portfolio/thesis/decision capabilities. No consumer/network connection.
+- last_successful_test: new targeted consumer-fallback5/5 PASS. Full107/107 PASS at b9e7adfa0d8f3310f4ffc7606d3a5b27a1dc5f8d reused; not rerun, not a112-test claim. New helper SHA256 7b1229e54dd276cd413e5b6c8931963713b7f8a90f8f1565821994b444d082f6.
+- last_successful_ci: historical Tests38481252849/candidate38481246040 SUCCESS at5dc82e5; no new remote CI claimed.
+- last_successful_build: historical Cloudflare115584344473 SUCCESS at5dc82e5. Parent25f49b3 check completed/skipped. New commit behavior must be observed, skip-ci alone is not proof.
+- deployed_sha: 5dc82e5d819a135bcf4832a588066d507350962f (historical authenticated intelligence candidate); latest helpers/v3/replay remain LOCAL_TESTED_NOT_DEPLOYED.
+- authenticated_validation: reused2026-10-14 job115611968326/run38481246040 attempt2 PASS, D1 writes0. Not repeated.
+- live_validation: saved2026-10-16T02:28:46.739Z public bucket arithmetic and local Signal-v3 replay; not D1/deployed Signal verification. Quality UNVERIFIED_TIME, pipeline DEGRADED preserved.
+- candidate_status: existing Builds/auth path retained; no new deployer/Worker/token/binding. Stored Feature2 remains20261007 STALE_INPUT; continuous v2 persistence disabled/unverified.
+- production_status: NOT_RECHECKED_THIS_TASK; historical relay operation retained; no current live-state claim. No production modifications.
+- implementation_state: consumer contract implemented/local validated; NOT_DEPLOYED, NOT_OPERATIONALLY_VALIDATED, NOT_CONNECTED_TO_SCHEDULED_TASKS. CONSUMER_CONTRACT.md documents actual existing read paths and auth boundary.
+- blocked: VALIDATOR_DEPLOY_COMMAND_UNVERIFIED; provider CPU/database bytes unavailable; no approved private asset storage path or automatic scheduler credential sharing established.
+- retry_condition: new authorized management/configuration evidence for Validator; separately approved private storage/access if needed. No same-auth/Dashboard retries.
+- waiting_for_live: current D1/continuous Feature2 persistence/latest corrected Feature/Signal-runtime gates unchanged; source/public/synthetic evidence never promotes them.
+- production_impact: NONE; no Worker/Secret/binding/route/migration/history/main change.
+- next_exact_step: Define a local-only private asset-ledger/risk input contract with fictional fixtures: distinguish valuation, net assets, withdrawable cash and investable cash; reject missing holdings/cash/debt inputs. Do not connect a private store or record actual personal assets.
+- recommended_next_reasoning: Medium for bounded contract and fictional-fixture tests; separate High only if a new security/storage architecture decision is actually needed.
 
-Detailed evidence: PROJECT_STATUS.md. Existing automation: CANDIDATE_AUTOMATION.md.
-
-- new_validation: helper tests4/4 PASS (constant-rate unequal intervals, actual counterexample, null/quality, future/duplicate/cross-day/unsafe values). Saved actual20261016 input recomputed locally, all qualities conservatively UNVERIFIED_TIME; not a fresh API/D1/Signal runtime validation.
-- code_status: new pure helper LOCAL_TESTED_NOT_DEPLOYED, CI_NOT_RUN. Contract in SIGNALS.md. Last observed eaba48d provider check116781059175 actually skipped; new commit skip behavior must be observed, not assumed.
-
-- adapter_validation: new adapter4 tests plus v2 compatibility11 tests=15/15 PASS. v2 remains SIGNAL_VERSION2; v3 explicit boolean enabled:true and Feature2 context required. Weakest3 input quality caps confidence. CANDIDATE_LOCAL_TESTED_NOT_DEPLOYED/CI_NOT_RUN.
-- adapter_scope: v3 is stock-flow-only, returns signals/diagnostics; no global Signal v3 engine, no latest Feature v2 persistence, no endpoint or alert. Today's counterexample numbers used in correctness fixtures, not a new live runtime validation.
-
-- latest_completed: v3-aware local replay CLI + durable selected-field actual public capture; adapter identity 74855080042caac2dc8789e78c6403acc712afab. New targeted tests2/2 PASS; saved-input replay PASS with4 descriptive signals. No API/database operation.
-- latest_replay_scope: SAVED_PUBLIC_INPUT_LOCAL_REPLAY; all source samples conservatively UNVERIFIED_TIME, confidence MEDIUM; availability established only by capture, not historical first arrival. Samsung foreign buying accelerating, Hynix foreign selling decelerating, both institution flow reversal. Pipeline DEGRADED preserved.
-- current_code_status: LOCAL_TESTED_NOT_DEPLOYED; CI_NOT_RUN. This checkpoint commit identifies the replay validator; parent7485508 identifies the adapter. Historical deployment/CI remain unchanged.
-
-- integration_checkpoint: source SHA b9e7adfa0d8f3310f4ffc7606d3a5b27a1dc5f8d;35 cloudflare/scripts/tests/migration blobs matched GitHub before execution. Node24.19.0, node --test tests/*.test.mjs:107/107 PASS,0 failed/skipped. LOCAL_REGRESSION_VALIDATED; no new remote CI/deployment or live claim.
-- integration_receipt: validation/local-regression-20261016.json; no code changes needed. Historical94/94 is superseded only for this local source, not production. b9e7adf Cloudflare Builds actually skipped.
-- next_scope: M2 consumer/fallback pure helper is absent in current tree; M2 gates4–7 remain unapproved/incomplete. Local contract/tests can proceed independently; actual consumer opt-in and production cadence change require approval.
+Detailed history: PROJECT_STATUS.md. Existing automation: CANDIDATE_AUTOMATION.md. Public-data contract: CONSUMER_CONTRACT.md.
