@@ -79,6 +79,29 @@ approval gates. Public approval metadata writes remain blocked pending explicit 
 
 ## Local validation and next gate
 
+The offline `private/research-approval-request.mjs` parser accepts only schema_version,
+request_id, expected_revision, approval_request and the exact sealed package. Requests are
+canonical, bounded, detached and frozen; owner, scope, credential, role, verified/proof and
+execution fields are not allowed. The digest identifies input equality, not authority. An
+unsigned package must first undergo the separate explicit DRAFT preparation workflow.
+Parsing expired material does not grant permission: approval freshness is the planner's gate,
+while a withdrawal must remain parseable after expiry.
+
+`private/research-approval-preflight.mjs` is an injected offline factory. It authenticates the
+RESEARCH_APPROVAL_IMPORT role and current principal expiry before inspecting request data;
+then it parses, uses the server-owned scope for trusted decision lookup and rechecks outer
+clock/credential/research expiry before returning an immutable staging plan. It never commits,
+initializes storage, exposes an HTTP route, loads actual conversation approvals or activates
+the engine. Source/credential failures yield fixed redacted errors and NOT_ATTEMPTED writes.
+The factory has no default authorizer or resolver. Passing fixture callbacks in production
+remains prohibited; this source is not an actual configured authentication service.
+
+`expected_revision` is checked structurally here and must be enforced atomically by the future
+store adapter. The proposal's imported_at_ms is a preparation timestamp, not proof of a later
+durable commit. Actual engine as-of activation needs a separately verified persisted recording
+time and must not become known at the earlier preparation time. Current functions never grant
+that activation, so no staging timestamp is treated as an operational decision timestamp.
+
 Run `node --test tests/research-approval-import.test.mjs` from the existing source checkout.
 No network, provider or actual approval file is used. The separate
 `tests/research-approval-storage-protocol.test.mjs` reuses the existing transaction store in an
