@@ -40,3 +40,31 @@ Local correctness validated; no new production historical/live validation implie
 Replay validation now requires supporting/contrary evidence arrays with finite numeric leaves.
 Nested NaN/Infinity is rejected before PASS; null remains unknown. The finiteNumericEvidence gate
 is local correctness evidence until a new authenticated real-data replay is validated.
+
+## Bucket acceleration compatibility contract — 2026-10-16
+
+Status: CONTRACT_AND_PURE_FUNCTION_TESTED; not wired into the writer or Signal output.
+
+- Preserve Feature v2 `bucketChanges.*.acceleration`: current bucket delta minus prior bucket delta,
+  unit shares. It is a delta difference, not elapsed-time-normalized acceleration. Existing Feature
+  version, compact encoding/tuple positions, stored rows and Signal v2 meanings are not rewritten.
+- Query-time candidate `bucketFlowKinematics`, contract version1, requires exactly three source bucket
+  times/cumulative quantities with same trading day and evidence available at or before input cutoff.
+  Duplicate/unordered times, future availability, unsupported time basis and unsafe arithmetic fail.
+  Incomplete history, missing quantity or stale/unusable quality leaves derived fields null.
+- For cumulative quantities C0/C1/C2 at t0/t1/t2, let d0=C1-C0, d1=C2-C1 and h0/h1 be source-time
+  interval lengths in minutes. Average flows are r0=d0/h0 and r1=d1/h1 (shares/minute).
+  Rate change is r1-r0; acceleration is (r1-r0)/((h0+h1)/2), in shares/minute squared.
+  The denominator is the distance between interval midpoints. This describes estimated interval
+  averages, not observed continuous flow, and does not prove predictive performance.
+- Actual0930/1000/1120 intervals are30/80 minutes. Hynix foreign raw difference-12000 shares coexists
+  with +52.19697 shares/minute squared; its interval-average selling slows. Constant100 shares/minute
+  over unequal intervals must yield zero normalized acceleration even when raw delta difference is nonzero.
+- Planned consumer is an explicitly versioned Signal v3 opt-in. No silent v2 semantic change.
+  Future v3 requires this time-basis evidence; if absent it emits no acceleration signal, with an
+  explicit insufficient-time-basis diagnostic. Never substitute observation/fetch time for source time
+  or invent the third bucket. Propagate the weakest of all three input qualities.
+- Query-time first: no new migration, persisted derived field, encoding change or writer activation
+  is authorized. Any eventual persistence representation needs a separate encoding compatibility gate.
+- Public replay availability at capture-fetch time proves those rows were available by that capture,
+  not their historical first-arrival times. Reuse at earlier cutoffs is invalid without D1 availability evidence.
