@@ -124,3 +124,16 @@ Cloudflare Secret and never committed.
 9. **간결한 보고**: 새로 완료한 결과, 검증, 투자 의사결정에 주는 효과, 남은 위험, 다음 정확한 작업, 추천 모델·추론 수준만 보고한다. 과거 완료 작업을 장황하게 반복하지 않는다.
 
 현재 원격 관리 blocker와 실제 시장 검증 대기는 이 운영 원칙만으로 해소되거나 승인되지 않는다.
+
+
+## ‘다음’ 기반 자율 재개 — 단일 운영 규칙
+
+기존 Pro 원칙에 다음 실행 규칙을 더한다. 별도 프롬프트 생성기·채팅 호출·재개 자동화는 만들지 않는다.
+
+- **명령 의미:** ‘다음/계속/이어가/진행’은 기존 승인 범위의 복구·실행이다. 별도 질문을 우선하며 권한·연구 운용·Production·main·개인자료·비용·Secret·파괴적 변경 승인을 새로 추론하지 않는다.
+- **최소 복구:** 최신 RESUME → 실제 source branch/HEAD → 접근 가능한 중단 변경 → PR head/base → 관련 CI만 대조한다. 다른 브랜치 안내는 포인터이며 코드가 아니다. 포인터 불일치만 해결하고 사용자 변경을 초기화하지 않는다. Git 상태를 확인할 수 없으면 확인 불가로 남긴다.
+- **한 작업 실행:** 목적·수정 범위·재사용·완료 조건·승인 경계를 짧게 정해 직접 실행한다. 오류 → 유효한 next_exact_step → 실제 사용 연결 → 독립 핵심 기능 순으로 선택한다. 한 PR에 무관한 기능을 누적하거나 막힌 작업을 대신할 가상 추상화를 계속 만들지 않는다.
+- **재실행 조건:** 작업/코드·설정/입력·기준시각/환경/이전 결과/이유를 비교한다. blocker에는 원인·마지막 시도·필요 변화·retry_condition을 기록하고 조건 변경 없이는 재시도하지 않는다. 진행 중 job ID를 보존하며 중복 실행·무한 조회를 피한다.
+- **복구 필드:** updated_at_kst, active_branch, active_pr, current_task, verified_code_sha, last_completed, tests_and_evidence, ci_build_runtime_status, unfinished_changes, approved_scope, blocked_and_retry_condition, next_exact_step, next_ready_task, recommended_model_and_reasoning. 상세 이력은 PROJECT_STATUS/기존 receipt에 연결한다. 비공개 판단·승인 기록은 기존 비공개 체크포인트를 재사용하며 공개 파일에 복제하지 않는다.
+- **멈춤 판단:** APPROVAL_REQUIRED / MODEL_CHANGE_REQUIRED / ACCESS_BLOCKED / WAITING_FOR_JOB / SCOPE_COMPLETE / SESSION_ENDED / EXECUTION_LIMIT을 구별한다. 명확한 독립 작업만 계속하고 없으면 next_ready_task=NONE으로 남긴다. 자료·권한 부족을 High로 해결하려 하지 않는다. 현재 모델 설정·남은 사용량·백그라운드 연속 실행을 추정하지 않는다.
+- **저장·상태:** 검증 코드 SHA와 문서 commit을 구분하고 실제 저장 성공만 보고한다. IMPLEMENTED → LOCAL_TESTED → CI_VALIDATED → CANDIDATE_DEPLOYED → RUNTIME_VALIDATED → PRODUCTION_VALIDATED를 별도 증거로 기록한다. 문서 변경에도 provider skip 결과를 확인한다. 이 규칙은 파일 지침이며 앱 설정·영구 메모리 변경이나 자동 읽기 보장이 아니다.
