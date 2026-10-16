@@ -1,6 +1,6 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: 2026-10-16T21:08:30+09:00
+- timestamp_kst: 2026-10-16T21:42:00+09:00
 - milestone: M2/M3 retained; parallel first Work × research-project handoff unit LOCAL_INTEGRATION_VALIDATED.
 - branch: feature/research-handoff (active executable source). M2/cash branch RESUME entries may mirror this routing pointer; switch to this branch before inspecting current source.
 - active_pr: #6 Draft/Open, base feature/m2-operational-storage. PR4/PR5 Draft/Open/unmerged preserved. No main merge approved.
@@ -27,7 +27,9 @@
 - waiting_for_live: continuous Feature2/latest corrected Feature/Signal runtime gates unchanged. Synthetic research/Signal replay never becomes live PASS.
 - production_impact: NONE; no main merge, production route/Worker/Secret/binding, sharedD1/history/data migration, scheduler or order action. Existing sole Builds path reused with skip requested/observed separately.
 - execution_policy: Pro rules in M2_OPERATIONS.md. Continue approved safe work, keep research source separate from cash PR5 and separate market/private data. Real data/permission/cost/Secret/production/main/destructive changes remain approval gates.
-- next_exact_step: obtain one explicitly delivered non-personal research DRAFT under RESEARCH_HANDOFF_CONTRACT.md and an appropriate approved private handling path. Run prepareResearchDraft / CLI --draft once, review original sources/privacy/material contrary evidence against exact revision/hash. Real authenticated user approval/persistence is not connected; do not use fixture verifier or publish actual research. No repeated provider/auth attempts.
+- next_exact_step: explicit actual DRAFT local preflight and core official-source comparison are complete; private review receipt retained outside repo. Await user content-review approval for exact revision/hash in that receipt. Real authenticated engine approval adapter/persistence remains unconnected; do not substitute fixture verifier, infer Watch readiness, or re-request/revalidate identical input.
 - recommended_next_reasoning: GPT-6 Astra Medium for actual company/report evidence and thesis review; GPT-6.1 Sol Medium for agreed handoff validation/tests. Sol High for real approval/persistence/as-of consistency or debt/pledge algorithm design, isolated scope only. No actual model switch claimed.
 
 Detailed research history: PROJECT_STATUS.md on feature/research-handoff. Public consumer boundaries: CONSUMER_CONTRACT.md. Cash contract review remains on PR5/f64783d66ebdcfc5337c66aa00077ed0c55dc759.
+
+- actual_handoff_preflight: one explicitly requested non-personal DRAFT resolved via existing Library; duplicate copies identical; local --draft structural/time/unit/claim-reference validation PASS and core official web source comparisons complete. No original research/body/source numeric analysis or private review receipt published here. This is actual local input review, not authenticated engine intake/approval/integration, live market validation or deployment. Existing code/regression unchanged; no repeated full tests.

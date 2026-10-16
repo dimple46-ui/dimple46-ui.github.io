@@ -2147,3 +2147,13 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - remaining: actual research package/source review not supplied; permitted private handling/authenticated user approval/persistence/Watch delivery unavailable. Review checklist does not certify facts/rights/privacy or approve research.
 - retry_condition: explicit non-personal DRAFT plus appropriate approved handling and actual authenticated approval route; unchanged private-management blocker retained.
 - next_exact_step: explicit project DRAFT → local --draft validation and human source/privacy/contrary-evidence review bound to returned exact revision/hash. Do not invent real package or replace actual approval with synthetic verifier. Astra Medium for real report/thesis evidence; Sol Medium for local mechanics; High only for bounded durable approval consistency design.
+
+
+## CHECKPOINT — 2026-10-16T21:42:00+09:00 — actual input review boundary
+
+- branch: feature/research-handoff; source afda438a7d9f89884d2ce035ecb0f345b8a9bbf2 unchanged; parent checkpoint29ab8216f1e1173549d8d40558192d17b06d728a.
+- completed: user requested continuation after separate project completed its DRAFT. Resolved existing non-personal file through Library; two copies byte-identical, processed once. Existing explicit --draft CLI validation passed. Core claim numerical/unit/period values compared to official issuer web text; additional event schedule checked separately without editing original package. Actual research and detailed review receipt retained outside public repository.
+- evidence limits: acquisition time/source-read flags remain declarations; no independent issuer corroboration or future thesis accuracy claim. No user approval inferred from 'work complete'. Missing second-company/private risk data not invented. No session intake/real approval verifier, persistence, Watch, notification, live Feature/Signal or trade integration.
+- tests: no code changes; prior338/338 source regression reused. New actual-input validation is distinct from historical synthetic tests. Initial CLI invocation had undefined workdir after store reset and failed before reading input; corrected to absolute script path, successful once. No auth/Cloudflare/Validator retry.
+- production_impact: NONE; no code/deploy/main/Secret/binding/route/D1/history/schedule change.
+- remaining/next_exact_step: user reviews exact revision/hash in privately retained receipt; approval of content is separate from engine authentication/durability and production/trade authority. Real authenticated approval adapter remains NOT_CONNECTED; do not use test double. Existing admin blocker/retry condition unchanged.
