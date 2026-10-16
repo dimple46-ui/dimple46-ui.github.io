@@ -1807,3 +1807,15 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - blocked: existing Validator command/provider/private storage/current live gates unchanged; retry only with new required evidence/access. No deployed or scheduler-accessible integrated result exists yet.
 - next_exact_step:Add a local CLI that accepts saved public market inputs and emits only buildPublicConsumerSummary output, with explicit cutoff/age policy and no private-input option; test stdout/error redaction and replay an existing saved fixture. Do not connect scheduled tasks, add authentication or deploy.
 - recommended_reasoning:Medium.
+
+
+## CHECKPOINT — 2026-10-16T13:37:00.632192+09:00: saved public summary CLI
+
+- parent:887e8dbe16c957d38f300429fc0f70829cd636be; CLI code commit contains checkpoint. Script SHA256 aea5546587d0595bfef002057301adb16d1762938154084037119821666edd77; tests SHA256 09d2eb6c71dd53a8cfc1f7d919494e433f13cc8a9d896b4a7333e62d1a4c32ca.
+- completed: scripts/summarize-public-input.mjs,5 targeted subprocess tests and PUBLIC_SUMMARY_CLI.md. Local regular files only,2MiB bound, explicit as-of/age policies, fixed existing public summary only, no raw payload/private-input/token/network. Invalid errors never echo argv/file paths/source content. Exit0 PARTIAL,2 UNAVAILABLE,1 sanitized input error.
+- validation: targeted5/5 PASS. Existing tests/fixtures/closed-snapshot.json replayed at1790766007732 (September30 historical), observation age1000ms, GitHub fallback, pipeline UNKNOWN, all advanced/private capabilities UNAVAILABLE. Not current market/D1/deployment evidence. Candidate saved-schema tests also preserve UNVERIFIED_TIME and separate stored Feature age/cutoff.
+- reused: last integration full132/132 at workflow source; no repeated full suite/current137-test claim. No authenticated request or old Build rerun.
+- production_impact:NONE; no Worker/Secret/binding/route/main/history/D1/private-store/scheduler changes. No private values stored. Existing Builds reused; new check skip remains to be observed.
+- blocked/retry: prior Validator command/provider/private storage/current live gates unchanged; require new evidence/access before retrial.
+- next_exact_step:Read main market-live.json once at a new explicit reference time and run the saved-public-input CLI on that capture. Record current public observation age/pipeline and unavailable capabilities only; do not poll/retry unchanged input or infer authenticated D1/Feature/Signal/scheduled readiness.
+- recommended_reasoning:Medium, bounded single fresh-public-capture validation.
