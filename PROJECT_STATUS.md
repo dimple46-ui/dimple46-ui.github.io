@@ -1758,3 +1758,15 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - roadmap: no renumbering/rebuild. Parallel priorities: fictional private asset-ledger/risk contract; one accessible report change-to-thesis-to-decision record; minimal holding/new-candidate comparison; actual scheduled result access. No predictive accuracy/completion percentage invented.
 - next_exact_step:Define a local-only private asset-ledger/risk input contract with fictional fixtures: distinguish valuation, net assets, withdrawable cash and investable cash; reject missing holdings/cash/debt inputs. Do not connect a private store or record actual personal assets.
 - recommended_reasoning:Medium.
+
+
+## CHECKPOINT — 2026-10-16T13:08:25.928924+09:00: fictional private asset-ledger contract
+
+- branch: feature/m2-operational-storage; verified parent:a08dbc67fb1a611a30e0a86ec285eef804d06431; PR4 Draft/Open. Commit containing this checkpoint identifies ledger code; module SHA256 7ff964d172aef9752e6c6b739716a9b34fa8641c72128a65e652cfab4b0379b0.
+- completed: domain/asset-ledger-contract.mjs plus6 targeted tests and ASSET_LEDGER_CONTRACT.md. Declared-account KRW valuation/gross/net assets, principal, withdrawable cash and cash-only investable remainder are distinct. Explicit completeness+source+verification required; missing/null inputs block totals. No implicit reserve or investment policy. Signed cash shortfall preserved; no trade action produced.
+- tests:6/6 targeted PASS using fictional quantities/references only. Coverage: omissions, measured0, missing reserve, negative net assets/shortfall, stale/future/unverified evidence, duplicate account/ticker, unsupported currency, coercion and overflow. Prior consumer5/5/core107/107 reused; no full regression repeated.
+- scope: IMPLEMENTED/LOCAL_VALIDATED only. Cost basis, transaction reconciliation, deadline-specific cash, interest/maturity/collateral/FX/tax/stress and actual personal-data verification remain unimplemented. Totals cover declared accounts, not a verified all-asset inventory.
+- deployment/production_impact:NONE. No remote CI/auth request, Worker/private store/scheduler connection, Secret/binding/D1/main/history change. No real personal values or account identifiers stored. Existing Builds reused, no new automation.
+- blockers/retry: existing VALIDATOR_DEPLOY_COMMAND_UNVERIFIED and provider metrics unchanged; require new evidence/access before retry. Private-store connection still separately approval-gated. Live Feature/Signal/persistence gates unchanged.
+- next_exact_step:Read existing FORECAST_LEDGER.md before extending records; select one legally accessible official company report with a comparable prior figure, verify original source contents, and create one minimal report-change → thesis → immutable judgment example with public evidence only. If source cannot be read, record UNVERIFIED rather than infer from a title.
+- recommended_reasoning:Medium for one bounded public report-change example and existing-record reuse. No roadmap renumbering or large engine expansion.
