@@ -51,3 +51,19 @@ test('component policy exception is isolated and generic; common reference remai
  assert.equal(future.inputCutoffMs,null);assert.equal(future.components.cashDeadlines.inputCutoffMs,null);
  for(const key of ['valuation','priceStress','cashDeadlines'])assert.equal(future.capabilities[key],'UNAVAILABLE');
 });
+
+test('concentration is opt-in with explicit denominator; never infers a maximum weight',()=>{
+ const f=fixture();const off=buildPrivateRiskSummary(f,policy);
+ assert.equal(off.capabilities.concentration,'UNAVAILABLE');assert.equal(off.components.concentration.status,'NOT_REQUESTED');
+ const r=buildPrivateRiskSummary(f,{...policy,concentrationDenominator:'DECLARED_GROSS_ASSETS'});
+ assert.equal(r.capabilities.concentration,'AVAILABLE');assert.equal(r.components.concentration.denominatorKrw,7000);
+ assert.equal(r.components.concentration.samsungHynixCombined.weightBps,2857);assert.equal(r.status,'PARTIAL');
+ assert.ok(!('maxWeight' in r));assert.equal(r.capabilities.tradeDecision,'UNAVAILABLE');
+});
+test('bad concentration policy or missing quote cannot suppress independent cash shortage',()=>{
+ const f=fixture();let r=buildPrivateRiskSummary(f,{...policy,concentrationDenominator:'NET_ASSETS'});
+ assert.equal(r.capabilities.concentration,'UNAVAILABLE');assert.equal(r.capabilities.cashDeadlines,'AVAILABLE');
+ delete f.prices['005930'];r=buildPrivateRiskSummary(f,{...policy,concentrationDenominator:'DECLARED_SECURITIES_VALUE'});
+ assert.equal(r.components.concentration.status,'BLOCKED');assert.equal(r.capabilities.cashDeadlines,'AVAILABLE');
+ assert.equal(r.components.cashDeadlines.totals.accountShortfallSumKrw,500);
+});

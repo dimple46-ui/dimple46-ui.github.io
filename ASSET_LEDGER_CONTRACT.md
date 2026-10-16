@@ -72,3 +72,16 @@ Valuation, investable cash, price stress and cash deadlines have separate availa
 Component limitations remain intact. No collateral, tax, trade decision, notification delivery, complete asset coverage or actual account verification is inferred. Output is private financial data and must not enter the public market response graph, CI logs or artifacts with real inputs. No new private storage/access has been approved or connected.
 
 Adapter4/4 targeted, combined adapter/stress/cash/public-boundary19/19 targeted; full174/174 local regression after final guard. Entirely fictional correctness, not remote CI or production validation. Existing authenticated candidate c62ec46 evidence remains separate and unchanged.
+
+
+## Private concentration contract
+
+`evaluateConcentration` in domain/concentration-contract.mjs reuses full ledger/quote validation. Policy must explicitly choose DECLARED_SECURITIES_VALUE (sum of declared securities) or DECLARED_GROSS_ASSETS (securities plus ledger cash balance, before debt deduction). No default denominator, net-assets weighting, portfolio maximum or tax threshold is inferred. Declared accounts do not attest entire wealth or all holdings.
+
+Results contain aggregated valueKrw per ticker across accounts and samsungHynixCombined for005930/000660. Zero-quantity holdings are skipped; covered absence is known zero combined exposure only when the denominator is positive. Weight is integer basis points floored with exact BigInt arithmetic. Both numerator value and denominatorKrw are explicit. Floors are not normalized: individual weights need not sum to10000, and0bps can represent a small positive exposure below1bp, not a zero amount. The two-stock group is not an industry classification.
+
+A zero denominator returns UNAVAILABLE with null weights/ZERO_DENOMINATOR, not0% concentration. Missing/incomplete ledger or unverified/stale quote blocks all exposure output, preserving the existing no-partial-account-total safety. Invalid/future root cutoff is null.
+
+The private risk-summary adapter computes concentration only when concentrationDenominator is explicitly supplied. Otherwise it is NOT_REQUESTED/UNAVAILABLE. A blocked concentration result leaves independent supported cash-deadline output intact; all summaries remain PARTIAL with trade/notification/collateral/tax capabilities unavailable. No public endpoint, private storage or actual account data is connected.
+
+Tests: concentration6/6; opt-in/failure-isolation adapter adds2 cases. Related suites14/14 and integration full182/182 local PASS. Fictional correctness only. Existing candidate c62ec46 runtime/CI receipt is unchanged and separate; no candidate rollout required.
