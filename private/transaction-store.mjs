@@ -25,8 +25,11 @@ export function createPrivateTransactionStore({sql,transactionSync}){
   if(!h||!sameScope(h,scope)||h.mode!=='ACTIVE'||!Number.isSafeInteger(h.revision)||h.revision<0||!envelopeValid(h.sealedState)||
    (h.revision>0&&(!timestamp(h.generatedAtMs)||!timestamp(h.inputCutoffMs)||h.inputCutoffMs>h.generatedAtMs)))fail('STORE_FROZEN_OR_SCOPE_MISMATCH');return h;
  }
- function findReceipt(scope,requestId){return receipt(rows('SELECT payload_tag,revision,generated_at_ms,input_cutoff_ms FROM private_requests WHERE policy_epoch=? AND restore_epoch=? AND request_id=?',scope.policyEpoch,scope.restoreEpoch,requestId)[0]);}
- function readReceipt(scope,requestId){checkHead(scope);return findReceipt(scope,requestId);}
+ function findReceipt(scope,requestId,head){const r=receipt(rows('SELECT payload_tag,revision,generated_at_ms,input_cutoff_ms FROM private_requests WHERE policy_epoch=? AND restore_epoch=? AND request_id=?',scope.policyEpoch,scope.restoreEpoch,requestId)[0]);
+  if(r&&(!opaqueId(r.payloadTag)||!Number.isSafeInteger(r.revision)||r.revision<1||r.revision>head.revision||
+   !timestamp(r.generatedAtMs)||!timestamp(r.inputCutoffMs)||r.inputCutoffMs>r.generatedAtMs||r.generatedAtMs>head.generatedAtMs||r.inputCutoffMs>head.inputCutoffMs))fail('STORE_FROZEN_OR_SCOPE_MISMATCH');return r;
+ }
+ function readReceipt(scope,requestId){return findReceipt(scope,requestId,checkHead(scope));}
  function commit(p){
   if(!opaqueId(p?.requestId)||!Number.isSafeInteger(p.expectedRevision)||p.expectedRevision<0||!opaqueId(p.payloadTag)||
     p.resultStatus!=='REDUCED'||![p.sealedInput,p.sealedAnalysis,p.sealedState].every(envelopeValid)||
@@ -34,7 +37,7 @@ export function createPrivateTransactionStore({sql,transactionSync}){
     !Array.isArray(p.outbox)||p.outbox.length>64||new Set(p.outbox.map(x=>x?.intentId)).size!==p.outbox.length||
     p.outbox.some(x=>!intentId(x?.intentId)||!envelopeValid(x.sealedPayload)))fail('PREPARED_STATE_NOT_COMMITTABLE');
   return transactionSync(()=>{
-   const h=checkHead(p.scope),prior=findReceipt(p.scope,p.requestId);
+   const h=checkHead(p.scope),prior=findReceipt(p.scope,p.requestId,h);
    if(prior){if(prior.payloadTag!==p.payloadTag)fail('IDEMPOTENCY_CONFLICT');return {...prior,replayed:true};}
    if(h.revision!==p.expectedRevision)fail('REVISION_CONFLICT');
    if(h.revision>=Number.MAX_SAFE_INTEGER)fail('REVISION_EXHAUSTED');

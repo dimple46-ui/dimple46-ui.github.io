@@ -48,6 +48,7 @@ export function createPrivateInputAdapter({authorize,getStore,getPolicy,crypto,c
    const outbox=[];
    for(const intent of result.events.intents){if(!intentId(intent?.intentId))fail('WORKFLOW_NOT_COMMITTABLE');
     outbox.push({intentId:intent.intentId,sealedPayload:await seal(intent,'OUTBOX',intent.intentId)});}
+   if(principal.expiresAtMs!==undefined&&(!timestamp(principal.expiresAtMs)||clock()>=principal.expiresAtMs))fail('UNAUTHORIZED');
    const committed=store.commit({scope,expectedRevision:head.revision,requestId:request.requestId,payloadTag,
     resultStatus:result.events.status,generatedAtMs:nowMs,inputCutoffMs:result.inputCutoffMs,sealedInput,sealedAnalysis,sealedState,outbox});
    return okReceipt(committed,committed.replayed);

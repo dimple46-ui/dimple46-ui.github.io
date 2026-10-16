@@ -130,3 +130,46 @@ test('offline adapter: next unchanged capture advances revision without duplicat
  const saved=f.sealed.get(f.snapshot().private_versions[2].sealed_analysis),analysis=JSON.parse(JSON.parse(saved).text);
  assert.equal(analysis.events.intents[0].transition,'RESOLVED');assert.equal(analysis.events.notificationConnection,'NOT_CONNECTED');
 }));
+test('offline adapter: authorization expiring during async sealing cannot commit',async()=>withFixture(async f=>{
+ f.deps.authorize=async()=>({...scope,roles:['OWNER_WRITE'],verified:true,expiresAtMs:now+100});
+ // Factory captures functions, so construct a fresh adapter with the deliberately expiring verifier.
+ f.adapter=createPrivateInputAdapter(f.deps);const seal=f.crypto.seal;
+ f.crypto.seal=async(...args)=>{f.setTime(now+101);return seal(...args);};
+ const before=f.snapshot();assert.equal((await submit(f)).code,'UNAUTHORIZED');assert.deepEqual(f.snapshot(),before);
+}));
+test('offline end-to-end: real signature, AEAD and memory SQLite preserve sealed state/replay and reject tampering',async()=>withFixture(async f=>{
+ const {createPrivateEnvelopeCrypto}=await import('../private/envelope-crypto.mjs');
+ const {createPinnedAccessAuthorizer}=await import('../private/access-identity.mjs');
+ const {canonicalJson,context}=await import('../private/storage-contract.mjs');
+ const wc=globalThis.crypto;
+ const key=await wc.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+ const tagKey=await wc.subtle.generateKey({name:'HMAC',hash:'SHA-256',length:256},false,['sign']);
+ const pair=await wc.subtle.generateKey({name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},false,['sign','verify']);
+ let n=0;const crypto=createPrivateEnvelopeCrypto({encryptionKeys:[{version:'fictional-v1',key}],activeVersion:'fictional-v1',tagKey,
+ allocateNonce:async()=>{const iv=new Uint8Array(12);new DataView(iv.buffer).setUint32(8,++n);return iv;}});
+ const initial=JSON.parse(f.sealed.get('fictional-initial'));
+ f.db.prepare('UPDATE private_head SET sealed_state=?').run(await crypto.seal(canonicalJson(initial),context(scope,'EVENT_STATE','0')));
+ const issuer='https://fictional-team.cloudflareaccess.com',audience='fictional-aud';
+ const authorize=createPinnedAccessAuthorizer({issuer,audience,publicKeys:[{kid:'fictional-kid',key:pair.publicKey}],
+ identities:[{...scope,kind:'USER',subject:'fictional-user',roles:['OWNER_WRITE']}],clock:()=>now,maxTokenAgeSeconds:300,maxLifetimeSeconds:3600});
+ const b64=x=>Buffer.from(x).toString('base64url'),sec=now/1000;
+ const signing=b64(JSON.stringify({alg:'RS256',kid:'fictional-kid'}))+'.'+b64(JSON.stringify({iss:issuer,aud:[audience],type:'app',sub:'fictional-user',iat:sec-1,exp:sec+100}));
+ const token='Bearer '+signing+'.'+b64(await wc.subtle.sign('RSASSA-PKCS1-v1_5',pair.privateKey,new TextEncoder().encode(signing)));
+ const adapter=createPrivateInputAdapter({...f.deps,authorize,crypto});
+ const r=await adapter.submit({credential:token,request:request()});assert.equal(r.status,'COMMITTED');
+ const saved=f.snapshot();assert.ok(!JSON.stringify(saved).includes('fictional-payment'));
+ assert.equal((await adapter.submit({credential:token,request:request()})).status,'REPLAYED');assert.deepEqual(f.snapshot(),saved);
+ const analysis=await crypto.open(saved.private_versions[0].sealed_analysis,context(scope,'ANALYSIS','1'));
+ assert.equal(analysis.summary.components.cashDeadlines.totals.accountShortfallSumKrw,500);assert.equal(analysis.events.intents.length,1);
+ f.db.exec("UPDATE private_head SET sealed_state='tampered'");const corrupted=f.snapshot();
+ assert.equal((await adapter.submit({credential:token,request:request({requestId:'fictional-new',expectedRevision:1})})).status,'REJECTED');assert.deepEqual(f.snapshot(),corrupted);
+}));
+test('offline adapter: corrupted receipt cannot become a replay success or clear accepted state',async()=>withFixture(async f=>{
+ await submit(f);f.db.exec('UPDATE private_requests SET revision=100');const before=f.snapshot();
+ assert.equal((await submit(f)).code,'STORE_FROZEN_OR_SCOPE_MISMATCH');assert.deepEqual(f.snapshot(),before);
+}));
+test('offline adapter: older input cutoff is rejected by the existing workflow before replacing accepted state',async()=>withFixture(async f=>{
+ await submit(f);f.setTime(now+100);const before=f.snapshot();
+ const r=await submit(f,request({requestId:'fictional-older-input',expectedRevision:1,inputs:inputs(now-100)}));
+ assert.equal(r.code,'WORKFLOW_NOT_COMMITTABLE');assert.deepEqual(f.snapshot(),before);
+}));
