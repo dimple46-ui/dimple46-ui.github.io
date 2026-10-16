@@ -145,8 +145,14 @@ test('offline end-to-end: real signature, AEAD and memory SQLite preserve sealed
  const key=await wc.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);
  const tagKey=await wc.subtle.generateKey({name:'HMAC',hash:'SHA-256',length:256},false,['sign']);
  const pair=await wc.subtle.generateKey({name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},false,['sign','verify']);
- let n=0;const crypto=createPrivateEnvelopeCrypto({encryptionKeys:[{version:'fictional-v1',key}],activeVersion:'fictional-v1',tagKey,
- allocateNonce:async()=>{const iv=new Uint8Array(12);new DataView(iv.buffer).setUint32(8,++n);return iv;}});
+ const {PRIVATE_NONCE_SCHEMA_V1,createPrivateNonceAllocator}=await import('../private/nonce-ledger.mjs');
+ f.db.exec(PRIVATE_NONCE_SCHEMA_V1);
+ f.db.prepare('INSERT INTO private_nonce_keys VALUES(?,?,?,?,?,?,?,?)').run('fictional-v1',1,'fictional-authority-a','01020304',scope.restoreEpoch,0,100,'ACTIVE');
+ const allocateNonce=createPrivateNonceAllocator({sql:{exec(query,...args){const s=f.db.prepare(query);if(/^SELECT/.test(query))return s.all(...args);s.run(...args);return [];}},
+ transactionSync(fn){f.db.exec('BEGIN IMMEDIATE');try{const r=fn();f.db.exec('COMMIT');return r;}catch(e){f.db.exec('ROLLBACK');throw e;}},
+ readHead:f.store.readHead,scope,keyBindings:[{version:'fictional-v1',keyAuthorityRef:'fictional-authority-a',noncePrefixHex:'01020304'}]});
+ const nonceCounter=()=>f.db.prepare('SELECT last_counter FROM private_nonce_keys').get().last_counter;
+ const crypto=createPrivateEnvelopeCrypto({encryptionKeys:[{version:'fictional-v1',key}],activeVersion:'fictional-v1',tagKey,allocateNonce});
  const initial=JSON.parse(f.sealed.get('fictional-initial'));
  f.db.prepare('UPDATE private_head SET sealed_state=?').run(await crypto.seal(canonicalJson(initial),context(scope,'EVENT_STATE','0')));
  const issuer='https://fictional-team.cloudflareaccess.com',audience='fictional-aud';
@@ -161,8 +167,13 @@ test('offline end-to-end: real signature, AEAD and memory SQLite preserve sealed
  assert.equal((await adapter.submit({credential:token,request:request()})).status,'REPLAYED');assert.deepEqual(f.snapshot(),saved);
  const analysis=await crypto.open(saved.private_versions[0].sealed_analysis,context(scope,'ANALYSIS','1'));
  assert.equal(analysis.summary.components.cashDeadlines.totals.accountShortfallSumKrw,500);assert.equal(analysis.events.intents.length,1);
+ assert.equal(nonceCounter(),5);const committed=f.snapshot(),beforeNonce=nonceCounter();
+ f.setFault('INSERT INTO private_requests');const second=request({requestId:'fictional-next',expectedRevision:1});
+ assert.equal((await adapter.submit({credential:token,request:second})).status,'REJECTED');assert.deepEqual(f.snapshot(),committed);
+ assert.ok(nonceCounter()>beforeNonce);const failedCounter=nonceCounter();
+ assert.equal((await adapter.submit({credential:token,request:second})).status,'COMMITTED');assert.ok(nonceCounter()>failedCounter);
  f.db.exec("UPDATE private_head SET sealed_state='tampered'");const corrupted=f.snapshot();
- assert.equal((await adapter.submit({credential:token,request:request({requestId:'fictional-new',expectedRevision:1})})).status,'REJECTED');assert.deepEqual(f.snapshot(),corrupted);
+ assert.equal((await adapter.submit({credential:token,request:request({requestId:'fictional-new',expectedRevision:2})})).status,'REJECTED');assert.deepEqual(f.snapshot(),corrupted);
 }));
 test('offline adapter: corrupted receipt cannot become a replay success or clear accepted state',async()=>withFixture(async f=>{
  await submit(f);f.db.exec('UPDATE private_requests SET revision=100');const before=f.snapshot();

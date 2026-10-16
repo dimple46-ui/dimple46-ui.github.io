@@ -53,3 +53,6 @@ test('real local keyed tags accept bounded requests above 16KB without serializi
  const p=provider(await keys()),text=canonicalJson({a:'a'.repeat(12000),b:'b'.repeat(12000)}),tagCtx=context(scope,'REQUEST_TAG','fictional-large-request');
  assert.match(await p.tag(text,tagCtx),/^[a-f0-9]{64}$/);
 });
+test('real local AEAD rejects one CryptoKey handle registered under multiple version aliases',async()=>{
+ const k=await keys();assert.throws(()=>provider(k,{encryptionKeys:[{version:'fictional-key-v1',key:k.key},{version:'alias',key:k.key}]}),/PRIVATE_ENVELOPE_REJECTED/);
+});

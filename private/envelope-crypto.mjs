@@ -15,8 +15,8 @@ export function createPrivateEnvelopeCrypto({encryptionKeys,activeVersion,tagKey
  const validKey=(key,name,usages)=>key?.type==='secret'&&key.extractable===false&&key.algorithm?.name===name&&key.algorithm.length===256&&usages.every(u=>key.usages.includes(u));
  if(!Array.isArray(encryptionKeys)||encryptionKeys.length===0||encryptionKeys.length>8||!opaqueId(activeVersion)||
   !validKey(tagKey,'HMAC',['sign'])||tagKey.algorithm.hash?.name!=='SHA-256'||typeof allocateNonce!=='function'||!webCrypto?.subtle)reject();
- const keys=new Map();
- for(const entry of encryptionKeys){if(!opaqueId(entry?.version)||keys.has(entry.version)||!validKey(entry.key,'AES-GCM',['encrypt','decrypt']))reject();keys.set(entry.version,entry.key);}
+ const keys=new Map(),handles=new Set();
+ for(const entry of encryptionKeys){if(!opaqueId(entry?.version)||keys.has(entry.version)||handles.has(entry.key)||!validKey(entry.key,'AES-GCM',['encrypt','decrypt']))reject();keys.set(entry.version,entry.key);handles.add(entry.key);}
  if(!keys.has(activeVersion))reject();
  // This cache only detects within-instance allocator bugs. Cross-instance/restart uniqueness remains allocator's contract.
  const usedNonces=new Set();
