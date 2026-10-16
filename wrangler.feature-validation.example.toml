@@ -1,0 +1,23 @@
+# Prepared candidate template, NOT a record of current provider configuration.
+# User verified existing binding/name and compatibility date on 2026-10-13.
+name = "market-feature-validation"
+main = "cloudflare/feature-validation-worker.js"
+compatibility_date = "2026-10-02"
+workers_dev = true
+# Preserve other Dashboard variables; this does not preserve/verify arbitrary bindings.
+keep_vars = true
+
+[build]
+# Existing source-identity test rejects a stale generated artifact before upload.
+command = "node --test tests/*.test.mjs"
+
+[vars]
+FEATURE_V2_WRITE_ENABLED = "false"
+
+[[d1_databases]]
+binding = "MARKET_HISTORY"
+database_name = "market-history"
+database_id = "c9902dac-8d27-47ec-80b5-73b2b1339535"
+
+# Existing VALIDATION_TOKEN stays in the provider Secret store, never in this file.
+# No cron, production routes, migrations, token creation, or write enablement.

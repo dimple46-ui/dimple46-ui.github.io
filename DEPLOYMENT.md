@@ -1,6 +1,19 @@
 # Relay deployment and verification
 
-This branch is a tested candidate, not proof of the running Cloudflare version.
+This is the historical production-relay deployment checklist. It does not authorize a new deployment.
+The running production relay remains the validated PR #2 baseline; PR #3's GitHub merge did not replace
+the Cloudflare Worker.
+
+## Current isolated candidate
+
+- `market-intelligence-read-candidate` is a separate authenticated, read-only Worker deployed from
+  PR #4 commit `2d34e7399f648168d6d8b88486071d27f382254f`.
+- Its `/health` response reported that exact Git SHA. Provider deployment ID/tag were unavailable and
+  the timestamp was a zero/default value; none was inferred.
+- It has no production route, Cron, GitHub credential or D1 mutation handler. Authentication, provider
+  rate limiting, bounded queries and zero-write D1 metadata were validated.
+- Candidate validation does not authorize replacing `market-relay`, changing production bindings or
+  Secrets, reducing GitHub snapshot publication, or enabling continuous Feature v2 writes.
 
 ## Required production evidence
 

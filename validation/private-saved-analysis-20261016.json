@@ -1,0 +1,42 @@
+{
+  "timestampKst": "2026-10-16T19:45:48+09:00",
+  "parentSha": "598c9818a2dd35734c7b819010e1002cc9c6de88",
+  "source": "CONTAINING_COMMIT_WITH_EXACT_FILE_MANIFEST",
+  "status": "LOCAL_TESTED_NOT_DEPLOYED",
+  "scope": "FICTIONAL_SAVED_AS_OF_AGGREGATES_ONLY",
+  "sourceSha256": {
+    "private/transaction-store.mjs": "9b89afc22e236e10d940480fc60e522cb2602ad8f5a1f8e2382ccd343fdf902a",
+    "private/read-adapter.mjs": "66122db2f712acd96173cef3545373d2ba2f133e5aac1d0894f89d9d082203ba",
+    "private/saved-analysis-view.mjs": "d23b77de1ccb0f3a6f8347b2348062e0df3a08845f14cc5aa63f7cc410e13652",
+    "private/http-boundary.mjs": "d6e1b39f563c1ff3e5c9df39ddb9f9c5e671f2d485b45b62d52d3468699f0d1f",
+    "tests/private-read-adapter.test.mjs": "d9648a5053a34d36c27b01beb9a8e93d33b19f40005b6b6e2dce12dea20d841e",
+    "tests/private-storage-adapter.test.mjs": "793b46d206931dee3c7238710678b859db518fc6c5cf6b2a9b364f8c564e592d"
+  },
+  "tests": {
+    "command": "node --test tests/*.test.mjs",
+    "total": 307,
+    "passed": 307,
+    "failed": 0,
+    "http": 17,
+    "reader": 13,
+    "privateAdapter": 23,
+    "logSha256": "b89c6f4ee4ee97f95db243d01ed4de27fdb6ee3a9737477a5f08d8db2c270fd8",
+    "sqliteReadTotalChanges": "UNCHANGED_IN_LOCAL_INTEGRATION",
+    "providerValidated": false
+  },
+  "dataMinimization": [
+    "NO_RAW_LEDGER",
+    "NO_ACCOUNT_IDENTIFIERS",
+    "NO_EVENT_STATE",
+    "NO_OUTBOX_EXPORT"
+  ],
+  "freshness": "INDEPENDENT_INPUT_AND_ANALYSIS_AGE_LIMITS_NO_STALE_UPGRADE",
+  "actualPersonalData": false,
+  "remoteDeployment": false,
+  "remoteResourcesChanged": false,
+  "productionImpact": "NONE",
+  "waitingForLive": "UNCHANGED",
+  "blocked": "PRIVATE_ADMIN_ACCOUNT_SELECTION_AND_MANAGEMENT_ACCESS_REQUIRED",
+  "retryCondition": "NEW_ACCOUNT_SELECTION_AND_APPROVED_MANAGEMENT_ACCESS_EVIDENCE",
+  "nextExactStep": "APPROVED_PRIVATE_PROVIDER_PREFLIGHT_WHEN_ACCESS_IS_AVAILABLE"
+}

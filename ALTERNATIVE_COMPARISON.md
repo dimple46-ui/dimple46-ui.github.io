@@ -1,0 +1,17 @@
+# Four-alternative comparison — fictional local prototype
+
+Status: IMPLEMENTED / LOCAL_VALIDATED / NOT_DEPLOYED / NOT_USER_READY. No scheduled consumer, private storage or recommendation engine.
+
+`domain/alternative-comparison.mjs` reuses evaluateAssetLedger without changing that contract. It compares exactly one each of ADD_EXISTING, ADD_NEW, KEEP_CASH and REPAY_DEBT with an explicit common capitalKrw and horizonDays. These are user-supplied hypothetical comparison inputs, not recommended allocation or target returns. No ranking, recommendation or trade quantities are generated.
+
+Corporate merit and portfolio fit are separate descriptive assessments with supporting references. A supportive corporate case can coexist with adverse portfolio fit. Cash/debt alternatives have company merit NOT_APPLICABLE. Portfolio fit explicitly records concentration and liquidity implications; risk records downside, catalyst, invalidation, expiry and evidence. No arbitrary weights or approved investment policy are assumed.
+
+All options require funding evidence and explicit fees/taxes/interest/prepayment fees, including actual asserted0. Costs are additional to the common principal/capital allocation. Every numeric value must be a nonnegative safe KRW integer; overflow blocks output. A reserve must be explicitly supplied to the existing ledger. This comparison does not determine taxes or interest: it only consumes hypothetical supplied costs with evidence references. Expiry is a review-condition expiry, not a forecast horizon or promise that the comparison stays valid for horizonDays.
+
+Evidence must have unique ID/source, VERIFIED status and verifiedAtMs within the supplied maximum age and no later than now or ledger asOfMs. This is local validation of caller assertions, not external verification of truth or source independence. Missing costs/funding/risk/merit/fit block the affected alternative. Invalid common context/evidence blocks all. Duplicate/missing types and holding-membership mismatches fail closed. An empty/debt-unknown ledger cannot authorize funding.
+
+Funding uses only the existing ledger's cash-only investable remainder. No sale proceeds or new borrowing are assumed. A sufficient-input row is INPUT_COMPLETE_NOT_RECOMMENDED, even if its fit is adverse. Insufficient money returns KNOWN_FUNDING_GAP with the amount; it is not an instruction to trade. Repayment cannot exceed aggregate declared debt principal. This is not loan-account-specific prepayment approval, maturity/interest analysis or collateral clearance.
+
+The returned data is PRIVATE by intended use. Fixed projection omits raw account identifiers/balances but still contains proposed capital, funding gaps and personal scenario descriptions. Never publish actual inputs/outputs to GitHub, CI artifacts or public endpoints. Only fictional code fixtures exist here; no private store has been connected. Fixed projection is not a general-purpose anonymizer.
+
+Targeted tests6/6 PASS: four alternatives, opposing merit/fit, missing values versus0, stale/future/unverified and post-cutoff evidence, absent reserve/cash, funding gap, debt principal, malformed scope, duplicate options, expired risk and overflow. Existing ledger helper unchanged, SHA2567ff964d172aef9752e6c6b739716a9b34fa8641c72128a65e652cfab4b0379b0. Comparison module SHA256 ec87016890ec3dc7ef95e89a3cb9cbd815aa4b359468746af85a5fedbf361aba. No remote CI/runtime result or combined full-suite count is claimed.

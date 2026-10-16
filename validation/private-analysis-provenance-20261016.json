@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "scope": "FICTIONAL_LOCAL_PRIVATE_ANALYSIS_PROVENANCE_ONLY",
+  "timestampKst": "2026-10-16T19:57:42+09:00",
+  "parentSha": "a01cbbf10fe6b1011f7d28391ced2187305f98d6",
+  "sourceSha256": {
+    "private/analysis-provenance.mjs": "8379e42208a75ef9cef671b225faa923a617c53f6e25c84de172e2e39620c782",
+    "private/input-adapter.mjs": "19f49513b4b85d3b4e96b47aeca885939c765ac41fa1b3ed34ef00526015dcd6",
+    "private/read-adapter.mjs": "06bb49cfd0041c4d87b25a68bc76ca03edafca6b7664a010591c4e3e4e97c608",
+    "private/saved-analysis-view.mjs": "6cafb9da1a9a898a62e073ca72493c1388ed3c2c34fdf3c6b42b818a28e4eb6a",
+    "tests/private-read-adapter.test.mjs": "cc9e59aad5b812fd85b48053a044169484ce5142f28e3fed9fe0de32f344dff8",
+    "tests/private-storage-adapter.test.mjs": "404c9fb4e412f584005d6713ec591f268d3af1d4c6fe123991cc252091709e30"
+  },
+  "tests": {
+    "targeted": {
+      "pass": 61,
+      "fail": 0,
+      "http": 17,
+      "readAdapter": 17,
+      "inputAdapter": 27
+    },
+    "full": {
+      "pass": 315,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    }
+  },
+  "validation": [
+    "ENCRYPTED_ANALYSIS_ENVELOPE_V2",
+    "EXPLICIT_CONFIGURED_RELEASE_NOT_ATTESTATION",
+    "EXACT_DETACHED_POLICY_APPLIED_AND_RETAINED",
+    "DOMAIN_SEPARATED_POLICY_HMAC",
+    "REVISION_EPOCH_CUTOFF_LINKAGE",
+    "LEGACY_OR_MISMATCH_FAIL_CLOSED_NO_REWRITE",
+    "IDEMPOTENT_REPLAY_RETAINS_ORIGINAL_RELEASE",
+    "HTTP_MINIMAL_PROVENANCE_NO_RAW_POLICY_INPUT_IDS",
+    "EXISTING_LOCAL_AEAD_SQLITE_WRITE_AND_ZERO_READ_WRITES"
+  ],
+  "limitations": [
+    "NO_PROVIDER_OR_RUNTIME_VERIFICATION",
+    "NO_KEYS_OR_PERSONAL_DATA",
+    "POLICY_TAG_INCLUDES_INVOCATION_TIME_NOT_SEMANTIC_CONFIG_DIFF",
+    "NOT_FULL_FORECAST_REPRODUCIBILITY_OR_SOURCE_ATTESTATION",
+    "NO_REMOTE_SCHEMA_OR_HISTORY_CHANGES",
+    "NO_DEPLOYMENT"
+  ],
+  "productionImpact": "NONE",
+  "deploymentStatus": "LOCAL_TESTED_NOT_DEPLOYED",
+  "ciStatus": "NOT_RUN_LOCAL_EVIDENCE_ONLY",
+  "integrationCheck": {
+    "unchangedParentCodeBlobsMatched": true,
+    "changedPaths": [
+      "private/analysis-provenance.mjs",
+      "private/input-adapter.mjs",
+      "private/read-adapter.mjs",
+      "private/saved-analysis-view.mjs",
+      "tests/private-read-adapter.test.mjs",
+      "tests/private-storage-adapter.test.mjs"
+    ],
+    "newModule": "private/analysis-provenance.mjs"
+  }
+}

@@ -1,0 +1,123 @@
+# Intelligence Secret and opt-in variable registered by user 2026-10-13; first remote verification pending.
+name: Candidate read-only checks
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/m2-operational-storage]
+    paths:
+      - 'scripts/check-candidate.mjs'
+      - 'tests/candidate-summary-check.test.mjs'
+      - 'tests/intelligence-summary.test.mjs'
+      - 'tests/public-module-boundary.test.mjs'
+      - 'cloudflare/public-consumer-summary.mjs'
+      - 'cloudflare/consumer-fallback.mjs'
+      - 'scripts/audit-candidate-access.mjs'
+      - 'scripts/wait-candidate-build.mjs'
+      - 'tests/candidate-automation.test.mjs'
+      - 'tests/candidate-build-wait.test.mjs'
+      - 'cloudflare/intelligence-read-worker.mjs'
+      - 'cloudflare/operational-storage-policy.mjs'
+      - 'wrangler.intelligence-candidate.example.toml'
+      - '.github/workflows/candidate-check.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: candidate-read-only-checks
+  cancel-in-progress: false
+
+jobs:
+  local-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node --test tests/candidate-automation.test.mjs tests/candidate-build-wait.test.mjs tests/candidate-summary-check.test.mjs
+      - name: Record scope
+        run: echo 'Local tests only. Intelligence, validator and provider audit use independent opt-in flags. Disabled remote jobs are NOT_EXECUTED, not PASS. No deployment or migration is performed.' >> "$GITHUB_STEP_SUMMARY"
+  remote-checks:
+    needs: local-checks
+    if: github.ref == 'refs/heads/feature/m2-operational-storage' && vars.CANDIDATE_CHECKS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      checks: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Wait for existing Cloudflare Builds at this exact push SHA
+        if: github.event_name == 'push'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EXPECTED_CANDIDATE_SHA: ${{ github.sha }}
+        run: node scripts/wait-candidate-build.mjs 2>&1 | tee candidate-build.json
+      - name: Check deployed intelligence identity and D1 reads
+        shell: bash
+        env:
+          CANDIDATE_KIND: intelligence
+          CANDIDATE_READ_TOKEN: ${{ secrets.INTELLIGENCE_READ_TOKEN }}
+          EXPECTED_CANDIDATE_SHA: ${{ github.event_name == 'push' && github.sha || vars.INTELLIGENCE_DEPLOYED_SHA }}
+        run: node scripts/check-candidate.mjs 2>&1 | tee candidate-validation.json
+      - name: Save non-secret validation receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: intelligence-validation-${{ github.sha }}
+          path: |
+            candidate-build.json
+            candidate-validation.json
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Record outcome
+        if: always()
+        env:
+          CHECK_STATUS: ${{ job.status }}
+        run: echo "Intelligence check outcome=$CHECK_STATUS. No deployment, migration or live-gate promotion." >> "$GITHUB_STEP_SUMMARY"
+  validator-checks:
+    needs: local-checks
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/feature/m2-operational-storage' && vars.VALIDATOR_CHECKS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check validator source and historical Signal replay
+        env:
+          CANDIDATE_KIND: validator
+          CANDIDATE_READ_TOKEN: ${{ secrets.VALIDATION_TOKEN }}
+          EXPECTED_CANDIDATE_SHA: ${{ github.sha }}
+          REPLAY_CUTOFF_MS: '1791778965346'
+        run: |
+          export EXPECTED_SOURCE_HASH="$(sha256sum cloudflare/market-relay-worker.js | cut -d ' ' -f1)"
+          node scripts/check-candidate.mjs
+      - name: Record outcome
+        if: always()
+        env:
+          CHECK_STATUS: ${{ job.status }}
+        run: echo "Validator check outcome=$CHECK_STATUS. No deployment, migration or live-gate promotion." >> "$GITHUB_STEP_SUMMARY"
+  provider-access-audit:
+    needs: local-checks
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/feature/m2-operational-storage' && vars.CANDIDATE_ACCESS_AUDIT_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Audit existing candidate access (no writes)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node scripts/audit-candidate-access.mjs

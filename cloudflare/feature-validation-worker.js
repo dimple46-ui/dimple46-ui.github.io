@@ -1,5 +1,5 @@
 // Generated from PR candidate; do not edit.
-const CANDIDATE_SHA256 = "c5ddaa18150af09ff2bfa9bea99a01136899e9c8067bb03b53216277aec6ded9";
+const CANDIDATE_SHA256 = "b28192c567c764f5868e01bb6f5f376161be4e36929a1628b6126c584d7c0733";
 const FEATURE_VERSION = 2;
 const SAME_TIME_TOLERANCE_MS = 150000;
 const KST_OFFSET_MS = 32400000;
@@ -14,6 +14,31 @@ function usableHistoryMetric(metric, atMs) {
 }
 function decodeHistoryRow(row) {
   return {...row, metrics: row.metrics ?? JSON.parse(row.metrics_json), quality: row.quality ?? JSON.parse(row.quality_json)};
+}
+function sourceAlignedProgramWindow(field,current,rows,minutes) {
+  const metric=current.metrics[field],currentSourceMs=Date.parse(metric?.marketTime);
+  if(!usableHistoryMetric(metric,current.observed_at_ms)||!Number.isFinite(currentSourceMs)) return null;
+  const bySource=new Map();
+  for(const row of [...rows,current]){
+    const candidate=row.metrics[field],sourceMs=Date.parse(candidate?.marketTime);
+    if(!Number.isFinite(sourceMs)||sourceMs>currentSourceMs||!usableHistoryMetric(candidate,row.observed_at_ms)) continue;
+    bySource.set(sourceMs,{sourceMs,value:candidate.value});
+  }
+  const points=[...bySource.values()].sort((a,b)=>a.sourceMs-b.sourceMs);
+  const atTarget=target=>points.filter(point=>point.sourceMs<=target&&target-point.sourceMs<=SAME_TIME_TOLERANCE_MS).at(-1);
+  const baseline=atTarget(currentSourceMs-minutes*60000);
+  if(!baseline) return null;
+  const earlier=atTarget(currentSourceMs-minutes*120000);
+  const currentMinutes=(currentSourceMs-baseline.sourceMs)/60000;
+  const delta=metric.value-baseline.value;
+  let acceleration=null;
+  if(earlier&&currentMinutes>0){
+    const previousMinutes=(baseline.sourceMs-earlier.sourceMs)/60000;
+    if(previousMinutes>0) acceleration=delta/currentMinutes-(baseline.value-earlier.value)/previousMinutes;
+  }
+  return {delta,acceleration,sampleCount:earlier?3:2,
+    sourceElapsedSeconds:(currentSourceMs-baseline.sourceMs)/1000,
+    previousSourceElapsedSeconds:earlier?(baseline.sourceMs-earlier.sourceMs)/1000:null};
 }
 // Keep the production persistence contract on Feature v1 unless a controlled rollout explicitly opts in.
 // Feature v2 is validated by the separate candidate Worker and must not silently replace v1 rows.
@@ -248,6 +273,12 @@ function historyFeatures(current, rawRows, rawSameTimeRows=[]) {
       }
       window.metrics[name]=result;
     }
+    const alignedProgram={};
+    for(const field of ["program.arbitrageNet","program.nonArbitrageNet","program.totalNet"]){
+      const aligned=sourceAlignedProgramWindow(field,current,rows,minutes);alignedProgram[field]=aligned;
+      if(aligned) window.metrics[field]=featureValue(aligned.delta,"OK",2,featureMetricQuality(current.metrics[field]),
+        {timeBasis:current.metrics[field].timeBasis,sourceElapsedSeconds:aligned.sourceElapsedSeconds});
+    }
     // Acceleration is change in shares/minute across two actual sampled windows.
     const previousTarget = baseline ? baseline.observed_at_ms-minutes*60000 : null;
     const earlier = baseline ? rows.filter(r => r.observed_at_ms<=previousTarget && previousTarget-r.observed_at_ms<=150000).at(-1) : null;
@@ -288,7 +319,9 @@ function historyFeatures(current, rawRows, rawSameTimeRows=[]) {
       "futures.individualNet","futures.openInterest"]){
       const currentDelta=window.metrics[field],old=baseline?.metrics[field],previous=earlier?.metrics[field];
       let value=null,status="INSUFFICIENT_HISTORY";
-      if(currentDelta?.status==="OK"&&usableHistoryMetric(old,baseline?.observed_at_ms)&&
+      const aligned=alignedProgram[field];
+      if(aligned?.acceleration!=null){value=aligned.acceleration;status="OK";}
+      else if(currentDelta?.status==="OK"&&usableHistoryMetric(old,baseline?.observed_at_ms)&&
         usableHistoryMetric(previous,earlier?.observed_at_ms)){
         const currentMinutes=(now-baseline.observed_at_ms)/60000;
         const previousMinutes=(baseline.observed_at_ms-earlier.observed_at_ms)/60000;
@@ -297,7 +330,8 @@ function historyFeatures(current, rawRows, rawSameTimeRows=[]) {
         }
       }
       window.acceleration[field]=featureValue(value,status,value==null?0:3,featureMetricQuality(current.metrics[field]),
-        {unit:"value_per_minute_change"});
+        {unit:"value_per_minute_change",...(aligned?.acceleration!=null?{
+          sourceElapsedSeconds:aligned.sourceElapsedSeconds,previousSourceElapsedSeconds:aligned.previousSourceElapsedSeconds}: {})});
       window.direction[field]={state:currentDelta?.value==null?null:currentDelta.value>0?"INCREASING":
         currentDelta.value<0?"DECREASING":"UNCHANGED",status:currentDelta?.status??"INSUFFICIENT_HISTORY",
         quality:currentDelta?.quality??"UNKNOWN"};

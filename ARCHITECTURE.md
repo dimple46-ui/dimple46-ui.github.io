@@ -31,5 +31,10 @@ The candidate does not remove or slow the two-minute GitHub publication path. Mi
 deploy separately, validate authenticated reads and provider rate limiting, opt consumers in, reduce
 GitHub cadence only after compatibility evidence, and roll back by disabling only the read candidate.
 
+`operational-storage-policy.mjs` provides read-only growth and retention planning decisions. It has no
+database or network access and never authorizes deletion. Provider-measured database bytes, at least
+20 trading days of growth, archive restore evidence and a consumer inventory are required before any
+retention or GitHub-cadence change. See `M2_OPERATIONS.md`.
+
 Feature, Signal, Regime and Tactical layers remain separate. `signal-engine.mjs` is a pure descriptive
 transform over Feature v2 and has no database, publication, alert or portfolio side effects.

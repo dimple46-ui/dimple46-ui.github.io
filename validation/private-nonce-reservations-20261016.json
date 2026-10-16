@@ -1,0 +1,50 @@
+{
+  "timestampKst": "2026-10-16T18:36:06+09:00",
+  "parentSha": "941ba8a167e0c830363184102a99fa5dd8781384",
+  "source": "CONTAINING_COMMIT_WITH_EXACT_FILE_MANIFEST",
+  "scope": "FICTIONAL_LOCAL_NONCE_RESERVATIONS_ONLY",
+  "status": "LOCAL_TESTED_NOT_DEPLOYED",
+  "resourceScopeApprovedAtKst": "2026-10-16T18:29:43+09:00",
+  "resourceCreation": "NOT_PERFORMED",
+  "runtimeSecretsCreated": false,
+  "personalDataUsed": false,
+  "sourceSha256": {
+    "private/nonce-ledger.mjs": "a1917aa93c1051c25f43ea3d60d38712b9a4dc9978d562e08afc3f9fd4e227c3",
+    "private/envelope-crypto.mjs": "3f3df6e9400b90bf380ae16622c184d21909f0420631c64e56c8902874e9ac31",
+    "tests/private-nonce-ledger.test.mjs": "183ffee1358aeef7aa02082378b0df554fc0470f6026b6efb91c65b46fcfc94c",
+    "tests/private-envelope-crypto.test.mjs": "203b3a088836fa3ee078ae7064f3ca2dd78c579f7b3f6fa2e0341ed80205d3fc",
+    "tests/private-storage-adapter.test.mjs": "049ae8961ccd0c0ad06a8e712f12b8fe95ff269a99d922ab318e7c4ff3997a69"
+  },
+  "tests": {
+    "command": "node --test tests/*.test.mjs",
+    "total": 275,
+    "passed": 275,
+    "failed": 0,
+    "nonce": 12,
+    "envelope": 8,
+    "privateAdapter": 21,
+    "logSha256": "e4e8a20517375f03297dedb8c733580fc423e1c55a686821dd6864da2f534617",
+    "providerValidated": false,
+    "storage": "MEMORY_SQLITE_PLUS_TEMPORARY_FILE_CLOSE_REOPEN",
+    "keyMaterial": "EPHEMERAL_TEST_ONLY"
+  },
+  "managementPreflight": {
+    "workApiCredentialPresent": false,
+    "workAccountConfigPresent": false,
+    "wranglerCliPresent": false,
+    "enabledCloudflareManagementTool": false,
+    "cloudflarePluginSearchMatches": 0,
+    "remoteSecrets": "NOT_READ_OR_DECLARED_ABSENT",
+    "remoteResourceExistence": "UNVERIFIED",
+    "authenticationAttempt": "NOT_REPEATED"
+  },
+  "limitations": [
+    "ONE_AUTHORITY_PER_ACTUAL_AES_KEY_REQUIRES_PROVIDER_KEY_CUSTODY_VERIFICATION",
+    "UNDECLARED_DB_COUNTER_ROLLBACK_IS_NOT_DETECTABLE_BY_LOCAL_DB_ALONE",
+    "EXTERNAL_RESTORE_FENCE_REQUIRED",
+    "NO_PROVIDER_DO_ACCESS_PITR_LOAD_CPU_OR_DELIVERY_PROOF"
+  ],
+  "productionImpact": "NONE",
+  "waitingForLive": "UNCHANGED",
+  "nextExactStep": "PRIVATE_ADMIN_ACCOUNT_SELECTION_AND_APPROVED_MANAGEMENT_ACCESS"
+}

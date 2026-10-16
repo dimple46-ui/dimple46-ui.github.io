@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 3,
+  "koreaDate": "20261016",
+  "relayUpdatedAt": "2026-10-16T04:38:47.368Z",
+  "pipelineStatus": "DEGRADED",
+  "sourceErrors": [],
+  "dataQuality": {
+    "evaluatedAt": "2026-10-16T04:38:47.368Z",
+    "issues": [
+      {
+        "path": "program",
+        "status": "STALE"
+      }
+    ],
+    "unverifiedMarketTimes": [
+      "indexes.kospi",
+      "indexes.kospi200",
+      "futures.kospi200",
+      "futuresInvestors.kospi200"
+    ],
+    "freshnessScope": "INGESTION_ONLY_RECOMPUTE_AT_READ_TIME"
+  },
+  "stocks": {
+    "samsung": {
+      "price": 219000,
+      "volume": 12179069,
+      "lastTradedAt": "2026-10-16T13:38:46.572141+09:00"
+    },
+    "skHynix": {
+      "price": 1302000,
+      "volume": 3052091,
+      "lastTradedAt": "2026-10-16T13:38:46.635354+09:00"
+    }
+  },
+  "dataMeta": {
+    "stocks": {
+      "samsung": {
+        "source": "NAVER_NPAY",
+        "marketTime": "2026-10-16T13:38:46.572141+09:00",
+        "fetchedAt": "2026-10-16T04:38:47.369Z",
+        "sourceAgeSeconds": 1,
+        "status": "LIVE",
+        "timeBasis": "SOURCE_TRADE_TIME",
+        "maxAgeSeconds": 300,
+        "marketAgeSeconds": 1,
+        "fetchAgeSeconds": 0,
+        "hasValue": true
+      },
+      "skHynix": {
+        "source": "NAVER_NPAY",
+        "marketTime": "2026-10-16T13:38:46.635354+09:00",
+        "fetchedAt": "2026-10-16T04:38:47.369Z",
+        "sourceAgeSeconds": 1,
+        "status": "LIVE",
+        "timeBasis": "SOURCE_TRADE_TIME",
+        "maxAgeSeconds": 300,
+        "marketAgeSeconds": 1,
+        "fetchAgeSeconds": 0,
+        "hasValue": true
+      }
+    },
+    "program": {
+      "source": "NAVER_NPAY",
+      "marketTime": "2026-10-16T04:30:00.000Z",
+      "fetchedAt": "2026-10-16T04:38:47.369Z",
+      "sourceAgeSeconds": 527,
+      "status": "STALE",
+      "timeBasis": "SOURCE_MARKET_TIME",
+      "maxAgeSeconds": 300,
+      "marketAgeSeconds": 527,
+      "fetchAgeSeconds": 0,
+      "hasValue": true
+    }
+  }
+}

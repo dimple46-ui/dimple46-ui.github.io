@@ -1,4 +1,4 @@
-export const SIGNAL_VERSION = 1;
+export const SIGNAL_VERSION = 2;
 const FEATURE_VERSION = 2;
 const CONFIDENCE_LEVELS = ["NONE", "LOW", "MEDIUM", "HIGH"];
 const QUALITY_ORDER = [
@@ -55,8 +55,20 @@ function stableSignalId({inputCutoff, ticker, horizon, signalType}) {
   return `s${SIGNAL_VERSION}:${inputCutoff}:${ticker}:${horizon}:${signalType}`;
 }
 
+function flowSignalType(prefix, currentDelta, acceleration) {
+  const previousDelta = currentDelta - acceleration;
+  if (Math.sign(previousDelta) !== 0 && Math.sign(currentDelta) !== 0 &&
+    Math.sign(previousDelta) !== Math.sign(currentDelta)) return `${prefix}_FLOW_REVERSAL`;
+  if (currentDelta > 0 && acceleration > 0) return `${prefix}_BUYING_ACCELERATING`;
+  if (currentDelta < 0 && acceleration < 0) return `${prefix}_SELLING_ACCELERATING`;
+  if (currentDelta < 0 && acceleration > 0) return `${prefix}_SELLING_DECELERATING`;
+  if (currentDelta > 0 && acceleration < 0) return `${prefix}_BUYING_DECELERATING`;
+  return null;
+}
+
 function createSignal(context, definition) {
   const quality = worstQuality(definition.qualityInputs || []);
+  if (["STALE_INPUT", "MISSING_INPUT", "UNUSABLE_INPUT"].includes(quality)) return null;
   const baseConfidence = definition.supportingEvidence.length >= 3 && definition.contraryEvidence.length === 0 ? "HIGH" :
     definition.supportingEvidence.length >= 2 ? "MEDIUM" : "LOW";
   const signal = {
@@ -83,31 +95,28 @@ function createSignal(context, definition) {
 
 function addStockFlowSignals(signals, features, context) {
   for (const [stock, identity] of Object.entries(STOCKS)) {
-    const foreign = features.bucketChanges?.[stock]?.foreignFlow;
-    if (usableMetric(foreign, ["BUCKET_DELTA"]) && typeof foreign.acceleration === "number") {
-      let signalType = null;
-      if (foreign.value > 0 && foreign.acceleration > 0) signalType = "FOREIGN_BUYING_ACCELERATING";
-      else if (foreign.value < 0 && foreign.acceleration < 0) signalType = "FOREIGN_SELLING_ACCELERATING";
-      else if (foreign.value < 0 && foreign.acceleration > 0) signalType = "FOREIGN_SELLING_DECELERATING";
-      if (signalType) signals.push(createSignal(context, {
+    for (const [flowName, prefix] of [["foreignFlow", "FOREIGN"], ["institutionFlow", "INSTITUTION"]]) {
+      const flow = features.bucketChanges?.[stock]?.[flowName];
+      if (!usableMetric(flow, ["BUCKET_DELTA"]) || !Number.isFinite(flow.acceleration)) continue;
+      if (!Number.isFinite(flow.value - flow.acceleration)) continue;
+      const signalType = flowSignalType(prefix, flow.value, flow.acceleration);
+      if (!signalType) continue;
+      const previousDelta = flow.value - flow.acceleration;
+      const reversal = signalType.endsWith("FLOW_REVERSAL");
+      signals.push(createSignal(context, {
         ticker: identity.ticker, horizon: "BUCKET", signalType,
-        strength: strengthFrom(foreign.value, foreign.acceleration), qualityInputs: [foreign],
-        supportingEvidence: [{metric: `${stock}.foreignFlowDelta`, value: foreign.value},
-          {metric: `${stock}.foreignFlowAcceleration`, value: foreign.acceleration}],
-        contraryEvidence: [], invalidation: ["NEXT_BUCKET_REVERSES_DIRECTION", "INPUT_QUALITY_BECOMES_UNUSABLE"]
+        strength: strengthFrom(flow.value, flow.acceleration), qualityInputs: [flow],
+        supportingEvidence: reversal ? [
+          {metric: `${stock}.${flowName}PreviousDelta`, value: previousDelta},
+          {metric: `${stock}.${flowName}CurrentDelta`, value: flow.value}
+        ] : [
+          {metric: `${stock}.${flowName}Delta`, value: flow.value},
+          {metric: `${stock}.${flowName}Acceleration`, value: flow.acceleration}
+        ],
+        contraryEvidence: [], invalidation: reversal ?
+          ["NEXT_BUCKET_RETURNS_TO_PREVIOUS_DIRECTION", "INPUT_QUALITY_BECOMES_UNUSABLE"] :
+          ["NEXT_BUCKET_ACCELERATION_CHANGES", "INPUT_QUALITY_BECOMES_UNUSABLE"]
       }));
-    }
-    const institution = features.bucketChanges?.[stock]?.institutionFlow;
-    if (usableMetric(institution, ["BUCKET_DELTA"]) && typeof institution.acceleration === "number") {
-      const previousDelta = institution.value - institution.acceleration;
-      if (Math.sign(previousDelta) !== 0 && Math.sign(institution.value) !== 0 && Math.sign(previousDelta) !== Math.sign(institution.value))
-        signals.push(createSignal(context, {
-          ticker: identity.ticker, horizon: "BUCKET", signalType: "INSTITUTION_FLOW_REVERSAL",
-          strength: strengthFrom(institution.value, institution.acceleration), qualityInputs: [institution],
-          supportingEvidence: [{metric: `${stock}.institutionPreviousDelta`, value: previousDelta},
-            {metric: `${stock}.institutionCurrentDelta`, value: institution.value}],
-          contraryEvidence: [], invalidation: ["NEXT_BUCKET_RETURNS_TO_PREVIOUS_DIRECTION", "INPUT_QUALITY_BECOMES_UNUSABLE"]
-        }));
     }
   }
 }
@@ -166,7 +175,7 @@ function addRelativeStrengthSignal(signals, features, context, horizon) {
   const hynix = window?.momentumAcceleration?.skHynix;
   if (!usableMetric(samsung) || !usableMetric(hynix)) return;
   const difference = samsung.value - hynix.value;
-  if (difference === 0) return;
+  if (!Number.isFinite(difference) || difference === 0) return;
   signals.push(createSignal(context, {
     ticker: "005930/000660", horizon,
     signalType: difference > 0 ? "RELATIVE_STRENGTH_IMPROVING" : "RELATIVE_STRENGTH_WEAKENING",
@@ -197,12 +206,16 @@ function addAbnormalVolumeSignals(signals, features, context) {
   const window = features.sameTimeHistorical?.windows?.["5d"];
   for (const [stock, identity] of Object.entries(STOCKS)) {
     const metric = window?.metrics?.[`${stock}.volume`];
-    if (!usableMetric(metric, ["VALID"]) || !((metric.percentile ?? 0) >= 95 || (metric.zScore ?? 0) >= 2)) continue;
+    if (!usableMetric(metric, ["VALID"]) || metric.value < 0) continue;
+    const percentile = Number.isFinite(metric.percentile) && metric.percentile >= 0 && metric.percentile <= 100
+      ? metric.percentile : null;
+    const zScore = Number.isFinite(metric.zScore) ? metric.zScore : null;
+    if (!((percentile != null && percentile >= 95) || (zScore != null && zScore >= 2))) continue;
     signals.push(createSignal(context, {
       ticker: identity.ticker, horizon: "SAME_TIME_5D", signalType: "ABNORMAL_VOLUME", strength: "STRONG",
       qualityInputs: [metric], supportingEvidence: [
-        {metric: `${stock}.volume`, value: metric.value}, {metric: "sameTimePercentile", value: metric.percentile},
-        {metric: "sameTimeZScore", value: metric.zScore}
+        {metric: `${stock}.volume`, value: metric.value}, {metric: "sameTimePercentile", value: percentile},
+        {metric: "sameTimeZScore", value: zScore}
       ], contraryEvidence: [], invalidation: ["SAME_TIME_PERCENTILE_FALLS_BELOW_95_AND_ZSCORE_BELOW_2"]
     }));
   }
