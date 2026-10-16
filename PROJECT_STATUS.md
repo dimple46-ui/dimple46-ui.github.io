@@ -1843,3 +1843,14 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - blockers: unchanged Validator command, provider measurements, private storage and live gates. Retry requires new evidence/access, no Dashboard/token retry.
 - next_exact_step:Extract the existing public summary projection into a public-only module, keep the current workflow export compatible, and add an import-graph guard proving the public entry does not import private ledger/comparison modules. Reuse current logic/tests; no new endpoint, deployment or scheduler connection.
 - recommended_reasoning:Medium, compatibility-preserving module extraction and dependency guard only.
+
+
+## CHECKPOINT — 2026-10-16T13:58:57.531951+09:00: public-only dependency extraction
+
+- parent:2dbc2363b63cb2cfb094335c1108b19e70436567; extraction code commit contains checkpoint. Source hashes stored in validation/local-regression-20261016-public-split.json.
+- completed: existing summary implementation moved unchanged to cloudflare/public-consumer-summary.mjs. It imports only consumer-fallback. Private workflow imports/re-exports same function; CLI imports public path directly. Native linker guard traverses actual static/re-export dependencies, rejects unexpected files/builtins/dynamic code, and confirms no asset-ledger/comparison/report domain dependency.
+- tests: new boundary2 + existing related13 =15/15 PASS; full143/143 PASS,0 failures/skips/cancelled at integration point. No repeated141 suite or new source semantics. CLI behavior/quality/redaction and compatibility preserved.
+- production_impact:NONE. No endpoint, Worker, deploy, Secret/binding/route, main, D1/history, scheduler/private-store or market fetch. Existing automation and historical runtime evidence retained; local tests not runtime proof.
+- blockers: unchanged Validator command, provider metrics, private storage and live gates; no auth retry/new token.
+- next_exact_step:Implement an authenticated GET-only /summary handler in the existing isolated intelligence candidate, reusing existing bounded state/feature SELECT helpers and public-only projector. Test auth, zero writes, missing/stale Feature, cutoff/quality and no private imports locally; do not change production, secrets, bindings or routing.
+- recommended_reasoning:Medium for bounded candidate handler reuse and local safety tests. Production changes remain unapproved.

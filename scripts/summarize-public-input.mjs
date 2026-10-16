@@ -1,6 +1,6 @@
 import {openSync,fstatSync,readSync,closeSync} from 'node:fs';
 import {pathToFileURL} from 'node:url';
-import {buildPublicConsumerSummary} from '../domain/local-consumer-workflow.mjs';
+import {buildPublicConsumerSummary} from '../cloudflare/public-consumer-summary.mjs';
 const MAX_BYTES=2*1024*1024;
 const FILE_FLAGS=new Set(['--snapshot','--state','--features']);
 const NUMBER_FLAGS=new Set(['--as-of-ms','--max-observation-age-ms','--max-feature-age-ms']);
