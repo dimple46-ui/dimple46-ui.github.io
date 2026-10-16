@@ -1,8 +1,9 @@
 // Offline private reader: fixed snapshot SELECT + authenticated minimal as-of projection, no mutation or initialization.
 import {fail,scopeValid,sameScope,timestamp,context,envelopeValid} from './storage-contract.mjs';
 import {savedWorkflowView} from './saved-analysis-view.mjs';
+import {openPrivateAnalysis} from './analysis-provenance.mjs';
 export function createPrivateReadAdapter({authorize,getStore,crypto,clock,maxAnalysisAgeMs,maxInputAgeMs,readRole='OWNER_READ'}={}){
- if(![authorize,getStore,clock].every(x=>typeof x==='function')||typeof crypto?.open!=='function'||
+ if(![authorize,getStore,clock].every(x=>typeof x==='function')||!['open','tag'].every(k=>typeof crypto?.[k]==='function')||
   ![maxAnalysisAgeMs,maxInputAgeMs].every(x=>Number.isSafeInteger(x)&&x>=0)||!['OWNER_READ','MACHINE_READ'].includes(readRole))throw new TypeError('INVALID_PRIVATE_READ_CONFIGURATION');
  const unavailable=()=>fail('PRIVATE_READ_UNAVAILABLE');
  function authValid(p){return p?.verified===true&&scopeValid(p)&&Array.isArray(p.roles)&&p.roles.includes(readRole)&&
@@ -24,11 +25,12 @@ export function createPrivateReadAdapter({authorize,getStore,crypto,clock,maxAna
   const {principal,store}=await access(credential,execution),snapshot=store.readAnalysisSnapshot(principal),h=snapshot?.head;
   if(!validHead(h,principal)||h.mode!=='ACTIVE')unavailable();if(!snapshot.version)fail('ANALYSIS_NOT_AVAILABLE');
   const v=snapshot.version;if(v.revision!==h.revision)unavailable();
-  const workflow=await crypto.open(v.sealedAnalysis,context(principal,'ANALYSIS',String(v.revision)));
+  const envelope=await crypto.open(v.sealedAnalysis,context(principal,'ANALYSIS',String(v.revision)));
+  const {workflow,provenance}=await openPrivateAnalysis(crypto,envelope,h,principal);
   if(!authValid(principal))fail('UNAUTHORIZED');if(execution?.signal?.aborted)unavailable();
   const current=store.readHead();if(!validHead(current,principal)||current.mode!=='ACTIVE')unavailable();
   if(current.revision!==h.revision||current.generatedAtMs!==h.generatedAtMs||current.inputCutoffMs!==h.inputCutoffMs)fail('SNAPSHOT_CHANGED');
-  return savedWorkflowView(workflow,h,{maxAnalysisAgeMs,maxInputAgeMs},clock());
+  return savedWorkflowView(workflow,h,{maxAnalysisAgeMs,maxInputAgeMs},clock(),provenance);
  }
  // Dependency exceptions intentionally become a fixed code, never financial/key/actor details.
  const safe=fn=>async args=>{try{return await fn(args);}catch(error){if(['UNAUTHORIZED','ANALYSIS_NOT_AVAILABLE','SNAPSHOT_CHANGED'].includes(error?.code))fail(error.code);unavailable();}};

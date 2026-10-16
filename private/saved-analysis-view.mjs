@@ -1,5 +1,6 @@
 // Minimal private as-of aggregate contract. No raw ledger/account identifiers, event state or sender payload.
 import {fail,timestamp} from './storage-contract.mjs';
+import {privateProvenanceView} from './analysis-provenance.mjs';
 const capKeys=['valuation','investableCash','priceStress','cashDeadlines','concentration','collateral','tax','tradeDecision','notifications','localRiskEventState','notificationDelivery'];
 const unsupported=['collateral','tax','tradeDecision','notifications','notificationDelivery'];
 const metricKeys={valuation:['securitiesValueKrw','grossAssetsKrw','debtPrincipalKrw','netAssetsKrw','withdrawableCashKrw','additionalOutflowsKrw','cashHeadroomAfterReserveKrw','investableCashKrw','cashShortfallKrw'],
@@ -13,6 +14,7 @@ export function privateSavedAnalysisView(value,nowMs){
  if(!Number.isSafeInteger(revision)||revision<1||!timestamp(nowMs)||!timestamp(generatedAtMs)||!timestamp(inputCutoffMs)||
   inputCutoffMs>generatedAtMs||generatedAtMs>nowMs||!age(ageLimits?.maxAnalysisAgeMs)||!age(ageLimits?.maxInputAgeMs)||
   !capabilitiesAsOf||!metricsAsOf)reject();
+ const provenance=privateProvenanceView(value.provenance,{revision});
  const caps={};for(const k of capKeys){if(!['AVAILABLE','UNAVAILABLE'].includes(capabilitiesAsOf[k]))reject();caps[k]=capabilitiesAsOf[k];}
  if(unsupported.some(k=>caps[k]!=='UNAVAILABLE')||caps.investableCash==='AVAILABLE'&&caps.valuation!=='AVAILABLE')reject();
  const metrics={};
@@ -46,13 +48,13 @@ export function privateSavedAnalysisView(value,nowMs){
  const stale=value?.freshness?.status==='STALE_INPUT'||analysisAgeMs>ageLimits.maxAnalysisAgeMs||inputAgeMs>ageLimits.maxInputAgeMs;
  if(stale){for(const k of capKeys)caps[k]='UNAVAILABLE';for(const k of Object.keys(metrics))metrics[k]=null;}
  return {contractVersion:1,scope:'PRIVATE_SAVED_RISK_AGGREGATES_ONLY',status:stale?'UNAVAILABLE':'PARTIAL',revision,generatedAtMs,inputCutoffMs,
-  temporalScope:'STORED_AS_OF_NOT_REEVALUATED',freshness:{analysisAgeMs,inputAgeMs,status:stale?'STALE_INPUT':'WITHIN_CONFIGURED_AGE_LIMITS'},
+  temporalScope:'STORED_AS_OF_NOT_REEVALUATED',provenance,freshness:{analysisAgeMs,inputAgeMs,status:stale?'STALE_INPUT':'WITHIN_CONFIGURED_AGE_LIMITS'},
   ageLimits:{maxAnalysisAgeMs:ageLimits.maxAnalysisAgeMs,maxInputAgeMs:ageLimits.maxInputAgeMs},capabilitiesAsOf:caps,metricsAsOf:metrics,
   sourceVerification:'DECLARED_INPUTS_NOT_EXTERNAL_ACCOUNT_VERIFICATION',riskEventState:'RETAINED_NOT_REEVALUATED_OR_RESOLVED',
   featureVersion:null,signalVersion:null,limitations:['NO_CURRENT_CASH_OR_PRICE_RECALCULATION','EXPLICIT_STRESS_IS_NOT_PROBABILITY',
    'NO_RAW_LEDGER_OR_EVENT_STATE_EXPORT','NO_COLLATERAL_TAX_TRADE_OR_DELIVERY_VALIDATION']};
 }
-export function savedWorkflowView(workflow,head,ageLimits,nowMs){
+export function savedWorkflowView(workflow,head,ageLimits,nowMs,provenance){
  if(workflow?.contractVersion!==1||workflow.status!=='PARTIAL'||workflow.scope!=='PRIVATE_LOCAL_WORKFLOW_ONLY'||
   workflow.generatedAtMs!==head.generatedAtMs||workflow.inputCutoffMs!==head.inputCutoffMs||
   workflow.summary?.contractVersion!==1||workflow.summary.status!=='PARTIAL'||workflow.summary.scope!=='PRIVATE_LOCAL_RISK_SUMMARY_ONLY'||workflow.summary.generatedAtMs!==head.generatedAtMs||workflow.summary.inputCutoffMs!==head.inputCutoffMs)reject();
@@ -66,5 +68,5 @@ export function savedWorkflowView(workflow,head,ageLimits,nowMs){
  metrics.concentration=c.concentration?{denominator:c.concentration.denominator,denominatorKrw:c.concentration.denominatorKrw,
   samsungHynixValueKrw:c.concentration.samsungHynixCombined?.valueKrw,samsungHynixWeightBps:c.concentration.samsungHynixCombined?.weightBps}:null;
  return privateSavedAnalysisView({revision:head.revision,generatedAtMs:head.generatedAtMs,inputCutoffMs:head.inputCutoffMs,
-  ageLimits,capabilitiesAsOf:workflow.capabilities,metricsAsOf:metrics},nowMs);
+  ageLimits,provenance,capabilitiesAsOf:workflow.capabilities,metricsAsOf:metrics},nowMs);
 }

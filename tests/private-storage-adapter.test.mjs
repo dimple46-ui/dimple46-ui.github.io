@@ -36,7 +36,7 @@ function fixture(overrides={}){
  const deps={authorize:async token=>token==='fictional-valid'?{...scope,roles:['OWNER_WRITE'],verified:true}:null,
  getStore:async owner=>{storeCalls++;assert.equal(owner,scope.ownerRef);return store;},
  getPolicy:async(s,t)=>({analysisPolicy:{nowMs:t,maxLedgerAgeMs:1000,maxPriceAgeMs:1000,horizonAtMs:horizon},eventPolicy:{nowMs:t,maxCaptureAgeMs:1000,maxInputAgeMs:1000}}),
- clock:()=>at,crypto,...overrides};
+ clock:()=>at,crypto,releaseIdentity:{engineGitSha:'1'.repeat(40),workflowVersion:1},...overrides};
  const adapter=createPrivateInputAdapter(deps);
  return {db,store,crypto,deps,adapter,sealed,close:()=>db.close(),storeCalls:()=>storeCalls,setTime:t=>at=t,setFault:p=>fault=p,
  snapshot:()=>Object.fromEntries(['private_head','private_versions','private_requests','private_outbox'].map(t=>[t,db.prepare(`SELECT * FROM ${t}`).all()]))};
@@ -59,13 +59,48 @@ test('offline adapter: accepted workflow is sealed and input/analysis/state/rece
  const r=await submit(f);assert.equal(r.status,'COMMITTED');assert.equal(r.revision,1);assert.equal(r.notificationStatus,'PENDING_REVIEW_NOT_SENT');
  const snap=f.snapshot();assert.equal(snap.private_versions.length,1);assert.equal(snap.private_requests.length,1);assert.equal(snap.private_outbox.length,1);
  assert.equal(snap.private_outbox[0].status,'PENDING_REVIEW');assert.ok(!JSON.stringify(snap).includes('fictional-payment'));
- const stored=f.sealed.get(snap.private_versions[0].sealed_analysis);const result=JSON.parse(JSON.parse(stored).text);
+ const stored=f.sealed.get(snap.private_versions[0].sealed_analysis);const envelope=JSON.parse(JSON.parse(stored).text),result=envelope.workflow;
+ assert.equal(envelope.analysisEnvelopeVersion,2);assert.equal(envelope.provenance.engineGitSha,'1'.repeat(40));
  assert.equal(result.summary.components.cashDeadlines.totals.accountShortfallSumKrw,500);assert.equal(result.capabilities.tax,'UNAVAILABLE');
 }));
 test('offline adapter: lost response replays original receipt; canonical key order does not duplicate writes',async()=>withFixture(async f=>{
  const a=await submit(f),before=f.snapshot(),original=request();
  const reversed={inputs:original.inputs,expectedRevision:0,requestId:original.requestId,schemaVersion:1};f.setTime(now+100);
  const b=await submit(f,reversed);assert.equal(b.status,'REPLAYED');assert.equal(b.generatedAtMs,a.generatedAtMs);assert.deepEqual(f.snapshot(),before);
+}));
+test('offline provenance: explicit supported release identity required, never inferred or mutated after construction',async()=>withFixture(async f=>{
+ for(const releaseIdentity of [undefined,{engineGitSha:'',workflowVersion:1},{engineGitSha:'0'.repeat(40),workflowVersion:1},
+  {engineGitSha:'1'.repeat(40),workflowVersion:2},{engineGitSha:'1'.repeat(40),workflowVersion:1,token:'fictional'}])
+  assert.throws(()=>createPrivateInputAdapter({...f.deps,releaseIdentity}),/PRIVATE_RELEASE_IDENTITY_REQUIRED/);
+ const releaseIdentity={engineGitSha:'3'.repeat(40),workflowVersion:1};f.adapter=createPrivateInputAdapter({...f.deps,releaseIdentity});
+ releaseIdentity.engineGitSha='4'.repeat(40);assert.equal((await submit(f)).status,'COMMITTED');
+ const p=JSON.parse(JSON.parse(f.sealed.get(f.snapshot().private_versions[0].sealed_analysis)).text).provenance;
+ assert.equal(p.engineGitSha,'3'.repeat(40));assert.equal(p.inputSchemaVersion,1);assert.equal(p.analysisRevision,1);assert.equal(p.previousRevision,0);
+ assert.equal(p.policyVersion,scope.policyEpoch);assert.equal(p.restoreEpoch,scope.restoreEpoch);assert.equal(p.generatedAtMs,now);assert.equal(p.inputCutoffMs,now);
+ assert.equal(p.inputTag,f.snapshot().private_requests[0].payload_tag);assert.match(p.policyTag,/^[0-9a-f]{64}$/);
+}));
+test('offline provenance: recorded policy is detached/frozen before asynchronous tagging and is the policy actually applied',async()=>withFixture(async f=>{
+ const policy=await f.deps.getPolicy(scope,now),tag=f.crypto.tag;policy.analysisPolicy.reserveKrw=300;
+ f.crypto.tag=async(text,ctx)=>{if(ctx.recordId.startsWith('policy:')){policy.analysisPolicy.reserveKrw=999999;policy.eventPolicy.maxInputAgeMs=0;}return tag(text,ctx);};
+ f.adapter=createPrivateInputAdapter({...f.deps,getPolicy:async()=>policy});assert.equal((await submit(f)).status,'COMMITTED');
+ const saved=JSON.parse(JSON.parse(f.sealed.get(f.snapshot().private_versions[0].sealed_analysis)).text);
+ assert.equal(saved.policySnapshot.analysisPolicy.reserveKrw,300);assert.equal(saved.policySnapshot.eventPolicy.maxInputAgeMs,1000);
+ assert.equal(saved.workflow.summary.components.valuation.totals.cashHeadroomAfterReserveKrw,-800);
+}));
+test('offline provenance: replay under a later configured release preserves original policy/version and performs no reseal',async()=>withFixture(async f=>{
+ const first=await submit(f),before=f.snapshot(),sealCount=f.sealed.size;
+ f.adapter=createPrivateInputAdapter({...f.deps,releaseIdentity:{engineGitSha:'5'.repeat(40),workflowVersion:1},getPolicy:async()=>{throw Error('must not run for replay');}});
+ f.setTime(now+100);const replay=await submit(f);assert.equal(replay.status,'REPLAYED');assert.equal(replay.generatedAtMs,first.generatedAtMs);
+ assert.deepEqual(f.snapshot(),before);assert.equal(f.sealed.size,sealCount);
+}));
+test('offline provenance: invalid/unknown server policy fails before sealing or accepted-state mutation',async()=>withFixture(async f=>{
+ for(const change of [p=>p.analysisPolicy.nowMs++,p=>p.eventPolicy.maxInputAgeMs=-1,p=>p.analysisPolicy.reserveKrw=null,
+  p=>p.analysisPolicy.unknown=true,p=>p.eventPolicy.unknown=true,p=>p.analysisPolicy.concentrationDenominator='UNKNOWN']){
+  const p=await f.deps.getPolicy(scope,now);change(p);const before=f.snapshot(),sealed=f.sealed.size;
+  const adapter=createPrivateInputAdapter({...f.deps,getPolicy:async()=>p});
+  assert.equal((await adapter.submit({credential:'fictional-valid',request:request()})).code,'INVALID_SERVER_POLICY');
+  assert.deepEqual(f.snapshot(),before);assert.equal(f.sealed.size,sealed);
+ }
 }));
 test('offline adapter: changed payload for same request conflicts without overwrite',async()=>withFixture(async f=>{
  await submit(f);const before=f.snapshot();const r=await submit(f,request({inputs:inputs(now,2000)}));
@@ -83,7 +118,7 @@ test('offline adapter: stale cash, future cutoff and expired horizon preserve ac
 }));
 test('offline adapter: stale market quote keeps independent cash risk and is not promoted to verified',async()=>withFixture(async f=>{
  const i=inputs();i.prices['005930'].quality='STALE_INPUT';const r=await submit(f,request({inputs:i}));assert.equal(r.status,'COMMITTED');
- const record=f.snapshot().private_versions[0],analysis=JSON.parse(JSON.parse(f.sealed.get(record.sealed_analysis)).text);
+ const record=f.snapshot().private_versions[0],analysis=JSON.parse(JSON.parse(f.sealed.get(record.sealed_analysis)).text).workflow;
  assert.equal(analysis.capabilities.valuation,'UNAVAILABLE');assert.equal(analysis.capabilities.cashDeadlines,'AVAILABLE');assert.equal(analysis.events.intents[0].transition,'OPENED');
 }));
 test('offline adapter: explicit maintenance freeze/missing head/schema mismatch prevent implicit initialization',async()=>{
@@ -106,7 +141,8 @@ test('offline adapter: write failures after each table mutation roll back all ac
  });
 });
 test('offline adapter: async competing preparations commit one revision with no lost update',async()=>withFixture(async f=>{
- const pending=[];const tag=f.crypto.tag;f.crypto.tag=async(...args)=>{const value=await tag(...args);await new Promise(resolve=>{pending.push(resolve);if(pending.length===2)pending.forEach(x=>x());});return value;};
+ const pending=[];const tag=f.crypto.tag;f.crypto.tag=async(...args)=>{const value=await tag(...args);
+  if(!args[1].recordId.startsWith('policy:'))await new Promise(resolve=>{pending.push(resolve);if(pending.length===2)pending.forEach(x=>x());});return value;};
  const results=await Promise.all([submit(f),submit(f,request({requestId:'fictional-concurrent'}))]);
  assert.deepEqual(results.map(x=>x.status).sort(),['COMMITTED','REJECTED']);assert.ok(results.some(x=>x.code==='REVISION_CONFLICT'));
  assert.equal(f.snapshot().private_versions.length,1);assert.equal(f.snapshot().private_outbox.length,1);
@@ -127,7 +163,7 @@ test('offline adapter: next unchanged capture advances revision without duplicat
  assert.equal(b.status,'COMMITTED');assert.equal(b.revision,2);assert.equal(f.snapshot().private_outbox.length,1);
  f.setTime(now+200);const c=await submit(f,request({requestId:'fictional-recovery',expectedRevision:2,inputs:inputs(now+200,2000)}));
  assert.equal(c.status,'COMMITTED');assert.equal(c.revision,3);assert.equal(f.snapshot().private_outbox.length,2);
- const saved=f.sealed.get(f.snapshot().private_versions[2].sealed_analysis),analysis=JSON.parse(JSON.parse(saved).text);
+ const saved=f.sealed.get(f.snapshot().private_versions[2].sealed_analysis),analysis=JSON.parse(JSON.parse(saved).text).workflow;
  assert.equal(analysis.events.intents[0].transition,'RESOLVED');assert.equal(analysis.events.notificationConnection,'NOT_CONNECTED');
 }));
 test('offline adapter: authorization expiring during async sealing cannot commit',async()=>withFixture(async f=>{
@@ -165,7 +201,7 @@ test('offline end-to-end: real signature, AEAD and memory SQLite preserve sealed
  const r=await adapter.submit({credential:token,request:request()});assert.equal(r.status,'COMMITTED');
  const saved=f.snapshot();assert.ok(!JSON.stringify(saved).includes('fictional-payment'));
  assert.equal((await adapter.submit({credential:token,request:request()})).status,'REPLAYED');assert.deepEqual(f.snapshot(),saved);
- const analysis=await crypto.open(saved.private_versions[0].sealed_analysis,context(scope,'ANALYSIS','1'));
+ const analysis=(await crypto.open(saved.private_versions[0].sealed_analysis,context(scope,'ANALYSIS','1'))).workflow;
  assert.equal(analysis.summary.components.cashDeadlines.totals.accountShortfallSumKrw,500);assert.equal(analysis.events.intents.length,1);
  assert.equal(nonceCounter(),5);const committed=f.snapshot(),beforeNonce=nonceCounter();
  f.setFault('INSERT INTO private_requests');const second=request({requestId:'fictional-next',expectedRevision:1});
