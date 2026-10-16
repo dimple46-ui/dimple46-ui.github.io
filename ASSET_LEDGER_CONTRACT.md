@@ -162,7 +162,7 @@ The returned summary/state/intents are PRIVATE financial data if real inputs are
 Validation: workflow6/6, workflow+adapter+public-boundary16/16 targeted; one cumulative full221/221 local PASS. Record validation/private-risk-workflow-fictional-20261016.json contains only test counts/source hashes/log digest and scope, no holdings/amounts/credentials. It is local correctness evidence, not remote CI/account/notification/live-production validation. Existing candidate c62ec46 remains unchanged.
 
 
-## Next boundary: private ingestion and durable state — HIGH_REVIEW_REQUIRED
+## Private-ingestion review scope — reviewed2026-10-16; ADR-PVT-01 below
 
 The local prototype is complete enough for fictional replay. It is not ready to accept actual user assets. The next unit is a bounded security/architecture review, not another market collector or a new deployer. No private store, credential, Worker, binding, route, file connection or sender has been selected/connected by these changes.
 
@@ -175,3 +175,137 @@ Before any real connection, review must resolve and produce a concrete proposal 
 5. Distinct intent/request-success/provider-delivery/user-ack facts and explicit delivery-channel approval. Current code sends nothing. Broker formulas and personal allocation/risk thresholds require separately validated applicable inputs; no default rule is inferred.
 
 Review deliverables: one limited design decision in this existing document, defined data/auth boundaries, failure/recovery tests, deployment/rollback proposal, and exact user approval required for real connection. High is recommended because this is a new private-data/authentication/persistence architecture, not a small change to the existing public candidate. Designing it does not authorize implementation/deployment of a connection.
+
+
+## ADR-PVT-01 — private ingestion, durable state and outbox review
+
+Review date:2026-10-16. Source reviewed:1a9a0305ad485ea5cdcb35d56ddee14e86d12e8f.
+Status: **RECOMMENDED_FOR_REVIEW / NOT_SELECTED / NOT_PROVISIONED**.
+This selects no real account, namespace, hostname, store, credentials or delivery channel. Existing public production/candidate/Builds remain unchanged.
+
+### Decision and alternatives
+
+| Option | Assessment | Status |
+| --- | --- | --- |
+| Existing market-relay/intelligence candidate or market-history D1 | Mixes public market privileges with private assets; rejected for personal data | REJECTED |
+| Owner-operated encrypted local SQLite | Possible offline prototype, but needs an owner-controlled persistent machine; Work scratch is not such a store | FALLBACK_ONLY |
+| Separate private Worker with one SQLite-backed Durable Object per owner | Recommended target for review: one authority for input revisions, event state and outbox, no market D1 binding | PROPOSED_NOT_APPROVED |
+
+Cloudflare documents transactional SQLite storage for Durable Objects and recommends that backend for new namespaces [P1]. This is a provider capability, not evidence of an existing deployed private store.
+
+Prefer a distinct administrative Cloudflare account/credential boundary for the private compartment. Same-account deployment is acceptable only after reviewing actual token/resource scopes, public CI/build permissions and administrator trust; names or namespaces alone are not an administrative boundary. Current per-Worker privilege isolation, available account/plan/cost and management access are NEEDS_EXTERNAL_VERIFICATION. Do not repeat old login/token checks without changed access. New paid subscription, account setup, Secret or route is not approved here.
+
+The existing public candidate keeps its single Builds path. No competing deployer is added. A future private release requires separately approved isolated release credentials and reviewed/pinned source; public branch contributors/build jobs must not obtain private deployment/runtime credentials. Source code and synthetic tests may stay in GitHub; actual payloads/results/identifiers must not.
+
+### Boundaries, readers and intake
+
+| Boundary | Permitted | Denied |
+| --- | --- | --- |
+| Public market GitHub/Worker/D1/CI/artifacts | Existing market data/code, generic synthetic test records | Personal inputs/results, private actor IDs, keys, state/outbox |
+| Private ingress/processor | Approved owner input; existing pure validators/calculators; owner-scoped sealed records | Arbitrary SQL, supplied destination URL, body-selected owner/actor, automatic order |
+| Owner identity | Versioned structured input/review; scoped private analysis | Implicit approval of tax/broker rules or sending |
+| Future machine reader | Explicitly granted owner-specific analysis/status read role | Input mutation, raw export, cross-owner read, deployment |
+| Future sender | Minimal approved outbox item and verified receipt protocol | Raw ledger access or inferred device/user acknowledgement |
+
+First intake would be an authenticated structured schema, not autonomous account scraping, PDF/OCR, chat-memory import or collection from project uploads. Source/verification fields remain assertions until independently verified; never promote RECENT_FETCH/UNVERIFIED_TIME to VERIFIED. Existing pure validators preserve their limits and unknown broker formulas. A read failure or missing input cannot initialize an empty personal ledger or clear an active risk.
+
+Proposed interfaces, **not existing endpoints**: bounded POST /private/inputs with opaque idempotency key and expected revision; GET /private/analysis/latest; GET /private/status; an explicit policy/scope-change operation. No arbitrary SQL/raw-secret endpoint, raw export, scheduler or sender in the initial candidate. Fixed JSON schemas, body/row/deadline limits and per-principal rate limits must be implemented and tested before deployment. Personal IDs/amounts/tokens never enter URLs. Private responses no-store, no Cache API/CDN caching, no third-party analytics. Deny CORS by default; an eventual owner UI needs an explicit origin and CSRF protection for cookie-authenticated writes.
+
+### Authentication and authorization
+
+Recommended Access-protected private ingress plus application authorization. Authenticate before touching the owner's actor/storage. Reject unsigned identity headers, wrong issuer/audience/algorithm/expiry and missing owner/role mapping. A supplied ownerId does not authorize object selection. Resolve the actor server-side from the authenticated principal and approved mapping.
+
+Use verified user subject for owner identity. An Access service-token JWT may have empty sub and identify the service via common_name [P3]; never map every empty sub to one owner. Machine identities need explicit separate role/owner mappings and no write/export by default. Do not reuse INTELLIGENCE_READ_TOKEN, VALIDATION_TOKEN or Cloudflare management tokens as personal-data credentials.
+
+Current Workers documentation also describes ctx.access, its absent/unpropagated contexts and Service Binding limitations [P2]. No existing runtime support or upstream binding propagation is assumed. For a future implementation choose exactly one tested verification path: explicit pinned-issuer JWT verification or validated runtime Access context with audience checks. Unknown/missing context fails closed, including previews/workers.dev/custom-domain/internal entry paths. A service-bound call without verified authorization cannot bypass ingress. JWKS source is fixed trusted configuration, not a URL derived from an untrusted token; bounded refresh/timeouts and unknown-key failure are required. Test unknown routes and deploy previews as separate bypass cases.
+
+Existing CI credentials are not inherited by Work, Cloudflare runtime or scheduled ChatGPT execution. No current scheduled private access is established. Cloudflare permission groups/resources exist [P4], but an actual token's ability to edit a private Worker is UNVERIFIED; test denied scope before accepting shared-administration isolation.
+
+### Encryption, metadata and trust
+
+Cloudflare documents managed encryption at rest/in transit for Durable Objects [P5]. This does not make the application end-to-end encrypted or protect plaintext from trusted runtime/deployment administrators.
+
+Propose application AEAD for ledger, analysis, event evidence/state and outbox payloads before persistence. Use a reviewed Web Crypto implementation, explicit key version, unique nonce per encryption and authenticated context containing opaque owner/record kind/record ID/schema/policy epoch. AES-GCM parameters and nonce uniqueness requirements are documented in [P6]. Do not store identifying account names or sensitive JSON in SQL indexes. Request-payload equality tags should be private keyed tags, not published hashes of guessable balances. Minimal revision/timing/status metadata remains observable to authorized platform administration; do not promise it is hidden.
+
+Keys must be in an approved private runtime secret/key system, never public Builds/Actions/source/logs or beside ciphertext backups. Key custody, rotation, owner-controlled recovery copy and loss handling need explicit approval. Missing/tampered/wrong-key data blocks writes and dispatch; it does not create a new empty state. Provider admins and code-deployment principals remain trusted; application encryption does not remove that residual risk. No key has been generated by this review.
+
+Private request/body/error logging and external log destinations must be audited, not assumed disabled. Application audit is bounded generic action/result/revision metadata; do not log raw payloads, account IDs, actor naming material, authorization or exception bodies. Access/provider logs may retain identity/network metadata; actual retention/location is an approval gate, not a promise of zero personal metadata.
+
+### Proposed durable records and commit protocol
+
+These are logical records, **not SQL migrations**:
+
+| Record | Purpose |
+| --- | --- |
+| owner_head | Accepted input/state revision, policy epoch, restore epoch, key/schema versions, sealed current state |
+| input_versions | Immutable sealed input revisions; original verification/cutoff; supersedes link |
+| analysis_versions | Sealed result plus input/engine/schema/policy provenance; no stale Feature freshness inheritance |
+| request_receipts | Owner-scoped idempotency key and private canonical payload tag, committed result/revision |
+| outbox | Unique owner+policyEpoch+restoreEpoch+local intent ID; sealed body and independent dispatch fact |
+| attempt/audit records | Later explicit delivery attempts/receipts or generic operational results |
+
+Current local intent IDs repeat across fresh state initialization: a fictional executable reproduction confirmed the same local ID at separate first captures. This is not an existing remote-store failure; no store is connected. Future durable uniqueness must include policy/restore epoch. Never silently reset an event ID/version counter after restore, account-binding or horizon changes.
+
+Protocol:
+1. Authenticate/authorize, enforce limits, canonicalize input and idempotency identity. Validate matching account/time/quality/policy scope; reject invalid input or explicitly quarantine it without advancing accepted active state.
+2. Read accepted revision/epochs and encrypted prior state. Decrypt, run existing pure workflow and prepare encrypted input/result/state/outbox outside the synchronous transaction. No network or asynchronous crypto inside the transaction.
+3. In one synchronous storage transaction, recheck current authorization/config epochs and expected revision. Same committed request+same canonical tag returns its original tagged receipt; changed content for that key conflicts. A stale prepared revision or epoch conflicts, with no automatic unbounded retry.
+4. Atomically append accepted input/analysis/receipt, update accepted head/event material state and insert all intent outbox rows. Any failure aborts the entire update. A BLOCKED/null/retain-caller-state workflow output must never replace accepted state. Quarantined attempts must be kept separate from accepted-current head.
+5. Return the durable receipt only after commit. A lost HTTP response is an idempotent replay, not evidence that storage failed. Never update authoritative in-memory state before successful commit.
+
+SQLite DO transactionSync is synchronous and rolls back on thrown errors [P1]. Async work can interleave before commit [P7], so expected revision/epoch checks remain necessary; single-threaded does not justify omitting them. SQL BEGIN/SAVEPOINT statements in the local reference model are not a deployable DO implementation; the provider adapter must use its documented transaction API.
+
+### Outbox, delivery and recovery
+
+Initial outbox state is PENDING_REVIEW, dispatcher disabled. One database transaction cannot atomically commit an external device delivery. A future approved sender must lease an item durably, use a stable provider idempotency key where supported, and record request outcome separately from provider delivery and user acknowledgement.
+
+If an external request times out after possibly sending, mark UNKNOWN, not failed/not-sent. Without verified provider idempotency, do not blindly retry an ambiguous send; reconcile or require owner action. Retrying may duplicate; not retrying may miss delivery. Exactly-once external delivery is not promised. An acknowledgement needs its own authenticated evidence; neither HTTP200 nor a generated intent is acknowledgement.
+
+Missing/corrupt/old state -> freeze, preserve last accepted records, no empty-state initialization. First owner creation is a separate authorized action. Horizon/account/rule changes require an explicit versioned epoch transition carrying active unresolved events for review, not createCashRiskEventState as automatic rollover.
+
+Cloudflare documents a PITR facility with a past30-day window [P1]; current plan/runtime/restore capability and key recovery are unverified. It is not an independent owner backup. Any restore enters MAINTENANCE_FROZEN, blocks all writes/dispatch and requires validation against owner-controlled latest receipt, deletion manifest and delivered/unknown attempts before activating a new restore epoch. Replaying old outbox as pending risks duplicate delivery. Key backups are separate; keys absent from a restored database cannot be inferred.
+
+Proposed retention: require owner-approved durations/version for inputs/results/state/outbox/audit before real ingestion; no executable default purge. Logical deletion does not prove deletion from PITR/backups, and deleting a row is not verified cryptographic erasure. Erasure and backup expiry/location must be confirmed before promising deletion. No Korean residency or specific data-location guarantee has been established.
+
+### Failure/acceptance matrix
+
+All rows below are **PLANNED_NOT_EXECUTED_ON_PROVIDER**, except the explicitly scoped local reference-model checks.
+
+| Case | Required outcome | Current evidence |
+| --- | --- | --- |
+| No/wrong/expired identity, foreign owner, forged headers, preview/internal bypass | Reject before actor/storage; no secret/body echo | PLAN_ONLY |
+| Read-only machine tries input/export; public token tries private access | Deny; public production unaffected | PLAN_ONLY |
+| Two preparations from same revision | One commit, stale one conflicts; no lost update | LOCAL_SQLITE_MODEL_PASS |
+| Crash after input/head/outbox write | Entire batch rolls back | LOCAL_SQLITE_MODEL_PASS |
+| Lost response after commit | Same key/content returns original revision, no duplicate outbox | LOCAL_SQLITE_MODEL_PASS |
+| Same request key/different input | Conflict, no overwrite | LOCAL_SQLITE_MODEL_PASS |
+| New epoch/local intent ID reuse; old writer | Separate uniqueness; old writer fenced | LOCAL_SQLITE_MODEL_PASS |
+| Workflow BLOCKED/null state | Preserve previous state, no false-clear | LOCAL_SQLITE_MODEL_PASS |
+| Wrong AEAD key/nonce/AAD, corrupted ciphertext | Fail closed; no state reset/plaintext log | PLAN_ONLY |
+| Stale/null/unverified/future input, incomplete scope, expired horizon | Preserve unresolved risk; no live/verified upgrade | EXISTING_LOCAL_WORKFLOW_TESTS_ONLY |
+| Crash before/after possible external send; provider duplicate callback | Unknown send distinguished; idempotent provider receipt handling | PLAN_ONLY |
+| PITR restore after sent item or deletion | Maintenance freeze; owner reconciliation; no automatic replay/resurrection | PLAN_ONLY |
+| Rotation/key loss/retention expiry/private backup restore | Authorized version-aware recovery or explicit blocked state | PLAN_ONLY |
+| Full logs/artifacts/caches/access review | No financial payload leakage; provider metadata disclosed | PLAN_ONLY |
+| New private failure/load | Existing market relay/publication/D1 writer unchanged | PLAN_ONLY |
+
+The6 reference tests use in-memory Node SQLite and fictional sealed markers; they verify the reference commit protocol only. They do not test provider transactions, JWT, encryption, durable storage, tamper resistance or real notification. Existing221/221 local regression remains historical evidence for unchanged runtime code; no new227/227 full-suite claim.
+
+### Release, rollback and approval gates
+
+- Current: design proposal+local reference validation only. No Worker/store/route/Access/Secret/paid subscription/real assets selected or connected.
+- Next safe implementation: after design direction is confirmed, build the private adapter with injected storage/crypto/auth and fictional tests offline. No public endpoint or existing production modification.
+- Actual isolated candidate provisioning needs explicit approval for new private Worker/SQLite DO/Access scope and administrative separation; exact account, permissions, plan/cost and key custody must first be reviewable. Test only synthetic data, dispatcher/real intake disabled.
+- Real input access/storage, real authentication credentials, retention policy and any notification channel each require their applicable separate approval. Synthetic-candidate approval is not real-asset or sending approval. No token values requested in chat.
+- Future rollback: disable ingress/dispatch first, preserve sealed records, select schema-compatible reviewed code; no destructive rollback migration or silent downgrade. Incompatible restored versions remain frozen. Public market infrastructure needs no rollback because it was not changed.
+
+### Primary references checked2026-10-16
+
+- [P1 SQLite DO storage/transaction/PITR](https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/)
+- [P2 Worker Access context and invocation limits](https://developers.cloudflare.com/workers/configuration/cloudflare-access/)
+- [P3 Access user/service application token fields](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/application-token/)
+- [P4 API permission groups/resources](https://developers.cloudflare.com/fundamentals/api/reference/permissions/)
+- [P5 Provider-managed storage/transport encryption](https://developers.cloudflare.com/durable-objects/reference/data-security/)
+- [P6 Web Crypto AES-GCM parameters](https://developer.mozilla.org/en-US/docs/Web/API/AesGcmParams)
+- [P7 Durable Object async concurrency rules](https://developers.cloudflare.com/durable-objects/best-practices/rules-of-durable-objects/)
+- [P8 Explicit Access JWT validation](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/)

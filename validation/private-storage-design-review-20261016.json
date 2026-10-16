@@ -1,0 +1,52 @@
+{
+  "recordSchemaVersion": 1,
+  "reviewedAtKst": "2026-10-16T16:18:02+09:00",
+  "sourceParentSha": "1a9a0305ad485ea5cdcb35d56ddee14e86d12e8f",
+  "scope": "DESIGN_REVIEW_AND_LOCAL_SQLITE_REFERENCE_MODEL_ONLY",
+  "runtimeCodeChanged": false,
+  "resourcesSelected": false,
+  "resourcesProvisioned": false,
+  "actualPersonalData": "NOT_USED",
+  "deployment": "NOT_PERFORMED",
+  "recommendation": "SEPARATE_PRIVATE_WORKER_SQLITE_DO_ACCESS_PENDING_APPROVAL",
+  "localModelTests": {
+    "command": "node --test tests/private-storage-design-model.test.mjs",
+    "tests": 6,
+    "pass": 6,
+    "fail": 0,
+    "sourceSha256": "808233df39f8ba76c3f3675f449432c25cd9700bf9f9aca5c7b98988a91e9bfe",
+    "proves": "REFERENCE_SQLITE_TRANSACTION_PROTOCOL_ONLY",
+    "doesNotProve": [
+      "CLOUDFLARE_DO_RUNTIME",
+      "AUTHENTICATION",
+      "ENCRYPTION",
+      "DURABLE_PROVIDER_STORAGE",
+      "NOTIFICATION_DELIVERY"
+    ]
+  },
+  "manualFictionalReproduction": {
+    "case": "FRESH_STATE_SAME_LOCAL_INTENT_ID_REUSE",
+    "status": "CONFIRMED",
+    "conclusion": "FUTURE_DURABLE_KEY_REQUIRES_POLICY_AND_RESTORE_EPOCH",
+    "currentRemoteStore": "NONE"
+  },
+  "historicalTestsReused": {
+    "sourceSha": "1a9a0305ad485ea5cdcb35d56ddee14e86d12e8f",
+    "fullLocalTests": 221,
+    "fullLocalPass": 221,
+    "reexecuted": false
+  },
+  "candidateRuntimeUnchanged": "c62ec46cdc1161b3f98d72c0ed1257aad1da400c",
+  "providerCapabilities": "OFFICIAL_DOCUMENTATION_CHECKED_NOT_RUNTIME_VALIDATED",
+  "privateAccountPermissionsCosts": "NEEDS_EXTERNAL_VERIFICATION",
+  "remainingAcceptance": [
+    "AUTH_AND_OWNER_SCOPE",
+    "AEAD_AND_KEY_RECOVERY",
+    "PROVIDER_ATOMICITY",
+    "OUTBOX_DELIVERY_AMBIGUITY",
+    "RESTORE_DELETE_RETENTION",
+    "LOG_CACHE_ISOLATION"
+  ],
+  "liveMarketGates": "UNCHANGED",
+  "productionImpact": "NONE"
+}
