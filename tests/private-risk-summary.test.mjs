@@ -67,3 +67,30 @@ test('bad concentration policy or missing quote cannot suppress independent cash
  assert.equal(r.components.concentration.status,'BLOCKED');assert.equal(r.capabilities.cashDeadlines,'AVAILABLE');
  assert.equal(r.components.cashDeadlines.totals.accountShortfallSumKrw,500);
 });
+
+function collateralFixture(){const f=fixture();return {...f,collateralInput:{schemaVersion:1,currency:'KRW',asOfMs:now,
+ accounts:f.ledger.accounts.map(a=>({accountRef:a.accountRef,collateralScope:'ACCOUNT_ONLY',
+ coverage:{positions:true,securedDebt:true,brokerTerms:true},sourceRef:'synthetic',quality:'VERIFIED',verifiedAtMs:now,
+ securedDebtKrw:4000,accruedChargesKrw:0,debtBasis:'PRINCIPAL_PLUS_ACCRUED_CHARGES',
+ rule:{versionRef:'fictional-v1',formulaRef:'unsupported-fictional',sourceRef:'synthetic',quality:'VERIFIED',
+ verifiedAtMs:now,effectiveFromMs:now-86400000,effectiveUntilMs:now+86400000,
+ calculationBasis:'POSITION_HAIRCUT_VALUE',requiredCoverageBps:12345},
+ positions:a.holdings.map(h=>({...h,...f.prices[h.ticker],eligibility:'ELIGIBLE',haircutBps:0}))}))}};}
+const collateralPolicy={...policy,maxCollateralInputAgeMs:86400000,maxCollateralQuoteAgeMs:120000};
+test('collateral opt-in validates matching fictional input without enabling collateral calculation',()=>{
+ const off=buildPrivateRiskSummary(fixture(),policy);assert.equal(off.components.collateral.status,'NOT_REQUESTED');
+ const f=collateralFixture(),copy=structuredClone(f),r=buildPrivateRiskSummary(f,collateralPolicy);assert.deepEqual(f,copy);
+ assert.equal(r.components.collateral.inputValidationStatus,'VALIDATED_LOCAL');
+ assert.equal(r.components.collateral.status,'UNAVAILABLE');assert.equal(r.capabilities.collateral,'UNAVAILABLE');
+ assert.equal(r.components.collateral.calculation.headroomKrw,null);assert.equal(r.capabilities.cashDeadlines,'AVAILABLE');
+});
+test('collateral cutoff/account mismatch or missing age policy is isolated without suppressing cash risk',()=>{
+ for(const mutate of [f=>f.collateralInput.asOfMs++,f=>f.collateralInput.accounts[0].accountRef='fictional-other',
+ f=>f.collateralInput.accounts.push(structuredClone(f.collateralInput.accounts[0]))]){
+  const f=collateralFixture();mutate(f);const r=buildPrivateRiskSummary(f,collateralPolicy);
+  assert.equal(r.components.collateral.status,'BLOCKED');assert.equal(r.capabilities.collateral,'UNAVAILABLE');
+  assert.equal(r.capabilities.cashDeadlines,'AVAILABLE');assert.equal(r.components.cashDeadlines.totals.accountShortfallSumKrw,500);
+ }
+ const r=buildPrivateRiskSummary(collateralFixture(),policy);
+ assert.equal(r.components.collateral.status,'BLOCKED');assert.equal(r.capabilities.cashDeadlines,'AVAILABLE');
+});

@@ -85,3 +85,20 @@ A zero denominator returns UNAVAILABLE with null weights/ZERO_DENOMINATOR, not0%
 The private risk-summary adapter computes concentration only when concentrationDenominator is explicitly supplied. Otherwise it is NOT_REQUESTED/UNAVAILABLE. A blocked concentration result leaves independent supported cash-deadline output intact; all summaries remain PARTIAL with trade/notification/collateral/tax capabilities unavailable. No public endpoint, private storage or actual account data is connected.
 
 Tests: concentration6/6; opt-in/failure-isolation adapter adds2 cases. Related suites14/14 and integration full182/182 local PASS. Fictional correctness only. Existing candidate c62ec46 runtime/CI receipt is unchanged and separate; no candidate rollout required.
+
+
+## Private collateral-input gate (no broker formula)
+
+`validateCollateralInput` in domain/collateral-input-contract.mjs checks only local schema and declared evidence. No broker terms have been externally validated, and no maintenance-margin, collateral-headroom, margin-call, liquidation or tax computation is implemented. A valid input reports inputValidationStatus=VALIDATED_LOCAL while overall status and calculation stay UNAVAILABLE, with calculated values null. RequiredCoverageBps and haircutBps are caller-supplied metadata; neither establishes an approved real or personal limit.
+
+Input schema1/KRW contains asOfMs and explicit account-only scope. Each account requires unique accountRef, completeness for positions/securedDebt/brokerTerms, sourceRef, VERIFIED quality and verifiedAtMs. Debt fields securedDebtKrw/accruedChargesKrw are separate nonnegative safe integers with explicit PRINCIPAL_PLUS_ACCRUED_CHARGES basis; unsafe combined values are rejected. These assertions do not prove which part of the ledger's debt is secured.
+
+Each rule requires versionRef, formulaRef, sourceRef, VERIFIED/fresh verification, effectiveFromMs<=asOfMs<effectiveUntilMs, positive integer requiredCoverageBps and an explicit BROKER_STATEMENT_VALUE or POSITION_HAIRCUT_VALUE calculation basis. These labels identify supplied intent only; there is no implemented formula registry. Every current formula remains unsupported, even if all metadata passes.
+
+Each declared position requires a unique six-digit ticker within its account, nonnegative integer quantity/priceKrw, KRW currency, explicit ELIGIBLE/INELIGIBLE plus integer haircutBps0..10000, source and VERIFIED/fresh observedAtMs no later than input cutoff. Nonzero quantity requires a positive price. Missing/null/estimated/stale/future values cannot stand in for verified fields. Explicit0 haircut/debt/charges remains0 metadata, never a calculated0 headroom.
+
+Bounds of32 accounts and256 positions per account are technical input-processing bounds, not investment limits. Oversized inputs, duplicate accounts/positions and missing/expired terms produce BLOCKED; outputs include generic paths/codes, never copied source text or sensitive values.
+
+The private risk-summary adapter accepts optional collateralInput with explicit maxCollateralInputAgeMs/maxCollateralQuoteAgeMs. It requires exact ledger cutoff and declared account-set matching; absent input is NOT_REQUESTED. This does not yet reconcile position quantities or debt classification across ledgers, and does not make collateral calculation available. Invalid policy/scope is isolated; other supported components, including direct cash risk, remain available independently. Public module graph excludes all private domain modules.
+
+Validation: gate6/6, gate+boundary8/8, integrated16/16 and full190/190 local PASS. Fictional test fixtures only; not a real brokerage/account/terms validation, candidate deployment or live-market PASS. Broker formula work requires a separately scoped High review using authoritative applicable terms; private account integration remains separately approved.
