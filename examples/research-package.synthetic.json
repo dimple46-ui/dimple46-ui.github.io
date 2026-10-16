@@ -1,0 +1,267 @@
+{
+  "alternatives": [
+    {
+      "claim_refs": [
+        "c-assumption"
+      ],
+      "portfolio_fit": "PRIVATE_DATA_REQUIRED",
+      "rationale": "Fictional alternative for review, not a recommendation.",
+      "type": "KEEP_HOLDING",
+      "unassessed_private_inputs": [
+        "HOLDINGS",
+        "CASH",
+        "DEBT",
+        "COLLATERAL",
+        "COSTS"
+      ]
+    },
+    {
+      "claim_refs": [
+        "c-assumption"
+      ],
+      "portfolio_fit": "PRIVATE_DATA_REQUIRED",
+      "rationale": "Fictional alternative for review, not a recommendation.",
+      "type": "ADD_EXISTING",
+      "unassessed_private_inputs": [
+        "HOLDINGS",
+        "CASH",
+        "DEBT",
+        "COLLATERAL",
+        "COSTS"
+      ]
+    },
+    {
+      "claim_refs": [
+        "c-assumption"
+      ],
+      "portfolio_fit": "PRIVATE_DATA_REQUIRED",
+      "rationale": "Fictional alternative for review, not a recommendation.",
+      "type": "ADD_NEW",
+      "unassessed_private_inputs": [
+        "HOLDINGS",
+        "CASH",
+        "DEBT",
+        "COLLATERAL",
+        "COSTS"
+      ]
+    },
+    {
+      "claim_refs": [
+        "c-assumption"
+      ],
+      "portfolio_fit": "PRIVATE_DATA_REQUIRED",
+      "rationale": "Fictional alternative for review, not a recommendation.",
+      "type": "KEEP_CASH",
+      "unassessed_private_inputs": [
+        "HOLDINGS",
+        "CASH",
+        "DEBT",
+        "COLLATERAL",
+        "COSTS"
+      ]
+    },
+    {
+      "claim_refs": [
+        "c-assumption"
+      ],
+      "portfolio_fit": "PRIVATE_DATA_REQUIRED",
+      "rationale": "Fictional alternative for review, not a recommendation.",
+      "type": "REPAY_DEBT",
+      "unassessed_private_inputs": [
+        "HOLDINGS",
+        "CASH",
+        "DEBT",
+        "COLLATERAL",
+        "COSTS"
+      ]
+    }
+  ],
+  "analysis_cutoff_ms": 1792148390000,
+  "claims": [
+    {
+      "claim_id": "c-revenue",
+      "kind": "FACT",
+      "quantity": {
+        "currency": "KRW",
+        "fiscalPeriod": "2026Q2",
+        "metric": "revenue",
+        "scope": "CONSOLIDATED",
+        "unit": "KRW_BILLION",
+        "value": 50
+      },
+      "source_refs": [
+        "fictional-current"
+      ],
+      "text": "Fictional reported revenue only."
+    },
+    {
+      "claim_id": "c-profit",
+      "kind": "FACT",
+      "quantity": {
+        "currency": "KRW",
+        "fiscalPeriod": "2026Q2",
+        "metric": "operatingProfit",
+        "scope": "CONSOLIDATED",
+        "unit": "KRW_BILLION",
+        "value": 8
+      },
+      "source_refs": [
+        "fictional-current"
+      ],
+      "text": "Fictional reported profit; lower than preliminary value."
+    },
+    {
+      "claim_id": "c-previous",
+      "kind": "ESTIMATE",
+      "quantity": {
+        "currency": "KRW",
+        "fiscalPeriod": "2026Q2",
+        "metric": "revenue",
+        "scope": "CONSOLIDATED",
+        "unit": "KRW_BILLION",
+        "value": 40
+      },
+      "source_refs": [
+        "fictional-baseline"
+      ],
+      "text": "Fictional preliminary revenue, not confirmed actual."
+    },
+    {
+      "claim_id": "c-assumption",
+      "kind": "HYPOTHESIS",
+      "quantity": null,
+      "source_refs": [
+        "fictional-current"
+      ],
+      "text": "Fictional longer-term demand could recover; not a probability."
+    }
+  ],
+  "disclosure": "SYNTHETIC_PUBLIC_EXAMPLE",
+  "expires_at_ms": 1792321200000,
+  "first_acquired_at_ms": 1792148380000,
+  "generated_at_ms": 1792148395000,
+  "horizon": "6M",
+  "monitoring": [
+    {
+      "claim_refs": [
+        "c-assumption"
+      ],
+      "condition_text": "Re-read future official quarterly revenue; never execute this text.",
+      "data_requirement": {
+        "horizon": "QUARTER",
+        "metric": "revenue",
+        "minimum_quality": "VERIFIED",
+        "unit": "KRW_BILLION"
+      },
+      "rule_id": "fictional-demand-review",
+      "severity": "WARNING",
+      "status": "MANUAL_REVIEW_REQUIRED"
+    }
+  ],
+  "package_id": "fictional-research-samsung",
+  "report_comparison": {
+    "baseline_document_id": "fictional-baseline",
+    "current_document_id": "fictional-current"
+  },
+  "review_at_ms": 1792234800000,
+  "revision": 1,
+  "schema_version": 1,
+  "sources": [
+    {
+      "accessStatus": "PUBLIC_ORIGINAL_READ",
+      "author": "Fictional example author",
+      "currency": "KRW",
+      "documentId": "fictional-baseline",
+      "figureStatus": "PRELIMINARY_ESTIMATE",
+      "firstSeenAtMs": 1792148380000,
+      "fiscalPeriod": "2026Q2",
+      "issuerId": "fictional-issuer",
+      "location": "Fictional table, page1; no real report read",
+      "metrics": {
+        "operatingProfit": 10,
+        "revenue": 40
+      },
+      "originalRead": true,
+      "publishedDate": "2026-07-07",
+      "scope": "CONSOLIDATED",
+      "ticker": "005930",
+      "unit": "KRW_BILLION",
+      "url": "https://example.invalid/fictional-baseline.pdf"
+    },
+    {
+      "accessStatus": "PUBLIC_ORIGINAL_READ",
+      "author": "Fictional example author",
+      "currency": "KRW",
+      "documentId": "fictional-current",
+      "figureStatus": "COMPANY_REPORTED",
+      "firstSeenAtMs": 1792148385000,
+      "fiscalPeriod": "2026Q2",
+      "issuerId": "fictional-issuer",
+      "location": "Fictional table, page1; no real report read",
+      "metrics": {
+        "operatingProfit": 8,
+        "revenue": 50
+      },
+      "originalRead": true,
+      "publishedDate": "2026-07-30",
+      "scope": "CONSOLIDATED",
+      "ticker": "005930",
+      "unit": "KRW_BILLION",
+      "url": "https://example.invalid/fictional-current.pdf"
+    }
+  ],
+  "supersedes": null,
+  "target": {
+    "currency": "KRW",
+    "market": "KRX",
+    "ticker": "005930"
+  },
+  "thesis": {
+    "assumptions": [
+      "c-assumption"
+    ],
+    "catalysts": [
+      {
+        "claim_refs": [
+          "c-assumption"
+        ],
+        "text": "Fictional future disclosure"
+      }
+    ],
+    "changes_since_previous": [
+      "Fictional revenue up, profit down; review both."
+    ],
+    "contrary_claim_refs": [
+      "c-profit"
+    ],
+    "invalidation": [
+      {
+        "claim_refs": [
+          "c-assumption"
+        ],
+        "text": "Reconsider if fictional demand assumption fails"
+      }
+    ],
+    "scenario_assumptions": [
+      {
+        "claim_refs": [
+          "c-assumption"
+        ],
+        "text": "Fictional downside demand case, no assigned probability"
+      }
+    ],
+    "state": "SUPPORTIVE",
+    "supporting_claim_refs": [
+      "c-revenue"
+    ],
+    "valuation_assumptions": [
+      {
+        "claim_refs": [
+          "c-assumption"
+        ],
+        "text": "No multiple, target price or ranking calculated"
+      }
+    ]
+  },
+  "content_sha256": "3c7bc2b8548ef5878437295ca388d4a344cc3b5f76d6e5e5fbe5a82a75ce6499"
+}

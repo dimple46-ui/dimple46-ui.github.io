@@ -1,0 +1,647 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "package_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000000
+    },
+    "supersedes": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "content_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "revision",
+        "content_sha256"
+      ],
+      "additionalProperties": false
+    },
+    "content_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "disclosure": {
+      "enum": [
+        "SYNTHETIC_PUBLIC_EXAMPLE",
+        "RESEARCH_NO_PERSONAL_DATA"
+      ]
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "ticker": {
+          "enum": [
+            "005930",
+            "000660"
+          ]
+        },
+        "market": {
+          "const": "KRX"
+        },
+        "currency": {
+          "const": "KRW"
+        }
+      },
+      "required": [
+        "ticker",
+        "market",
+        "currency"
+      ],
+      "additionalProperties": false
+    },
+    "horizon": {
+      "enum": [
+        "1M",
+        "3M",
+        "6M",
+        "12M"
+      ]
+    },
+    "analysis_cutoff_ms": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8640000000000000
+    },
+    "first_acquired_at_ms": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8640000000000000
+    },
+    "generated_at_ms": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8640000000000000
+    },
+    "review_at_ms": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8640000000000000
+    },
+    "expires_at_ms": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8640000000000000
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/source"
+      },
+      "minItems": 2,
+      "maxItems": 8,
+      "uniqueItems": true
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/claim"
+      },
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true
+    },
+    "report_comparison": {
+      "type": "object",
+      "properties": {
+        "baseline_document_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        },
+        "current_document_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        }
+      },
+      "required": [
+        "baseline_document_id",
+        "current_document_id"
+      ],
+      "additionalProperties": false
+    },
+    "thesis": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "enum": [
+            "SUPPORTIVE",
+            "MIXED",
+            "ADVERSE"
+          ]
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+          },
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true
+        },
+        "supporting_claim_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+          },
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true
+        },
+        "contrary_claim_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+          },
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true
+        },
+        "changes_since_previous": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "pattern": "\\S"
+          },
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true
+        },
+        "catalysts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/note"
+          },
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "invalidation": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/note"
+          },
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "scenario_assumptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/note"
+          },
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "valuation_assumptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/note"
+          },
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "state",
+        "assumptions",
+        "supporting_claim_refs",
+        "contrary_claim_refs",
+        "changes_since_previous",
+        "catalysts",
+        "invalidation",
+        "scenario_assumptions",
+        "valuation_assumptions"
+      ],
+      "additionalProperties": false
+    },
+    "alternatives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "KEEP_HOLDING",
+              "ADD_EXISTING",
+              "ADD_NEW",
+              "KEEP_CASH",
+              "REPAY_DEBT"
+            ]
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "pattern": "\\S"
+          },
+          "claim_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+            },
+            "minItems": 1,
+            "maxItems": 32,
+            "uniqueItems": true
+          },
+          "portfolio_fit": {
+            "const": "PRIVATE_DATA_REQUIRED"
+          },
+          "unassessed_private_inputs": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "HOLDINGS",
+                "CASH",
+                "DEBT",
+                "COLLATERAL",
+                "COSTS"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 32,
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "type",
+          "rationale",
+          "claim_refs",
+          "portfolio_fit",
+          "unassessed_private_inputs"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 5,
+      "uniqueItems": true
+    },
+    "monitoring": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+          },
+          "status": {
+            "const": "MANUAL_REVIEW_REQUIRED"
+          },
+          "claim_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+            },
+            "minItems": 1,
+            "maxItems": 32,
+            "uniqueItems": true
+          },
+          "condition_text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "pattern": "\\S"
+          },
+          "severity": {
+            "enum": [
+              "INFO",
+              "WARNING",
+              "CRITICAL"
+            ]
+          },
+          "data_requirement": {
+            "type": "object",
+            "properties": {
+              "metric": {
+                "enum": [
+                  "revenue",
+                  "operatingProfit",
+                  "price",
+                  "foreignFlow",
+                  "program.totalNet",
+                  "futures.openInterest",
+                  "futures.basis"
+                ]
+              },
+              "unit": {
+                "enum": [
+                  "KRW_BILLION",
+                  "KRW",
+                  "SHARES",
+                  "CONTRACTS",
+                  "POINTS"
+                ]
+              },
+              "horizon": {
+                "enum": [
+                  "QUARTER",
+                  "BUCKET",
+                  "5m",
+                  "10m",
+                  "30m"
+                ]
+              },
+              "minimum_quality": {
+                "enum": [
+                  "VERIFIED",
+                  "RECENT_FETCH",
+                  "UNVERIFIED_TIME"
+                ]
+              }
+            },
+            "required": [
+              "metric",
+              "unit",
+              "horizon",
+              "minimum_quality"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "rule_id",
+          "status",
+          "claim_refs",
+          "condition_text",
+          "severity",
+          "data_requirement"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "schema_version",
+    "package_id",
+    "revision",
+    "supersedes",
+    "content_sha256",
+    "disclosure",
+    "target",
+    "horizon",
+    "analysis_cutoff_ms",
+    "first_acquired_at_ms",
+    "generated_at_ms",
+    "review_at_ms",
+    "expires_at_ms",
+    "sources",
+    "claims",
+    "report_comparison",
+    "thesis",
+    "alternatives",
+    "monitoring"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:investment-system:research-package:1",
+  "$defs": {
+    "source": {
+      "type": "object",
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        },
+        "issuerId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        },
+        "ticker": {
+          "enum": [
+            "005930",
+            "000660"
+          ]
+        },
+        "author": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "\\S"
+        },
+        "accessStatus": {
+          "enum": [
+            "PUBLIC_ORIGINAL_READ",
+            "AUTHORIZED_ORIGINAL_READ"
+          ]
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "\\S"
+        },
+        "publishedDate": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "firstSeenAtMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8640000000000000
+        },
+        "originalRead": {
+          "const": true
+        },
+        "fiscalPeriod": {
+          "type": "string",
+          "pattern": "^[0-9]{4}Q[1-4]$"
+        },
+        "scope": {
+          "const": "CONSOLIDATED"
+        },
+        "currency": {
+          "const": "KRW"
+        },
+        "unit": {
+          "const": "KRW_BILLION"
+        },
+        "figureStatus": {
+          "enum": [
+            "PRELIMINARY_ESTIMATE",
+            "COMPANY_REPORTED"
+          ]
+        },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "revenue": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "operatingProfit": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          },
+          "minProperties": 1,
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "documentId",
+        "issuerId",
+        "ticker",
+        "author",
+        "accessStatus",
+        "url",
+        "location",
+        "publishedDate",
+        "firstSeenAtMs",
+        "originalRead",
+        "fiscalPeriod",
+        "scope",
+        "currency",
+        "unit",
+        "figureStatus",
+        "metrics"
+      ],
+      "additionalProperties": false
+    },
+    "quantity": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "metric": {
+          "enum": [
+            "revenue",
+            "operatingProfit"
+          ]
+        },
+        "value": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "unit": {
+          "const": "KRW_BILLION"
+        },
+        "currency": {
+          "const": "KRW"
+        },
+        "fiscalPeriod": {
+          "type": "string",
+          "pattern": "^[0-9]{4}Q[1-4]$"
+        },
+        "scope": {
+          "const": "CONSOLIDATED"
+        }
+      },
+      "required": [
+        "metric",
+        "value",
+        "unit",
+        "currency",
+        "fiscalPeriod",
+        "scope"
+      ],
+      "additionalProperties": false
+    },
+    "note": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "\\S"
+        },
+        "claim_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+          },
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "text",
+        "claim_refs"
+      ],
+      "additionalProperties": false
+    },
+    "claim": {
+      "type": "object",
+      "properties": {
+        "claim_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        },
+        "kind": {
+          "enum": [
+            "FACT",
+            "ESTIMATE",
+            "HYPOTHESIS"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "\\S"
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+          },
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true
+        },
+        "quantity": {
+          "$ref": "#/$defs/quantity"
+        }
+      },
+      "required": [
+        "claim_id",
+        "kind",
+        "text",
+        "source_refs",
+        "quantity"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
