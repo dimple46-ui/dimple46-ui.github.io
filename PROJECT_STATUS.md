@@ -1770,3 +1770,16 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - blockers/retry: existing VALIDATOR_DEPLOY_COMMAND_UNVERIFIED and provider metrics unchanged; require new evidence/access before retry. Private-store connection still separately approval-gated. Live Feature/Signal/persistence gates unchanged.
 - next_exact_step:Read existing FORECAST_LEDGER.md before extending records; select one legally accessible official company report with a comparable prior figure, verify original source contents, and create one minimal report-change → thesis → immutable judgment example with public evidence only. If source cannot be read, record UNVERIFIED rather than infer from a title.
 - recommended_reasoning:Medium for one bounded public report-change example and existing-record reuse. No roadmap renumbering or large engine expansion.
+
+
+## CHECKPOINT — 2026-10-16T13:13:02.960531+09:00: one official report-change to historical judgment
+
+- parent:e2f412376abd649e7e3490d1ec49656586aefd22; code commit is the commit containing this checkpoint. Existing FORECAST_LEDGER.md inspected/reused, no parallel ledger rebuilt.
+- completed: domain/report-judgment.mjs,4 targeted tests and one historical Samsung2026Q2 example input/result. Original official pages read: July7 guidance and July30 results; source locations and first collection checkpoint recorded. Same-period consolidated KRW billion metric comparison; current report is COMPANY_REPORTED, never AUDITED or a2026Q3 actual claim. One issuer counted once.
+- interpretation: small preliminary-to-reported changes support only numerical consistency for that historical quarter. Valuation, later-quarter, independent corroboration and portfolio fit not evaluated. No current hold/buy/sell conclusion, predictive probability or forecast-success score. No original report redistribution/private assets.
+- tests:4/4 targeted PASS; deterministic frozen/hash record, append-only local API, duplicate/tamper/backdate rejection, mismatched period/currency/unit/scope, null/nonfinite and zero-denominator null. No durable storage guarantee: repository edits can still replace files; no deployed forecast engine/outcome DB.
+- reused: prior ledger6/6, consumer5/5 and core107/107 historical evidence, not rerun. No current remote CI/deployment/live assessment.
+- production_impact:NONE. No Worker/Secret/binding/route/history/D1/main/scheduler/private-store change. Existing Builds path retained.
+- blocked/retry: unchanged Validator command/provider metrics/private storage and current live gates. New evidence/access required before blocked retries.
+- next_exact_step: minimal fictional four-alternative comparison contract (holding addition/new candidate/cash/debt repayment), separating corporate merit from portfolio suitability; explicit missing funding/cost/risk fields prevent actionable conclusions.
+- recommended_reasoning:Medium.
