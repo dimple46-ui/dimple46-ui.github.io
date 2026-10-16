@@ -2142,3 +2142,8 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - safeguards: no actual personal data, credentials or source reports; no provider resource/Secret/binding/main/production/sharedD1/history/schedule/order modifications. Watch not changed, and no path is claimed accessible to it.
 - blocked/retry: private admin account/access unchanged; no retry without new evidence. Borrowing/debt repayment/payment deferral/collateral clearance and law-based major-shareholder assessment stay UNAVAILABLE.
 - next_exact_step: independent Sol High risk-contract review for account-specific debt and pledged-sale cash: explicit loan identifiers, principal/rate/maturity/costs, automatic repayment and withdrawal restrictions, then fictional fail-closed invariants before implementing cash effects. This is a core risk/data-consistency task; no model switch asserted, no real account connection inferred. Fixed implementation after contract review uses Sol Medium.
+
+
+## CHECKPOINT — bounded A4 risk-contract review (2026-10-16)
+
+Existing ac219d92 cash code/full334 evidence reused unchanged. Contract now specifies loan/pledge identifiers, known/effective times, automatic repayment order, withdrawal restrictions and reconciliation invariants. CONTRACT_DEFINED_NOT_IMPLEMENTED; no loan calculation, broker clearance or real/private data connection. No new tests or deployment needed for documentation-only change. PR5 stays Draft; research handoff will be a separate source branch, with no cash feature rewriting. Existing private-admin blocker/retry conditions and live-only gates unchanged.
