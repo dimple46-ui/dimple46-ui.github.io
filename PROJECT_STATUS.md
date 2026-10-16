@@ -2106,3 +2106,13 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - production_impact: NONE; no public/domain/runtime/config/production/binding/Secret/route/sharedD1/migration/history or actual private resource modification.
 - waiting_for_live: continuous market Feature2 persistence/latest corrected Feature and Signal runtime gates unchanged; local private version2 is unrelated and never promotes market/live status.
 - next_exact_step: approved private provider preflight after account boundary and management access evidence; fixed names/least privileges/plan-cost/existing targets once, then synthetic-only provisioning. High for actual private security/restore boundary; Medium for subsequent fixed implementation mechanics. No model changed.
+
+
+## CHECKPOINT — Pro common operating principles (2026-10-16T20:03:42+09:00)
+
+- branch feature/m2-operational-storage; checkpoint parent d24a05961e551ff839a5bec9b0cfa8e710009b94; verified executable source bfbf49b9b3496b55da89137767f556f58a3dac1c unchanged.
+- completed: user operating rules persisted in existing M2_OPERATIONS.md and linked from RESUME; no duplicate policy file or architecture. Model task routing: GPT-6.1 Sol Medium ordinary code/recovery/tests; Sol High complex consistency/algorithms; GPT-6 Astra Medium industry/company/portfolio; Astra High material strategy/compound-risk review. Actual model selection was not changed or claimed.
+- effect: favors sufficient risk-based verification and decision usefulness over mere usage reduction, reuses exact valid evidence, permits parallel long-term/private-asset and tactical work and autonomous safe continuity. Facts/estimates/scenarios, privacy and as-of quality remain explicit. No improved predictive accuracy claimed.
+- verification: documentation-only; no executable changes or repeated315-test run. Source315/315 and prior authenticated deployed c62ec46 receipts retained as source-specific historical evidence. Last checkpoint actual Cloudflare116940275450 SKIPPED; current commit requests [skip ci], not assumed provider outcome.
+- production_impact: NONE; no build/deployment requested, main merge, provider/Secret/binding/D1/history or actual private-data connection. Existing approvals and live-only gates unchanged.
+- blocked/retry/next_exact_step: PRIVATE_ADMIN_ACCOUNT_SELECTION_AND_MANAGEMENT_ACCESS_REQUIRED unchanged. New management boundary/access evidence is required before approved synthetic provider preflight. Do not repeat unchanged account/auth/Validator questions. Further fixed implementation uses Sol Medium after any needed separate High boundary review.

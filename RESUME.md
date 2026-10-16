@@ -1,6 +1,6 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: 2026-10-16T20:00:27+09:00
+- timestamp_kst: 2026-10-16T20:03:42+09:00
 - milestone: M2 Operational / Storage Architecture Stabilization; existing M3/asset-management tracks preserved.
 - branch: feature/m2-operational-storage
 - active_pr: #4 Draft/Open/unmerged verified at bfbf49b9b3496b55da89137767f556f58a3dac1c; PR3 already merged. No main merge approved.
@@ -8,7 +8,7 @@
 - code_parent_sha: a01cbbf10fe6b1011f7d28391ced2187305f98d6; all other tracked JS/MJS blobs matched parent. Source manifest: validation/private-analysis-provenance-20261016.json.
 - completed: encrypted private analysis envelope2 retains configured engineGitSha/workflow1/inputSchema1, revision/previousRevision, generation/input cutoff, server policy/restore epochs, request/input HMAC linkage and detached frozen policy snapshot. Reader requires exact supported version/metadata and keyed policy verification; no inferred SHA, legacy rewrite or older-row fallback. Minimal private HTTP view preserves historical release/policy reference and excludes raw policy/request/input identifiers.
 - last_successful_test: local full315/315 PASS,0 fail; targeted61/61 PASS (HTTP17/read17/input adapter27), fictional inputs/ephemeral local keys only. Local SQLite read writes remain0. Existing AEAD/nonce/atomicity tests included. NOT provider/runtime/live validation.
-- current_code_ci: no check runs present at the single immediate source-head lookup; NOT a new remote test/CI PASS. [skip ci] requested. Parent a01cbbf10fe6b1011f7d28391ced2187305f98d6 Cloudflare check116935511540 was SKIPPED. Observe new head separately, do not assume all providers skip.
+- current_code_ci: code bfbf49b immediate lookup had no checks, no new remote test PASS claimed. Checkpoint d24a05961e551ff839a5bec9b0cfa8e710009b94 Cloudflare check116940275450 completed SKIPPED. Current documentation commit requests [skip ci]; result observed separately.
 - last_successful_ci: exact c62ec46cdc1161b3f98d72c0ed1257aad1da400c Tests38855556255/job116826090523 SUCCESS,157/157 verified logs; candidate38855552812 remote116826119392 SUCCESS. Validator/provider skipped.
 - last_successful_build: c62ec46cdc1161b3f98d72c0ed1257aad1da400c, Cloudflare116826182160 SUCCESS. Existing sole Builds deployer reused; no rebuild.
 - deployed_sha: c62ec46cdc1161b3f98d72c0ed1257aad1da400c, deploymentId a573fe53-e437-4df6-87b7-295c7754cd8c. Runtime-reported SHA plus provider check, not independent code attestation.
@@ -21,8 +21,9 @@
 - waiting_for_live: continuous Feature2/latest corrected Feature/Signal runtime gates unchanged; synthetic/saved replay never becomes live PASS.
 - production_impact: NONE. No public/domain/runtime/main/production/candidate Worker/Secret/binding/route/shared D1/history/migration/actual private resource changes. Private DDL remains schema1, only new encrypted payload version2; no existing rows rewritten.
 - approved_scope: synthetic-only new market-private-risk-candidate Worker + PRIVATE_RISK_STORE/PrivateRiskStore SQLite DO + Access scope accepted2026-10-16T18:29:43+09:00. No actual resources created. No paid signup, real personal intake, sender, production change/main merge or runtime key/Secret custody inferred.
-- execution_policy: continuous safe work authorized. Reuse exact source/input evidence; stop at actual approval/access/model boundary without repeating unchanged blocker questions.
+- execution_policy: Pro-optimized user operating principles persisted in M2_OPERATIONS.md. Continue approved safe work autonomously; reuse valid evidence, perform sufficient risk-based verification for changed code/input/environment. Parallel asset-management/long-term/short-term/evaluation tracks; no production/private-data approval inferred.
+- operating_principles: M2_OPERATIONS.md common Pro principles updated 2026-10-16T20:03:42+09:00; user preference, no model switch or extra access inferred. Documentation-only checkpoint, parent d24a05961e551ff839a5bec9b0cfa8e710009b94; code/test/deployment identity unchanged.
 - next_exact_step: provider preflight remains blocked until the already-requested private account/approved management path is supplied. With new evidence, verify resource names/plan/least permissions before synthetic-only provisioning; do not retry unchanged access or claim private operational readiness.
-- recommended_next_reasoning: High for real private administration/key/restore/auth boundary; Medium for fixed config/test/checkpoint mechanics after those boundaries are established. No model setting changed.
+- recommended_next_reasoning: GPT-6.1 Sol Medium for ordinary recovery/development/tests; Sol High for complex code/data consistency. GPT-6 Astra Medium for company/industry/portfolio analysis; Astra High for material strategy/compound-risk review. Next private administration/key/restore/auth design review is a separate High unit; fixed implementation follows with Sol Medium. No actual model setting changed.
 
 Detailed history: PROJECT_STATUS.md. Existing automation: CANDIDATE_AUTOMATION.md. Public contract: CONSUMER_CONTRACT.md.
