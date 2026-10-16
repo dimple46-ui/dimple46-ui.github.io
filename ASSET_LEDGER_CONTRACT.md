@@ -46,3 +46,18 @@ Output separates base net assets, modelled securities/gross/net assets, signed n
 This is an instantaneous price-only model: no security sales, new borrowing, collateral call, liquidation, taxes, interest, FX, time path or liquidity effect is inferred. No trade, maximum allocation, forecast confidence or probability is produced. Actual asset quantities and all outputs remain private; public Worker import boundaries are tested.
 
 Targeted scenario5/5 PASS plus existing ledger6/6 and public-boundary2/2,13/13 total. Synthetic correctness only. No additional full-suite or remote validation claim for this isolated module.
+
+
+## Private local dated-cash coverage contract
+
+`evaluateCashDeadlines` in domain/cash-deadline-contract.mjs is a separate cash-only validator/calculator. It does not require live stock quotes or claim holdings/debt valuation completeness: a direct cash-payment risk can be examined independently of market Signals.
+
+Input is the existing KRW ledger plus schedule schema1 with ledgerAsOfMs exactly matching ledger.asOfMs. Every declared account must have explicit cash/obligations coverage, fresh source/verification, balance and withdrawable cash. Each matching schedule account needs coverageComplete=true and an explicit obligations list (empty is allowed). OPEN obligations require a unique obligationRef, nonnegative integer amountKrw, valid dueAtMs, sourceRef/verifiedAtMs, and cashTreatment=NOT_DEDUCTED_FROM_WITHDRAWABLE. The sum of all listed amounts, including after the requested horizon, must equal that account's additionalOutflowsKrw. An already-deducted or paid item cannot be subtracted again.
+
+Caller supplies nowMs, maxLedgerAgeMs and horizonAtMs>=nowMs. Due timestamps are exact instants supplied by the caller; no legal/bank holiday, settlement-calendar or time-zone cutoff is invented. Future deadlines are allowed; future/stale verification is rejected. The schedule asserts all relevant declared outflows have been supplied; local checks do not externally verify that assertion.
+
+Equal deadlines are grouped; OPEN overdue payments and items due exactly at the horizon are included. Per-account cumulative headroom uses only current withdrawable cash. Output distinguishes balance, withdrawable, due-through-horizon, signed headroom, shortfall and first shortage time. Total accountShortfallSumKrw sums each account's positive gap rather than offsetting it against another account's surplus. No transfer, future salary/dividend, security sale, new borrowing or reserve is assumed.
+
+An OVERDUE_OPEN_OBLIGATION remains a separate risk event even if cash covers it. Events here are local data, not delivered alerts; no event-notification lifecycle or channel is connected. Missing/incomplete dates/amounts/coverage, duplicate identity, unrecognized account, unreconciled totals and unsafe aggregate arithmetic return BLOCKED with all derived totals null and account/event arrays empty. BigInt prevents aggregate precision loss.
+
+Private output contains account references and financial values and must never be imported/published by the public Worker or written to public logs/artifacts with real data. Tests use fictional inputs only: cash-deadline8/8, together with ledger6/6 and public-boundary2/2,16/16 targeted PASS. No real account verification, production deployment, investable-cash rule, collateral/tax computation or alert delivery is claimed.
