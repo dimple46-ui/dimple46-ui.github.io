@@ -61,3 +61,14 @@ Equal deadlines are grouped; OPEN overdue payments and items due exactly at the 
 An OVERDUE_OPEN_OBLIGATION remains a separate risk event even if cash covers it. Events here are local data, not delivered alerts; no event-notification lifecycle or channel is connected. Missing/incomplete dates/amounts/coverage, duplicate identity, unrecognized account, unreconciled totals and unsafe aggregate arithmetic return BLOCKED with all derived totals null and account/event arrays empty. BigInt prevents aggregate precision loss.
 
 Private output contains account references and financial values and must never be imported/published by the public Worker or written to public logs/artifacts with real data. Tests use fictional inputs only: cash-deadline8/8, together with ledger6/6 and public-boundary2/2,16/16 targeted PASS. No real account verification, production deployment, investable-cash rule, collateral/tax computation or alert delivery is claimed.
+
+
+## Private local risk-summary adapter
+
+`buildPrivateRiskSummary` in domain/private-risk-summary.mjs reuses the three separate ledger, price-shock and dated-cash contracts with a common caller reference time and ledger cutoff. It performs no fetching, storage, notification or public API work. Its output is always PRIVATE_LOCAL_RISK_SUMMARY_ONLY/PARTIAL, never an overall safe classification.
+
+Valuation, investable cash, price stress and cash deadlines have separate availability. Valuation can remain available with investable cash unavailable when reserve is unspecified. Missing/unverified quotes block valuation/stress without hiding a valid direct cash shortage; missing dated obligations block only cash timing while other valid calculations remain visible. Invalid component policy/input exceptions become generic blocked issues, without serializing exception bodies. A future/invalid common cutoff is null, not a verified reference.
+
+Component limitations remain intact. No collateral, tax, trade decision, notification delivery, complete asset coverage or actual account verification is inferred. Output is private financial data and must not enter the public market response graph, CI logs or artifacts with real inputs. No new private storage/access has been approved or connected.
+
+Adapter4/4 targeted, combined adapter/stress/cash/public-boundary19/19 targeted; full174/174 local regression after final guard. Entirely fictional correctness, not remote CI or production validation. Existing authenticated candidate c62ec46 evidence remains separate and unchanged.

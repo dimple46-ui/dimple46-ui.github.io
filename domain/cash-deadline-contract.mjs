@@ -11,7 +11,7 @@ export function evaluateCashDeadlines(ledger,schedule,{nowMs,maxLedgerAgeMs,hori
  const issues=[],accounts=[],riskEvents=[];
  const issue=(path,code)=>issues.push({path,code});
  const blocked=()=>({contractVersion:1,status:'BLOCKED',scope:'PRIVATE_LOCAL_CASH_COVERAGE_ONLY',
-  inputCutoffMs:time(ledger?.asOfMs)?ledger.asOfMs:null,totals:empty(),accounts:[],riskEvents:[],issues});
+  inputCutoffMs:time(ledger?.asOfMs)&&ledger.asOfMs<=nowMs?ledger.asOfMs:null,totals:empty(),accounts:[],riskEvents:[],issues});
  if(ledger?.schemaVersion!==1||ledger?.currency!=='KRW')issue('ledger','UNSUPPORTED_LEDGER_SCHEMA_OR_CURRENCY');
  if(!time(ledger?.asOfMs)||ledger.asOfMs>nowMs||nowMs-ledger.asOfMs>maxLedgerAgeMs)
   issue('ledger.asOfMs','MISSING_STALE_OR_FUTURE_TIME');
