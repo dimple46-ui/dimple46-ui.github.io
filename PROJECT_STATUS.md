@@ -1719,3 +1719,15 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Per-flow missing/stale/future/invalid input ->suppression diagnostic, no raw fallback. Oldest input quality influences ceiling; descriptive MEDIUM confidence capped by weakest3. Evidence carries units/source times/intervals/midpoint, no probability/action.
 - New adapter4 tests + existing v2 compatibility11=15/15 PASS locally. Covers Hynix v2 selling-accelerating vs v3 selling-decelerating, both stocks institution reversals, deterministic IDs, no input mutation, quality and missing-time isolation. LOCAL_TESTED_NOT_DEPLOYED/CI_NOT_RUN, synthetic correctness only.
 - No production/D1/API/Secret/binding changes. Existing deploy evidence reused, no auth/read repeated. Next: v3-aware local replay validator with explicit inputs, saved actual capture and correct source SHA; keep v2 API. Medium implementation. Checkpoint skip-ci; provider skip must be checked rather than assumed.
+
+
+## CHECKPOINT — 2026-10-16T12:02:03.656973+09:00: Signal v3 saved-input replay
+
+- branch: feature/m2-operational-storage; verified parent/adapter SHA: 74855080042caac2dc8789e78c6403acc712afab. Replay-validator commit is the commit containing this checkpoint.
+- completed: separate local v3 replay validator/CLI; existing v2 validator API unchanged; selected-field actual 2026-10-16T02:28:46.739Z public capture preserved in tests/fixtures/stock-flow-20261016.json.
+- tests: new targeted replay2/2 PASS. Existing adapter4+v2 compatibility11 PASS reused, not rerun. No full regression/CI or deployment claimed.
+- validation: saved capture replay PASS, four descriptive signals; Samsung foreign BUYING_ACCELERATING, Hynix foreign SELLING_DECELERATING, both institution FLOW_REVERSAL. Hynix normalized acceleration +52.196969697 shares/minute_squared versus legacy delta difference -12000 shares; these quantities have distinct meanings.
+- quality: UNVERIFIED_TIME/MEDIUM ceiling retained for all three source samples; original pipeline DEGRADED preserved. Capture establishes availability by capture time only, not each historical first arrival. This is LOCAL saved-public-input evidence, NOT authenticated D1 or deployed Signal validation. D1/deployment checks NOT_PERFORMED.
+- safety: stale/null/missing/future/cross-day input rejection covered; deterministic output, finite evidence, source identity/version/cutoff checked. No new API reads, D1 queries/writes, Worker/binding/Secret/route/production changes.
+- blocked: VALIDATOR_DEPLOY_COMMAND_UNVERIFIED, provider metrics and existing live gates unchanged. Retry only with new authorized management/configuration evidence.
+- next_exact_step: one integration regression at accumulated helper/adapter/replay boundary, recording exact code SHA; do not deploy merely to reconfirm local results.

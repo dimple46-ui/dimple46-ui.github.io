@@ -1,6 +1,6 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: 2026-10-16T11:55:00+09:00
+- timestamp_kst: 2026-10-16T12:02:03.656973+09:00
 - milestone: M2 — Operational / Storage Architecture Stabilization; independent M3 correctness work
 - branch: feature/m2-operational-storage
 - active_pr: #4 Draft/Open/unmerged; PR #3 merged. No main merge approval.
@@ -20,7 +20,7 @@
 - build_trigger_evidence: checkpoint9ba45e2 Cloudflare check115616776743 actually skipped; reason not exposed, so skip-ci alone is not assumed to guarantee skipping. New commit check pending.
 - production_impact: NONE; no Worker/Secret/binding/route/migration/history/main changes.
 - waiting_for_live: current D1/Feature2 persistence/latest corrected Feature replay/Signal-runtime gates unchanged. Public source arithmetic PASS is narrower.
-- next_exact_step: add v3-aware local replay validation for explicit three-bucket evidence and verify saved actual public capture with correct code SHA; preserve v2 validator API. No Worker endpoint/writer/persistence activation.
+- next_exact_step: run one integration regression at the accumulated kinematics/Signal-v3/replay boundary; record the exact code SHA and preserve existing v2 API. No deployment or live gate promotion.
 - recommended_next_reasoning: Medium for bounded v3 replay validator and saved-input integration; High only for changed time-basis/version contract.
 
 Detailed evidence: PROJECT_STATUS.md. Existing automation: CANDIDATE_AUTOMATION.md.
@@ -30,3 +30,7 @@ Detailed evidence: PROJECT_STATUS.md. Existing automation: CANDIDATE_AUTOMATION.
 
 - adapter_validation: new adapter4 tests plus v2 compatibility11 tests=15/15 PASS. v2 remains SIGNAL_VERSION2; v3 explicit boolean enabled:true and Feature2 context required. Weakest3 input quality caps confidence. CANDIDATE_LOCAL_TESTED_NOT_DEPLOYED/CI_NOT_RUN.
 - adapter_scope: v3 is stock-flow-only, returns signals/diagnostics; no global Signal v3 engine, no latest Feature v2 persistence, no endpoint or alert. Today's counterexample numbers used in correctness fixtures, not a new live runtime validation.
+
+- latest_completed: v3-aware local replay CLI + durable selected-field actual public capture; adapter identity 74855080042caac2dc8789e78c6403acc712afab. New targeted tests2/2 PASS; saved-input replay PASS with4 descriptive signals. No API/database operation.
+- latest_replay_scope: SAVED_PUBLIC_INPUT_LOCAL_REPLAY; all source samples conservatively UNVERIFIED_TIME, confidence MEDIUM; availability established only by capture, not historical first arrival. Samsung foreign buying accelerating, Hynix foreign selling decelerating, both institution flow reversal. Pipeline DEGRADED preserved.
+- current_code_status: LOCAL_TESTED_NOT_DEPLOYED; CI_NOT_RUN. This checkpoint commit identifies the replay validator; parent7485508 identifies the adapter. Historical deployment/CI remain unchanged.
