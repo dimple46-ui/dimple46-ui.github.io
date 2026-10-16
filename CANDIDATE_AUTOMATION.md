@@ -24,8 +24,18 @@ A disabled job is `NOT_EXECUTED`, not PASS. No deployment, migration, token edit
 private resource creation, or live-gate promotion is performed. Cloud Browser login errors are separate
 from Cloudflare API-token authentication and are not retried to run this audit.
 
-Local targeted validation: 27/27 PASS, plus workflow YAML parsing. Remote execution and opt-in variable
-availability remain unverified until an actual Actions job produces a receipt.
+Source `3cbcebd23fc50415aa3785d80bc3bf4f044d3e2f`: local targeted27/27 PASS and workflow YAML parsing;
+GitHub Tests run38922501378/job117045681443 passed319/319, and Candidate checks
+run38922501400/local-checks117045681525 passed. The provider audit job117045763359 was SKIPPED;
+its opt-in configuration and authenticated management access are not verified. Intelligence and
+validator jobs were also SKIPPED as intended on this PR.
+
+The separate provider-created `Workers Builds: market-feature-validation` check117045864053 FAILED
+(build9a521b8d-cfcf-4814-a267-7ff6b04a83a9). GitHub supplied no failure detail/annotations. This is
+not a successful deployment; its provider execution stage and runtime effect remain unverified.
+Do not rerun the build or blocked Cloud Browser login without new evidence. The audit workflow
+contains no deploy/migration commands. Account-ID variable registration is user-reported configuration
+evidence only, not a successful API-token authentication test.
 
 ## Latest result (2026-10-13)
 
@@ -169,3 +179,39 @@ Official references:
 - https://developers.cloudflare.com/workers/wrangler/configuration/
 - https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/
 - https://developers.cloudflare.com/d1/tutorials/build-an-api-to-access-d1/
+
+
+## Validator Builds preparation — 2026-10-13 14:28 KST
+
+User confirms FEATURE_V2_WRITE_ENABLED=false. Screenshot shows a repository-connection dialog
+with main/default `npx wrangler deploy`, not a completed Git link; instructed Cancel, user acknowledged.
+GitHub CLOUDFLARE_API_TOKEN is absent per user. Do not request token recreation or use intelligence
+credentials to manage provider settings.
+
+Prepared `wrangler.feature-validation.example.toml`: fixed existing validator target, generated entry,
+write flag false, existing market-history database ID, full pre-upload tests. TOML parsed and safety
+fields checked locally. NOT_DEPLOYED; this template is not proof of current bindings/runtime date.
+Next inspect actual MARKET_HISTORY binding and additional bindings; compare compatibility date before
+using the template. Do not connect with main or the generic deploy command. Existing provider Secret
+VALIDATION_TOKEN is never copied into source. keep_vars preserves Dashboard variables, not arbitrary
+bindings; do not claim it prevents all configuration changes.
+
+After those checks, use the existing Worker Git integration (one deployer per Worker), branch
+feature/m2-operational-storage, root /, candidate-specific configuration. Planned command, NOT YET
+AUTHORIZED TO RUN BEFORE PREFLIGHT: `npx wrangler deploy --config wrangler.feature-validation.example.toml`.
+The write flag remains false; no FEATURE_ENGINE_GIT_SHA override is needed for read-only replay.
+Reusing the existing test gate also checks validator source hash. Successful upload must still be
+followed by authenticated read-only replay1791778965346 and zero-write evidence. Workflow validator
+checks remain disabled until existing VALIDATION_TOKEN is available in its GitHub Secret store.
+Reference: https://developers.cloudflare.com/workers/wrangler/configuration/#source-of-truth
+
+
+## Summary-aware validation — 2026-10-16T14:10:07.772888+09:00
+
+Existing check-candidate.mjs now performs no-token/wrong-token rejection and one authenticated bounded GET /summary after the existing health/state/features checks. It checks exact runtime-reported SHA, source release3/API1/Feature2, explicit cutoff/age policy, independent Feature freshness, quality code allowlist and unavailable private capabilities. Receipts include only selected metadata, no source payload/token/private scenario. Runtime SHA remains reported identity, not independent provider code attestation.
+
+Both observation and Feature query telemetry must explicitly report rowsWritten0 and finite rowsRead; missing/null telemetry never becomes a0-write PASS. Stale Feature may correctly be UNAVAILABLE with successful reads. Missing/corrupt/read-failed Feature is a supported partial handler response, but cannot satisfy strict remote validation when query metadata is missing; failures remain failures, not deployment success. The existing standalone /features check also still requires a stored row.
+
+Existing workflow/build/credential/artifact path reused. New public modules/summary tests are included in watch paths, local-checks adds the new checker tests. Validator and management-provider jobs require workflow_dispatch plus existing opt-in flags, so candidate push cannot retry those blocked external paths. No flags, Secrets, bindings, account access or competing deployer added. One variable-readback attempt was unavailable; no credentials/values read or repeated request.
+
+Local evidence: checker/actual-handler targeted17/17 PASS; full154/154 PASS; final workflow-gate targeted22/22 PASS. Mocked/local evidence only. This meaningful code commit intentionally allows the existing isolated candidate Builds and CI path to run once. Build started/success and authenticated runtime outcome remain pending until actual checks/artifact prove them. Production is excluded.
