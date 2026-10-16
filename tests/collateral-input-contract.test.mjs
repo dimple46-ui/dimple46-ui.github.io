@@ -21,6 +21,7 @@ test('complete fictional input passes schema only; all collateral calculations r
 });
 test('missing coverage, debt, haircut, eligibility, rule identity or effective time blocks inputs',()=>{
  for(const mutate of [f=>delete f.accounts[0].coverage.securedDebt,f=>f.accounts[0].securedDebtKrw=null,
+ f=>f.accounts[0].positions[0].ticker=123456,
  f=>delete f.accounts[0].accruedChargesKrw,f=>delete f.accounts[0].positions[0].haircutBps,
  f=>f.accounts[0].positions[0].eligibility='UNKNOWN',f=>delete f.accounts[0].rule.formulaRef,
  f=>delete f.accounts[0].rule.effectiveUntilMs,f=>f.accounts[0].collateralScope='CROSS_ACCOUNT_POOL']){

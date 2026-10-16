@@ -102,3 +102,20 @@ Bounds of32 accounts and256 positions per account are technical input-processing
 The private risk-summary adapter accepts optional collateralInput with explicit maxCollateralInputAgeMs/maxCollateralQuoteAgeMs. It requires exact ledger cutoff and declared account-set matching; absent input is NOT_REQUESTED. This does not yet reconcile position quantities or debt classification across ledgers, and does not make collateral calculation available. Invalid policy/scope is isolated; other supported components, including direct cash risk, remain available independently. Public module graph excludes all private domain modules.
 
 Validation: gate6/6, gate+boundary8/8, integrated16/16 and full190/190 local PASS. Fictional test fixtures only; not a real brokerage/account/terms validation, candidate deployment or live-market PASS. Broker formula work requires a separately scoped High review using authoritative applicable terms; private account integration remains separately approved.
+
+
+## Local collateral-to-ledger reconciliation
+
+`reconcileCollateralToLedger` in domain/collateral-reconciliation.mjs first reuses the collateral schema gate, then checks a matching bounded ledger snapshot. Policy supplies maxLedgerAgeMs separately from collateral input/quote ages. Same schema1/KRW cutoff and exact declared account set are required; ledger source/verification and holdings/debt coverage must be valid. No quote lookup or broker formula is performed.
+
+Reconciliation requires ledger account holdingBasis=OWNED_SETTLED_SHARES, collateral positionScope=OWNED_PLEDGED_SUBSET, and collateral debtScope=ALL_DEBT_SECURED_TO_THIS_ACCOUNT. Missing or other ownership/pool semantics are unsupported/BLOCKED; the helper does not reinterpret borrowed/unsettled/third-party collateral. Each pledged ticker quantity must not exceed that same account's declared owned settled quantity. A complete covered ledger's absent ticker is known0; missing/incomplete holdings are never treated as0. Other account surplus shares cannot offset a local shortage. Prices/haircuts are not reconciled into a collateral value.
+
+Each ledger debt requires a unique debtRef across the declared scope, principalKrw, accruedChargesKrw and explicit securityType=SECURED_TO_THIS_ACCOUNT or UNSECURED. Only the former is summed, using exact integer arithmetic. Its principal and accrued charges must independently equal the collateral snapshot fields. Unclassified or secured-elsewhere debt is unsupported, not automatically counted as unsecured or secured. Empty covered debt and explicit0 are valid; unknown debt is not. Duplicate debt/holding IDs, unsafe secured totals and amount mismatches block reconciliation.
+
+Ledger bounds are32 accounts/256 holdings/128 debt entries per account, technical limits only. Tickers must be strings of six digits; numeric coercion is rejected in collateral input and owned holdings.
+
+Successful matching adds reconciliation.status=MATCHED_LOCAL, while overall collateral status/calculation remain UNAVAILABLE and all calculated collateral fields remain null. Failure clears validated counts and preserves blocked issues. The risk-summary adapter now uses this gate: legacy ledger snapshots can still support their existing valuation/cash contracts, but cannot claim collateral consistency without the new explicit scope/classification fields. Failures remain isolated from direct cash risk.
+
+This is local assertion consistency, not external brokerage/ownership/debt attestation, legal eligibility or margin safety. Real formula/terms, private data access and deployment remain separate gates. No raw personal IDs/amounts/source text are echoed by this reconciliation result.
+
+Tests: new7/7, initial reconciliation+input13/13, integrated related23/23, one full197/197 local PASS. Fictional fixtures only. Public import boundary remains intact; no candidate or production deployment is required.

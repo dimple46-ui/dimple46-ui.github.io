@@ -3,7 +3,7 @@ import {evaluateAssetLedger} from './asset-ledger-contract.mjs';
 import {evaluateAssetStress} from './asset-stress-contract.mjs';
 import {evaluateCashDeadlines} from './cash-deadline-contract.mjs';
 import {evaluateConcentration} from './concentration-contract.mjs';
-import {validateCollateralInput} from './collateral-input-contract.mjs';
+import {reconcileCollateralToLedger} from './collateral-reconciliation.mjs';
 const time=n=>Number.isSafeInteger(n)&&n>0&&Number.isFinite(new Date(n).getTime());
 const blocked=()=>({status:'BLOCKED',issues:[{code:'COMPONENT_INPUT_OR_POLICY_REJECTED'}]});
 function safely(evaluate){try{return evaluate();}catch{return blocked();}}
@@ -18,17 +18,8 @@ export function buildPrivateRiskSummary({ledger,prices,scenario,schedule,collate
  const concentration=concentrationDenominator===undefined?{status:'NOT_REQUESTED',issues:[]}:
   safely(()=>evaluateConcentration(ledger,prices,{...ledgerPolicy,denominator:concentrationDenominator}));
  const collateral=collateralInput===undefined?{status:'NOT_REQUESTED',inputValidationStatus:'NOT_REQUESTED',issues:[]}:
-  safely(()=>{
-   const ledgerRefs=Array.isArray(ledger?.accounts)?ledger.accounts.map(a=>a?.accountRef):[];
-   const collateralRefs=Array.isArray(collateralInput?.accounts)?collateralInput.accounts.map(a=>a?.accountRef):[];
-   if(collateralInput?.asOfMs!==ledger?.asOfMs||ledgerRefs.length===0||
-      !ledgerRefs.every(ref=>typeof ref==='string')||new Set(ledgerRefs).size!==ledgerRefs.length||
-      collateralRefs.length!==ledgerRefs.length||new Set(collateralRefs).size!==collateralRefs.length||
-      !collateralRefs.every(ref=>ledgerRefs.includes(ref)))
-    return {status:'BLOCKED',inputValidationStatus:'BLOCKED',issues:[{code:'LEDGER_COLLATERAL_CUTOFF_OR_SCOPE_MISMATCH'}],
-     calculation:{status:'UNAVAILABLE',collateralValueKrw:null,coverageRatioBps:null,headroomKrw:null,liquidationQuantity:null}};
-   return validateCollateralInput(collateralInput,{nowMs,maxInputAgeMs:maxCollateralInputAgeMs,maxQuoteAgeMs:maxCollateralQuoteAgeMs});
-  });
+  safely(()=>reconcileCollateralToLedger(ledger,collateralInput,{nowMs,maxLedgerAgeMs,
+   maxInputAgeMs:maxCollateralInputAgeMs,maxQuoteAgeMs:maxCollateralQuoteAgeMs}));
  const valued=['CALCULATED','PARTIAL'].includes(valuation.status);
  return {contractVersion:1,status:'PARTIAL',scope:'PRIVATE_LOCAL_RISK_SUMMARY_ONLY',generatedAtMs:nowMs,
   inputCutoffMs:time(ledger?.asOfMs)&&ledger.asOfMs<=nowMs?ledger.asOfMs:null,

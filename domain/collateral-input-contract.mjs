@@ -36,7 +36,7 @@ export function validateCollateralInput(input,{nowMs,maxInputAgeMs,maxQuoteAgeMs
   const tickers=new Set();positions+=a.positions.length;
   for(const [j,h] of a.positions.entries()){
    const hp=`${p}.positions[${j}]`;
-   if(!/^\d{6}$/.test(h?.ticker??'')||tickers.has(h.ticker)||!money(h?.quantity)||!money(h?.priceKrw)||
+   if(typeof h?.ticker!=='string'||!/^\d{6}$/.test(h.ticker)||tickers.has(h.ticker)||!money(h?.quantity)||!money(h?.priceKrw)||
       (h.quantity>0&&h.priceKrw===0)||h?.currency!=='KRW'||h?.quality!=='VERIFIED'||
       !ref(h?.sourceRef)||!recent(h?.observedAtMs,maxQuoteAgeMs)||
       !['ELIGIBLE','INELIGIBLE'].includes(h?.eligibility)||!Number.isInteger(h?.haircutBps)||h.haircutBps<0||h.haircutBps>10000)
