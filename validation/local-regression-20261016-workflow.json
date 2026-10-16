@@ -1,0 +1,28 @@
+{
+  "validatedAtKst": "2026-10-16T13:32:46.964015+09:00",
+  "validationType": "LOCAL_SYNTHETIC_INTEGRATION_REGRESSION",
+  "parentSha": "9377e6379e5f71ea1e8594cb0057110660fc8646",
+  "addedFilesSha256": {
+    "domain/local-consumer-workflow.mjs": "a63ba39d5200fc0ce08560268435ddae1dfa656ec8ef3287653411a0de3bb595",
+    "tests/local-consumer-workflow.test.mjs": "b6de5366dd19b29d9664c3234f789d56726d03115190abf3290a4c78dc68d9a5"
+  },
+  "parentBlobsMatched": 43,
+  "parentBlobMismatches": 0,
+  "targeted": {
+    "tests": 4,
+    "pass": 4
+  },
+  "full": {
+    "command": "node --test tests/*.test.mjs",
+    "tests": 132,
+    "pass": 132,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "remoteCi": "NOT_RUN",
+  "deployment": "NOT_PERFORMED",
+  "liveValidation": "NOT_PERFORMED",
+  "privateData": "FICTIONAL_ONLY",
+  "productionImpact": "NONE"
+}

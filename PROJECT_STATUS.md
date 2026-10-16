@@ -1795,3 +1795,15 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - blockers: unchanged Validator deployment command/provider metrics/private storage/current live gates. Retry conditions unchanged.
 - next_exact_step:Add one fictional end-to-end local integration test across consumer/fallback, ledger and alternative comparison, with an explicit public/private output boundary. Prove GitHub price-only fallback cannot imply Feature/Signal/portfolio readiness and private scenario data cannot enter the proposed public result. Do not connect or modify scheduled tasks.
 - recommended_reasoning:Medium.
+
+
+## CHECKPOINT — 2026-10-16T13:32:46.964015+09:00: local consumer/ledger/comparison integration
+
+- parent:9377e6379e5f71ea1e8594cb0057110660fc8646; integration code commit contains this checkpoint. Source identities: domain/local-consumer-workflow.mjs SHA256 a63ba39d5200fc0ce08560268435ddae1dfa656ec8ef3287653411a0de3bb595; tests SHA256 b6de5366dd19b29d9664c3234f789d56726d03115190abf3290a4c78dc68d9a5.
+- completed: fixed metadata-only public consumer summary and explicit private combined workflow. Separate private fictional inputs/prices/policy and boolean opt-in; private errors sanitized. Existing consumer, ledger and comparison implementation reused unchanged. Public output independent of private scenario/status; price-only fallback never implies Feature/Signal/portfolio readiness.
+- targeted tests:4/4 PASS. Sentinels detect private descriptions/IDs/scenario fields, raw-string exclusion, stale Feature age/cutoff independence, no implicit quote verification, no mutation/auto-opt-in.
+- integration gate:43 parent source/test/schema blobs matched GitHub exactly, then one full node --test tests/*.test.mjs run132/132 PASS,0 failures/skips/cancelled. Receipt: validation/local-regression-20261016-workflow.json. This is current local/synthetic integration evidence, not live/API/D1/provider validation. Historical successful CI/deployment reused, no auth retry.
+- production_impact:NONE; no Worker/Secret/binding/route/main/history/D1/private store/scheduled-task change. No real personal input/output stored. Combined/private outputs explicitly not public. Existing Cloudflare Builds reused; new skip behavior must be observed, not assumed.
+- blocked: existing Validator command/provider/private storage/current live gates unchanged; retry only with new required evidence/access. No deployed or scheduler-accessible integrated result exists yet.
+- next_exact_step:Add a local CLI that accepts saved public market inputs and emits only buildPublicConsumerSummary output, with explicit cutoff/age policy and no private-input option; test stdout/error redaction and replay an existing saved fixture. Do not connect scheduled tasks, add authentication or deploy.
+- recommended_reasoning:Medium.
