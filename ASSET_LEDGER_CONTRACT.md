@@ -149,3 +149,29 @@ Material shortage evidence is positive gap plus first-shortfall deadline. Materi
 Blocked/partial/corrupt cash results, stale underlying cutoff, wrong account scope or changed horizon preserve caller state with no resolution/intents. Out-of-order snapshots are rejected. Evidence history must match lifecycle IDs/versions/type/severity; missing state is not silently reset. JSON serialization/reload preserves local duplicate suppression, but there is no durable store or exactly-once delivery guarantee. Valid schema/consistency does not externally attest source facts or prevent deliberate caller-state tampering.
 
 All notification fields remain NOT_CONNECTED/NOT_REQUESTED/UNCONFIRMED. No actual notification, private file/store or scheduler is connected. Adapter8/8 plus lifecycle10/cash8/public-boundary2,28/28 targeted PASS using the existing calculator and fictional inputs. A full cumulative run is reserved for the immediately following local workflow integration.
+
+
+## Private local workflow and fictional end-to-end replay
+
+`runPrivateRiskWorkflow` in domain/private-risk-workflow.mjs composes existing risk-summary and cash-event helpers; it does not recalculate rules independently. Caller supplies analysisPolicy and, only when event processing is requested, previousEventState plus an eventPolicy at the same reference time. Missing prior state means NOT_REQUESTED, not an implicitly initialized or persisted event ledger.
+
+Valuation, price stress, concentration, cash timing and collateral input gates remain separate. Stale quotes do not hide independently valid cash risk. Incomplete cash timing preserves known event state; complete recovery explicitly resolves it. Malformed previous state or incompatible event policy yields BLOCKED with state=null and RETAIN_CALLER_STATE_UNCHANGED, never a new empty state or a claim that no risk exists. Other valid analysis remains visible. Overall status alwaysPARTIAL, notifications/delivery/trade/tax/actual-collateral computation unavailable.
+
+The returned summary/state/intents are PRIVATE financial data if real inputs are supplied. Current tests use fictional inputs only; no actual user data, network, file/store connection, sender, scheduler or public endpoint exists. JSON serialization in tests is not durable persistence or tamper evidence. Fixed horizon rollover requires a separate explicit design.
+
+Validation: workflow6/6, workflow+adapter+public-boundary16/16 targeted; one cumulative full221/221 local PASS. Record validation/private-risk-workflow-fictional-20261016.json contains only test counts/source hashes/log digest and scope, no holdings/amounts/credentials. It is local correctness evidence, not remote CI/account/notification/live-production validation. Existing candidate c62ec46 remains unchanged.
+
+
+## Next boundary: private ingestion and durable state — HIGH_REVIEW_REQUIRED
+
+The local prototype is complete enough for fictional replay. It is not ready to accept actual user assets. The next unit is a bounded security/architecture review, not another market collector or a new deployer. No private store, credential, Worker, binding, route, file connection or sender has been selected/connected by these changes.
+
+Before any real connection, review must resolve and produce a concrete proposal for:
+
+1. Approved private input/storage destination and authorized readers, isolated from public GitHub, market D1/API, public CI logs and artifacts. Work conversations/uploads and scheduled tasks do not automatically share private access.
+2. Authentication/least privilege, encryption and key custody, data retention/deletion, backup/recovery, error redaction, and handling of real holdings/cash/debt identifiers. No secret values in code or checkpoint.
+3. Atomic durable event state/material evidence/outbox boundary. Crash between state update and intent handling must not silently lose or duplicate a user notification. No exactly-once or delivery claim without tests.
+4. Versioned state restoration and explicit account/horizon policy changes. Missing, corrupt or outdated state must not reset active risk. Caller-retain/null outcomes must not overwrite persisted state.
+5. Distinct intent/request-success/provider-delivery/user-ack facts and explicit delivery-channel approval. Current code sends nothing. Broker formulas and personal allocation/risk thresholds require separately validated applicable inputs; no default rule is inferred.
+
+Review deliverables: one limited design decision in this existing document, defined data/auth boundaries, failure/recovery tests, deployment/rollback proposal, and exact user approval required for real connection. High is recommended because this is a new private-data/authentication/persistence architecture, not a small change to the existing public candidate. Designing it does not authorize implementation/deployment of a connection.
