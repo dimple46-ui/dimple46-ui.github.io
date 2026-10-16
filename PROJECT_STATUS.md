@@ -1866,3 +1866,15 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - blocked/retry: existing Validator command/provider measurements/private storage/live gates unchanged; no auth retry/token reissue.
 - next_exact_step:Extend the existing candidate-check script/tests to verify authenticated /summary with explicit bounded age policy, exact runtime SHA, zero/unknown D1 write telemetry, Feature failure/staleness and unavailable private capabilities. Reuse existing credential/build/artifact path; prepare checks before one candidate rollout, with no second deployer or production change.
 - recommended_reasoning:Medium, narrow existing checker extension and preparation for approved isolated candidate rollout.
+
+
+## CHECKPOINT — 2026-10-16T14:10:07.772888+09:00: summary-aware existing automation, rollout pending
+
+- parent:3baffb358d97c32332a7e5dc4ef94491ae5eb69e; code commit contains checkpoint; changed hashes in validation/local-regression-20261016-summary-check.json.
+- completed: existing checker validates /summary auth, exact reported SHA/release3, explicit bounded age/cutoff, Feature quality/stale/unavailable semantics and forbidden private fields/capabilities. Requires explicit0-write metadata for both queries; unknown/missing/failure cannot produce PASS. Receipt contains metadata only. Existing error classifier adds SUMMARY with no body/token/retry.
+- automation: existing workflow local tests/watch paths extended. Validator/provider jobs manual workflow_dispatch+their prior flags only, preventing unrelated blocked push retries. No deployer/token/Secret/binding/config regeneration. Variable readback attempted once/unavailable, no reattempt or value exposure.
+- local tests:17/17 related, full154/154, final workflow-gated22/22 PASS. Final workflow guard tested after full-suite stage; no second full rerun. No synthetic result promoted to runtime/live evidence.
+- deployment: normal meaningful code commit intentionally permits existing isolated candidate Builds+CI once. Actual build start/success/deployed SHA/authenticated receipt are PENDING_VERIFICATION, not DEPLOYED. Historical candidate5dc82e5 retained until actual evidence replaces it.
+- production_impact:NONE. No main, market-relay, productionSecret/binding/route, shared migration/history change or scheduled/private-store connection.
+- next_exact_step:Observe the exact-SHA existing Cloudflare Build and existing candidate-check run for this code commit once states advance. Reuse produced artifact for authenticated /summary evidence; if skipped/failed/disabled, record its precise blocker without rebuild/auth retry or another deployer.
+- recommended_reasoning:Medium. If build/auth fails, persist exact blocker/retry condition; no repeated unchanged attempt.

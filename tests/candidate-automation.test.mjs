@@ -39,6 +39,9 @@ test('automation exercises actual candidate handlers, preserves stale/null and n
   assert.equal(result.quality, 'STALE_INPUT');
   assert.equal(result.liveMarketGate, 'UNCHANGED');
   assert.equal(result.deployment, 'NOT_PERFORMED');
+  assert.equal(result.summary.runtimeReportedSha,sha);
+  assert.equal(result.summary.serviceReleaseVersion,3);
+  assert.equal(f.calls.filter(call=>new URL(call.url).pathname==='/summary').length,3);
   assert.ok(f.calls.every(call => call.method === 'GET'));
   assert.ok(!JSON.stringify(result).includes(token));
 });
@@ -104,6 +107,10 @@ test('intelligence checks do not require management or validator credentials and
   assert.match(workflow, /vars.VALIDATOR_CHECKS_ENABLED == 'true'/);
   assert.match(workflow, /vars.CANDIDATE_ACCESS_AUDIT_ENABLED == 'true'/);
   assert.doesNotMatch(workflow, /continue-on-error:\s*true/);
+  for(const name of ['validator-checks','provider-access-audit']) {
+    const job=workflow.split(`  ${name}:`)[1];
+    assert.match(job.slice(0,job.indexOf('runs-on:')), /github.event_name == 'workflow_dispatch'/);
+  }
 });
 
 test('existing short tokens are authenticated by server, never approved by length alone', async () => {
@@ -138,7 +145,7 @@ test('validator write-disabled evidence must be explicit and readable', () => {
 });
 
 test('failure codes identify endpoint and auth stage without secrets, bodies or retries',async()=>{
- for (const endpoint of ['/health','/state','/features','/history']) {
+ for (const endpoint of ['/health','/state','/features','/history','/summary']) {
   const f=fixture();let failures=0;
   const fetcher=async(url,options)=>{
    if(new URL(url).pathname===endpoint && options.headers.Authorization===`Bearer ${token}`) {
@@ -159,5 +166,21 @@ test('failure codes identify endpoint and auth stage without secrets, bodies or 
    assert.match(error.message,scenario==='network'?/NETWORK_OR_TIMEOUT_FAILURE_AT_HEALTH_NO_TOKEN/:/INVALID_JSON_RESPONSE_AT_HEALTH_NO_TOKEN/);
    assert.ok(!error.message.includes(token));assert.ok(!error.message.includes('private'));return true;
   });
+ }
+});
+
+test('actual summary response corruption blocks the existing authenticated smoke receipt',async()=>{
+ for(const mutate of [s=>s.release.workerGitSha='b'.repeat(40),s=>s.queryMeta.feature=null,
+ s=>s.capabilities.portfolio='AVAILABLE']){
+  const f=fixture();let authenticatedSummaryCalls=0;
+  const fetcher=async(url,options)=>{
+   const response=await f.fetcher(url,options);
+   if(new URL(url).pathname==='/summary'&&options.headers.Authorization===`Bearer ${token}`){
+    authenticatedSummaryCalls++;const body=await response.json();mutate(body);return Response.json(body);
+   }
+   return response;
+  };
+  await assert.rejects(checkCandidate({kind:'intelligence',token,expectedSha:sha,fetcher}));
+  assert.equal(authenticatedSummaryCalls,1);
  }
 });

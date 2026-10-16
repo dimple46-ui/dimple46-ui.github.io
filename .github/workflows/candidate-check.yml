@@ -7,6 +7,11 @@ on:
     branches: [feature/m2-operational-storage]
     paths:
       - 'scripts/check-candidate.mjs'
+      - 'tests/candidate-summary-check.test.mjs'
+      - 'tests/intelligence-summary.test.mjs'
+      - 'tests/public-module-boundary.test.mjs'
+      - 'cloudflare/public-consumer-summary.mjs'
+      - 'cloudflare/consumer-fallback.mjs'
       - 'scripts/audit-candidate-access.mjs'
       - 'scripts/wait-candidate-build.mjs'
       - 'tests/candidate-automation.test.mjs'
@@ -32,7 +37,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: node --test tests/candidate-automation.test.mjs tests/candidate-build-wait.test.mjs
+      - run: node --test tests/candidate-automation.test.mjs tests/candidate-build-wait.test.mjs tests/candidate-summary-check.test.mjs
       - name: Record scope
         run: echo 'Local tests only. Intelligence, validator and provider audit use independent opt-in flags. Disabled remote jobs are NOT_EXECUTED, not PASS. No deployment or migration is performed.' >> "$GITHUB_STEP_SUMMARY"
   remote-checks:
@@ -79,7 +84,7 @@ jobs:
         run: echo "Intelligence check outcome=$CHECK_STATUS. No deployment, migration or live-gate promotion." >> "$GITHUB_STEP_SUMMARY"
   validator-checks:
     needs: local-checks
-    if: github.ref == 'refs/heads/feature/m2-operational-storage' && vars.VALIDATOR_CHECKS_ENABLED == 'true'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/feature/m2-operational-storage' && vars.VALIDATOR_CHECKS_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -103,7 +108,7 @@ jobs:
         run: echo "Validator check outcome=$CHECK_STATUS. No deployment, migration or live-gate promotion." >> "$GITHUB_STEP_SUMMARY"
   provider-access-audit:
     needs: local-checks
-    if: github.ref == 'refs/heads/feature/m2-operational-storage' && vars.CANDIDATE_ACCESS_AUDIT_ENABLED == 'true'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/feature/m2-operational-storage' && vars.CANDIDATE_ACCESS_AUDIT_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

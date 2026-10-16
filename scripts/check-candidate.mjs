@@ -19,6 +19,60 @@ export function assertReadMeta(meta) {
   visit(meta);
   requireCheck(count > 0, 'QUERY_META_MISSING');
 }
+export function assertSummary(summary, {expectedSha, referenceMs, maxObservationAgeMs, maxFeatureAgeMs}) {
+  requireCheck(summary?.readOnly === true && summary.apiSchemaVersion === 1 && summary.schemaVersion === 1,
+    'SUMMARY_SCHEMA_MISMATCH');
+  requireCheck(summary.release?.workerGitSha === expectedSha && summary.release?.serviceReleaseVersion === 3 &&
+    summary.release?.supportedFeatureVersion === 2, 'SUMMARY_DEPLOYMENT_IDENTITY_MISMATCH');
+  requireCheck(summary.evaluationReferenceMs === referenceMs && Number.isSafeInteger(summary.generatedAtMs) &&
+    summary.generatedAtMs >= referenceMs && summary.generatedAtMs <= referenceMs + 60000, 'SUMMARY_TIME_MISMATCH');
+  requireCheck(summary.agePolicy?.maxObservationAgeMs === maxObservationAgeMs &&
+    summary.agePolicy?.maxFeatureAgeMs === maxFeatureAgeMs, 'SUMMARY_POLICY_MISMATCH');
+  for (const name of ['signals','portfolio','thesis','decision'])
+    requireCheck(summary.capabilities?.[name] === 'UNAVAILABLE', 'SUMMARY_PRIVATE_CAPABILITY_PROMOTED');
+  const forbidden = new Set(['privateResult','privateComparison','ledger','accounts','holdings','accountRef',
+    'capitalKrw','fundingGapKrw','requiredCashKrw','companyMerit','portfolioFit','authorization','token','secrets']);
+  function inspect(value) {
+    if (!value || typeof value !== 'object') return;
+    for (const [key, child] of Object.entries(value)) {
+      requireCheck(!forbidden.has(key), 'SUMMARY_PRIVATE_PAYLOAD'); inspect(child);
+    }
+  }
+  inspect(summary);
+  requireCheck(['PARTIAL','UNAVAILABLE'].includes(summary.status), 'SUMMARY_OVERALL_STATUS_INVALID');
+  const observation = summary.observation, feature = summary.features;
+  requireCheck(summary.capabilities?.observation === observation?.status &&
+    summary.capabilities?.features === feature?.status, 'SUMMARY_CAPABILITY_MISMATCH');
+  for (const item of [observation, feature]) {
+    if (item?.inputCutoffMs != null) requireCheck(Number.isSafeInteger(item.inputCutoffMs) &&
+      item.inputCutoffMs > 0 && item.inputCutoffMs <= referenceMs, 'SUMMARY_FUTURE_INPUT');
+  }
+  if (observation?.status === 'AVAILABLE') requireCheck(observation.source === 'CANDIDATE' &&
+    Number.isSafeInteger(observation.observedAtMs) && observation.observedAtMs <= observation.inputCutoffMs &&
+    observation.ageMs === referenceMs - observation.observedAtMs && observation.ageMs >= 0 &&
+    observation.ageMs <= maxObservationAgeMs, 'SUMMARY_OBSERVATION_AGE_MISMATCH');
+  if (feature?.inputCutoffMs != null) requireCheck(feature.ageMs === referenceMs - feature.inputCutoffMs,
+    'SUMMARY_FEATURE_AGE_MISMATCH');
+  if (feature?.status === 'AVAILABLE') requireCheck(feature.featureVersion === 2 && feature.ageMs >= 0 &&
+    feature.ageMs <= maxFeatureAgeMs && ['VERIFIED','RECENT_FETCH','UNVERIFIED_TIME'].includes(feature.quality),
+    'SUMMARY_FEATURE_QUALITY_PROMOTED');
+  requireCheck(['OK','NOT_FOUND','FAILED'].includes(summary.featureRead?.status), 'SUMMARY_FEATURE_READ_STATUS_MISSING');
+  // Missing telemetry is unknown, never verified zero, even when missing/failed Feature is a supported response.
+  assertReadMeta(summary.queryMeta?.observation);
+  assertReadMeta(summary.queryMeta?.feature);
+  requireCheck(summary.featureRead.status === 'OK', 'SUMMARY_FEATURE_READ_FAILED');
+  requireCheck(summary.sourceQuality?.scope === 'CAPTURE_REPORTED_NOT_READ_TIME_REVALIDATED' &&
+    Array.isArray(summary.sourceQuality.reasonCodes) && summary.sourceQuality.reasonCodes.every(code =>
+      /^(PROGRAM|KOSPI|KOSPI200|SAMSUNG|SK_HYNIX|FUTURES|FUTURES_INVESTORS)_(STALE|MISSING|ERROR|UNVERIFIED_TIME|UNVERIFIED_MARKET_TIME)$/.test(code)),
+    'SUMMARY_QUALITY_CONTRACT_INVALID');
+  return {status: summary.status, serviceReleaseVersion: 3, runtimeReportedSha: summary.release.workerGitSha,
+    evaluationReferenceMs: referenceMs, observationAgeMs: observation?.ageMs ?? null,
+    featureAgeMs: feature?.ageMs ?? null, featureInputCutoffMs: feature?.inputCutoffMs ?? null,
+    featureStatus: feature?.status, featureQuality: feature?.quality,
+    pipelineStatus: observation?.pipelineStatus, sourceQuality: summary.sourceQuality.status,
+    d1Writes: 0, privateCapabilities: 'UNAVAILABLE', scope: 'AUTHENTICATED_CANDIDATE_NOT_PRODUCTION_OR_SCHEDULER'};
+}
+
 export async function checkCandidate({kind, token, expectedSha, expectedSourceHash, cutoffMs,
   fetcher = fetch, now = Date.now()}) {
   requireCheck(Object.hasOwn(ORIGINS, kind), 'INVALID_CANDIDATE');
@@ -32,7 +86,7 @@ export async function checkCandidate({kind, token, expectedSha, expectedSourceHa
     // Fixed origins, no redirects or user-controlled SQL/host. Token never enters a URL or output.
     const route = path.split('?')[0];
     const endpoint = route.startsWith('/replay/') ? 'REPLAY'
-      : ({'/':'ROOT','/health':'HEALTH','/state':'STATE','/features':'FEATURES','/history':'HISTORY'}[route] || 'UNKNOWN');
+      : ({'/':'ROOT','/health':'HEALTH','/state':'STATE','/features':'FEATURES','/history':'HISTORY','/summary':'SUMMARY'}[route] || 'UNKNOWN');
     const stage = auth == null ? 'NO_TOKEN' : auth === token ? 'AUTHENTICATED' : 'WRONG_TOKEN';
     const fail = code => { throw new Error(`${code}_AT_${endpoint}_${stage}`); };
     let response;
@@ -85,6 +139,12 @@ export async function checkCandidate({kind, token, expectedSha, expectedSourceHa
   requireCheck(features.feature?.featureVersion === 2, 'FEATURE_VERSION_MISMATCH');
   requireCheck(features.feature?.inputCutoffMs <= features.inputCutoffMs, 'FUTURE_FEATURE');
   requireCheck(features.metadata?.quality === features.feature?.qualityCeiling, 'QUALITY_NOT_PRESERVED');
+  const summaryPath = `/summary?cutoffMs=${now}&maxObservationAgeMs=180000&maxFeatureAgeMs=300000`;
+  await request(summaryPath, null, 401);
+  await request(summaryPath, 'deliberately-invalid-candidate-smoke-token', 401);
+  const summary = assertSummary(await request(summaryPath), {
+    expectedSha, referenceMs: now, maxObservationAgeMs: 180000, maxFeatureAgeMs: 300000
+  });
   const history = await request('/history?ticker=005930&limit=2');
   assertReadMeta(history.queryMeta);
   requireCheck(Array.isArray(history.rows) && history.rows.length <= 2, 'HISTORY_UNBOUNDED');
@@ -105,7 +165,7 @@ export async function checkCandidate({kind, token, expectedSha, expectedSourceHa
     collectionHealth: health.collectionHealth, latestObservation: health.latestObservation?.observedAtMs,
     featureVersion: features.feature.featureVersion, featureInputCutoff: features.feature.inputCutoffMs,
     quality: features.feature.qualityCeiling, freshness: state.metadata.freshness,
-    d1Writes: 0, liveMarketGate: 'UNCHANGED', deployment: 'NOT_PERFORMED'};
+    summary, d1Writes: 0, liveMarketGate: 'UNCHANGED', deployment: 'NOT_PERFORMED'};
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {

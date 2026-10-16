@@ -167,3 +167,14 @@ Reusing the existing test gate also checks validator source hash. Successful upl
 followed by authenticated read-only replay1791778965346 and zero-write evidence. Workflow validator
 checks remain disabled until existing VALIDATION_TOKEN is available in its GitHub Secret store.
 Reference: https://developers.cloudflare.com/workers/wrangler/configuration/#source-of-truth
+
+
+## Summary-aware validation — 2026-10-16T14:10:07.772888+09:00
+
+Existing check-candidate.mjs now performs no-token/wrong-token rejection and one authenticated bounded GET /summary after the existing health/state/features checks. It checks exact runtime-reported SHA, source release3/API1/Feature2, explicit cutoff/age policy, independent Feature freshness, quality code allowlist and unavailable private capabilities. Receipts include only selected metadata, no source payload/token/private scenario. Runtime SHA remains reported identity, not independent provider code attestation.
+
+Both observation and Feature query telemetry must explicitly report rowsWritten0 and finite rowsRead; missing/null telemetry never becomes a0-write PASS. Stale Feature may correctly be UNAVAILABLE with successful reads. Missing/corrupt/read-failed Feature is a supported partial handler response, but cannot satisfy strict remote validation when query metadata is missing; failures remain failures, not deployment success. The existing standalone /features check also still requires a stored row.
+
+Existing workflow/build/credential/artifact path reused. New public modules/summary tests are included in watch paths, local-checks adds the new checker tests. Validator and management-provider jobs require workflow_dispatch plus existing opt-in flags, so candidate push cannot retry those blocked external paths. No flags, Secrets, bindings, account access or competing deployer added. One variable-readback attempt was unavailable; no credentials/values read or repeated request.
+
+Local evidence: checker/actual-handler targeted17/17 PASS; full154/154 PASS; final workflow-gate targeted22/22 PASS. Mocked/local evidence only. This meaningful code commit intentionally allows the existing isolated candidate Builds and CI path to run once. Build started/success and authenticated runtime outcome remain pending until actual checks/artifact prove them. Production is excluded.
