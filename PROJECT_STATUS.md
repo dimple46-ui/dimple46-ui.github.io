@@ -1831,3 +1831,15 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - production_impact:NONE; evidence-only feature-branch checkpoint, no Worker/Secret/binding/route/main/history/D1/private data/scheduler changes. Current PR4 remains unmerged.
 - next_exact_step:Add allowlisted source-quality reason codes/counts to the public summary so DEGRADED explains PROGRAM_STALE and unverified market time without copying arbitrary raw descriptions. Reuse the saved 20261016-1338 selected public capture, add targeted redaction tests, and do not refetch or deploy.
 - recommended_reasoning:Medium, narrow public quality projection/redaction change.
+
+
+## CHECKPOINT — 2026-10-16T13:51:24.583225+09:00: allowlisted public quality explanations
+
+- parent:2b52db34e060882b40e1bf50845006e8cb895ea6; changed quality-projection module SHA256 c2acd1e1abbdd7dfb96780ea262dd02fca00dbbc1314010ad48b45e557ab6257; test SHA256 14c4f13f51205d8c90c7d4d7f16497fc22a361477950f1b55299179cb842b709. This checkpoint commit identifies code.
+- completed: additive sourceQuality metadata uses fixed code allowlist, own-key/type guard, unique known issue/source counts, generic unknown count and null missing counts. Capture-only scope explicit; no raw paths/descriptions/private strings. Candidate/fallback quality isolation and pipeline degradation preserved.
+- tests: new4 + related workflow4/CLI5 targeted13/13 PASS; after final path-type guard full141/141 PASS,0 failed/skipped/cancelled. No full-suite repeat at unchanged code. Receipt validation/local-regression-20261016-quality.json.
+- input evidence: saved actual public1338 capture reused, PROGRAM_STALE1 plus4 unverified-time sources; this is saved-input correctness, NOT a new13:50 live snapshot/D1/Worker assessment. No new fetch/auth/read-only replay request.
+- production_impact:NONE; no Worker/main/Secret/binding/route/D1/history/private-store/scheduled-task change. New field exists only in local code. Remote CI/deployment not executed; existing deployment evidence reused.
+- blockers: unchanged Validator command, provider measurements, private storage and live gates. Retry requires new evidence/access, no Dashboard/token retry.
+- next_exact_step:Extract the existing public summary projection into a public-only module, keep the current workflow export compatible, and add an import-graph guard proving the public entry does not import private ledger/comparison modules. Reuse current logic/tests; no new endpoint, deployment or scheduler connection.
+- recommended_reasoning:Medium, compatibility-preserving module extraction and dependency guard only.

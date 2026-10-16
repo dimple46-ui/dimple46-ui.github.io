@@ -1,0 +1,27 @@
+{
+  "validatedAtKst": "2026-10-16T13:51:24.583225+09:00",
+  "validationType": "LOCAL_REGRESSION_AND_SAVED_PUBLIC_INPUT",
+  "parentSha": "2b52db34e060882b40e1bf50845006e8cb895ea6",
+  "changedFilesSha256": {
+    "domain/local-consumer-workflow.mjs": "c2acd1e1abbdd7dfb96780ea262dd02fca00dbbc1314010ad48b45e557ab6257",
+    "tests/public-quality-summary.test.mjs": "14c4f13f51205d8c90c7d4d7f16497fc22a361477950f1b55299179cb842b709"
+  },
+  "targeted": {
+    "tests": 13,
+    "pass": 13,
+    "scope": "public-quality + workflow + CLI"
+  },
+  "finalFull": {
+    "tests": 141,
+    "pass": 141,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "inputFixture": "tests/fixtures/public-state-20261016-1338.json",
+  "newMarketFetch": false,
+  "remoteCi": "NOT_RUN",
+  "deployment": "NOT_PERFORMED",
+  "liveValidation": "NOT_PERFORMED",
+  "productionImpact": "NONE"
+}
