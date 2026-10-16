@@ -1,25 +1,50 @@
-# Local consumer/fallback contract
+# Consumer/fallback contract
 
-Status: implemented and locally tested; not deployed, connected to a consumer, or available to scheduled tasks.
+## Implementation and deployment scope
 
-`selectConsumerData` in cloudflare/consumer-fallback.mjs accepts already obtained candidateState (/state), candidateFeatures (/features), and a GitHub schema3 snapshot. It performs no network, authentication, SQL, persistence or order execution. Callers must supply nowMs and separate maxObservationAgeMs/maxFeatureAgeMs; these are data-age policies, not approved portfolio limits.
+`selectConsumerData` in cloudflare/consumer-fallback.mjs is a pure selection helper: no network, authentication, SQL, persistence or order execution. It accepts already obtained candidateState (/state), candidateFeatures (/features) and a GitHub schema3 snapshot.
 
-- Prefer valid candidate observations; on failure/invalid/future/stale data, use valid GitHub price/volume for Samsung and SK Hynix only. Empty/null-only observations cannot satisfy availability.
-- Preserve null, measured0, raw source status, quality and pipeline degradation. Invalid numeric or future per-metric timestamps are suppressed. Ingestion age does not certify exchange/source freshness; individual fields retain their status, which consumers must inspect.
-- Feature age is now minus its own inputCutoffMs, independently of observation age. Missing, stale, failed, unsupported-version or future features remain UNAVAILABLE. Even a fresh Feature carrying UNVERIFIED_TIME stays UNVERIFIED_TIME.
-- GitHub fallback cannot supply features, signals, portfolio, thesis or decisions. Overall status remains PARTIAL whenever an observation is selected; no whole-system success claim. Each feature/observation cutoff is explicit; do not treat them as a synchronized combined decision.
-- Response projection excludes accounts, holdings, balances, debt and personal actions. Do not add those fields to public endpoints/artifacts. Private asset work uses fictional fixtures until a safe private path is separately approved.
+`buildPublicConsumerSummary` in cloudflare/public-consumer-summary.mjs projects fixed public metadata from that helper. The separate intelligence candidate exposes it through authenticated GET /summary. Candidate release3 at647787b was deployed and authenticated on2026-10-16; its receipt is validation/candidate-summary-20261016-1411.json. The subsequent quality-preservation fix must be assessed using its own exact-SHA evidence in RESUME.md. A local-only helper is distinct from the deployed candidate handler.
 
-## Actual access paths and scheduling boundary
+There is no approved production route, connected scheduled consumer, private portfolio service, Signal runtime service, or continuous Feature2 writer implied by this contract.
 
-Existing isolated candidate: https://market-intelligence-read-candidate.dimple3691.workers.dev/state and /features; existing Bearer INTELLIGENCE_READ_TOKEN authentication is required. Work does not provide token values, and scheduled tasks do not automatically inherit Work/runtime/GitHub Secrets. Historical candidate authentication is evidence for its deployed SHA, not evidence that a scheduled task has access today.
+## Selection and freshness
 
-Existing public fallback: https://raw.githubusercontent.com/dimple46-ui/dimple46-ui.github.io/main/market-live.json ; no authentication, schema3. It contains observations, not this helper's result or a private portfolio calculation.
+- Callers supply nowMs and separate maxObservationAgeMs/maxFeatureAgeMs. These are age policies, not portfolio rules.
+- Prefer valid candidate observations; on failure/invalid/future/stale data, use valid GitHub Samsung/SK Hynix price/volume only. Empty/null-only observations are unavailable.
+- Preserve null, measured0, source status, quality and pipeline degradation. Invalid numbers or future per-metric timestamps are suppressed. Observation age does not verify exchange time or individual source freshness.
+- Feature age is now minus its own inputCutoffMs. It never inherits observation freshness. Missing, stale, failed, unsupported-version and future Feature remain UNAVAILABLE.
+- An age-rejected Feature retains only its allowlisted original quality ceiling (VERIFIED, RECENT_FETCH, UNVERIFIED_TIME, STALE_INPUT, MISSING_INPUT); unknown values become UNKNOWN. Retaining a ceiling does not make that Feature available. Data remains null.
+- GitHub fallback provides no Feature, Signal, portfolio, thesis or decision. Overall PARTIAL means an observation is selected, not whole-system success. Separate cutoffs do not imply a synchronized decision.
+- Source-quality reason codes describe captured reported issues; they do not revalidate source freshness at read time.
+- Public projections exclude accounts, holdings, balances, debt, private analysis and personal actions.
 
-No persisted consumer-result endpoint/file or scheduled consumer connection is implemented by this change. A scheduler must obtain approved authenticated access separately or explicitly report price/volume-only fallback. It must not claim feature/signal/portfolio availability from a successful snapshot fetch.
+## Existing access paths
 
-## Validation and next track
+| Path | Access | Scope |
+| --- | --- | --- |
+| Candidate /health | Existing Bearer INTELLIGENCE_READ_TOKEN | Lightweight health by default in checker; explicit storage-growth request is separate |
+| Candidate /state | Existing Bearer token | Bounded observation read |
+| Candidate /features | Existing Bearer token | Stored compact Feature2, including its actual age/quality |
+| Candidate /history | Existing Bearer token | Bounded fixed SELECT history |
+| Candidate /summary | Existing Bearer token | At most two bounded SELECTs; whitelisted observation/Feature metadata, no generated Signal or private output |
+| GitHub main market-live.json | Public | Schema3 observations; helper fallback is stock price/volume only |
+| scripts/summarize-public-input.mjs | Local saved public files | Offline projection with explicit reference/age policy; no network or credential access |
 
-New helper targeted tests5/5 PASS. Previous full107/107 at b9e7adf is historical unchanged-core evidence, not a full run including this helper. No current live/remote deployment validation. Local source SHA256: 7b1229e54dd276cd413e5b6c8931963713b7f8a90f8f1565821994b444d082f6.
+Candidate origin: https://market-intelligence-read-candidate.dimple3691.workers.dev
 
-Existing M2/M3 milestones remain intact. Independent next priorities: (1) fictional private ledger/risk contract and tests; (2) one accessible report's changes linked to thesis and immutable decision record; (3) minimal existing-holding/new-candidate comparison; (4) a result path actually accessible to scheduled execution. These are priorities, not implemented engines.
+Public fallback: https://raw.githubusercontent.com/dimple46-ui/dimple46-ui.github.io/main/market-live.json
+
+/summary requires maxObservationAgeMs (0..900000) and maxFeatureAgeMs (0..3600000); optional cutoffMs must not be future; ticker is ALL/005930/000660. Authentication, GET-only handling, rate limiting, query deadline, fixed SELECT enforcement and response limits are shared with the existing API. D1 binding itself does not provide SELECT-only permissions.
+
+## Validation and scheduling boundary
+
+Existing CI and Cloudflare Builds remain the sole candidate deployment path. candidate-check.yml uses its existing Secret and emits a sanitized authenticated receipt. It verifies exact reported SHA, independent ages/cutoffs, quality for a matching stored Feature, explicit zero-write query metadata and unavailable private capabilities. An identity report plus successful provider build is not independent provider code attestation.
+
+Historical receipts are immutable evidence for their source SHA and capture time. Local replay/synthetic tests are correctness evidence, never new live-market validation. Continuous Feature2 persistence remains inactive/unverified; old20261007 rows do not become current.
+
+Scheduled tasks do not automatically inherit Work, Cloudflare runtime or GitHub Actions Secrets. Candidate API authentication in CI does not establish scheduler access. No scheduled connection or notification delivery is configured here. A separately approved consumer must obtain its own authenticated access, or report only the public fallback's available scope. Do not expose token values or put personal data in public artifacts.
+
+## Roadmap links
+
+M2/M3 history is retained. Fictional ledger/risk, one report-to-thesis/decision example, and alternative-comparison contracts exist as separate local prototypes; they are not production asset-management engines. The next integration depends on measured gaps and approved private/scheduled access, as recorded in RESUME.md. No new external source, private store, production route or execution loop is authorized by this document.

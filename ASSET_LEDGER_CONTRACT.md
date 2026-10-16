@@ -30,6 +30,19 @@ An explicit reserveKrw is required for the last three outputs. It is never defau
 
 Never import this module into the public market Worker or place actual inputs/outputs in GitHub, CI logs or public artifacts. Tests contain fictional references and round-number values only. A new private storage/access connection requires separate approval.
 
-Cost basis, lots/transactions/corporate actions, settlement calendars, obligation deadlines, interest/maturity, collateral conditions, FX, concentration, stress, tax law and personal adjustments are not implemented. This module cannot attest account-wide collateral safety or calculate a tax result. No legal threshold or investment policy is encoded. Additional-outflow completeness is a caller assertion, not a reconstructed accounting ledger.
+Cost basis, lots/transactions/corporate actions, settlement calendars, obligation deadlines, interest/maturity, collateral conditions, FX, concentration, tax law and personal adjustments are not implemented. This module cannot attest account-wide collateral safety or calculate a tax result. No legal threshold or investment policy is encoded. Additional-outflow completeness is a caller assertion, not a reconstructed accounting ledger.
 
 Tests:6/6 targeted PASS, synthetic correctness only. Existing core107/107 and consumer5/5 retained as historical results, not rerun or combined into a current full-suite claim. Module SHA256: 7ff964d172aef9752e6c6b739716a9b34fa8641c72128a65e652cfab4b0379b0.
+
+
+## Private local price-shock scenario contract
+
+`domain/asset-stress-contract.mjs` reuses the ledger validation above. Only fictional fixtures have been evaluated; no private storage, account connection, endpoint, scheduler or production integration exists.
+
+The caller supplies schemaVersion1, a scenario id and an explicit integer basis-point shock for every held nonzero ticker. Missing shocks are unknown and block all scenario totals; an explicit0 is valid. The numerical contract accepts -10000..10000bps (a price loss down to100% or gain up to100%); this is a calculation bound, not an approved risk limit or probability.
+
+Output separates base net assets, modelled securities/gross/net assets, signed net-asset change and nonnegative scenario loss. Cash and debt principal are unchanged. BigInt arithmetic floors each account/ticker valuation to whole KRW; output amounts must remain safe integers or all scenario totals are null/BLOCKED. Modelled prices are never relabelled as VERIFIED observations. Negative net assets remain visible.
+
+This is an instantaneous price-only model: no security sales, new borrowing, collateral call, liquidation, taxes, interest, FX, time path or liquidity effect is inferred. No trade, maximum allocation, forecast confidence or probability is produced. Actual asset quantities and all outputs remain private; public Worker import boundaries are tested.
+
+Targeted scenario5/5 PASS plus existing ledger6/6 and public-boundary2/2,13/13 total. Synthetic correctness only. No additional full-suite or remote validation claim for this isolated module.
