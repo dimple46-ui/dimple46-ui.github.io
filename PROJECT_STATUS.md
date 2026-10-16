@@ -2023,3 +2023,15 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - source verification: official Cloudflare SQLite/Access/JWT/encryption/permissions docs and MDN Web Crypto read2026-10-16, URLs stored in ADR. Provider documentation is not current deployment evidence. Modern Access context/service-binding limits and empty service-token subject explicitly accounted for.
 - production_impact:NONE; no domain runtime/production/candidate/main/Secret/binding/route/migration/history changes. New design/reference-test-only checkpoint [skip ci], actual current skip not assumed. Live Feature/Signal gates unchanged, Validator/provider/broker blockers preserved.
 - stop/next:PRIVATE_CANDIDATE_DIRECTION_AND_PROVISIONING_APPROVAL_REQUIRED. Ask once whether to adopt the separate synthetic-only private-candidate direction. After direction confirmation, offline adapter/test implementation may proceed; actual new resources/credentials/cost/real intake/delivery remain explicit approval gates. High for security/provider adapter; no model setting changed here.
+
+
+## CHECKPOINT — offline private transactional adapter (2026-10-16T17:08:17+09:00)
+
+- branch: feature/m2-operational-storage; parent93a771a7e144de195da191917ea84aa7fa1e22d8; implementation is the commit containing this checkpoint.
+- approval: user 'next' accepts proposed isolated-private-candidate direction/offline development. Actual resource/account/key/route/cost and real input/sender approval are not inferred.
+- completed: private/input-adapter uses trusted injected authorization+server owner mapping, strict bounded detached JSON, existing private-risk workflow and async envelope preparation. private/transaction-store uses fixed SQL and injected synchronous transaction; atomically appends input/analysis/receipt/outbox and accepted state, validates revision/schema/epochs/time. Outbox PENDING_REVIEW only. No auto-init/reset/restore/dispatch, network or public imports.
+- tests: adapter17/17 PASS on actual in-memory SQLite with identity/crypto doubles; boundary2/2 PASS. Injected SQL failure after each mutation rolls back; lost response replay returns original receipt; changed payload/stale revision/auth+policy+restore epoch rejects; stale quote preserves independent cash risk; missing/stale/future/expired cash cannot clear accepted state. No remote auth/AEAD/provider/durable/delivery claim. Historical221/221 plus model6/6 reused, not rerun/full aggregate.
+- deployment/CI: no deploy requested; existing sole candidate Builds unchanged, [skip ci]. No new deployer. Current exact check must be observed separately.
+- production_impact: NONE; private schema text executed only in memory fixtures; existing D1/production untouched. No actual private resources or keys.
+- waiting_for_live: unchanged continuous Feature2/corrected Feature/Signal/live gates, never upgraded by fictional tests.
+- next_exact_step: offline Web Crypto AEAD/keyed-tag provider with ephemeral keys and tamper/context/key tests; then pinned verified identity mapping. Stop before new resource/Secret/cost provisioning.

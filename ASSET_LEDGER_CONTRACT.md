@@ -309,3 +309,10 @@ The6 reference tests use in-memory Node SQLite and fictional sealed markers; the
 - [P6 Web Crypto AES-GCM parameters](https://developer.mozilla.org/en-US/docs/Web/API/AesGcmParams)
 - [P7 Durable Object async concurrency rules](https://developers.cloudflare.com/durable-objects/best-practices/rules-of-durable-objects/)
 - [P8 Explicit Access JWT validation](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/)
+
+
+### ADR-PVT-01 implementation checkpoint — 2026-10-16T17:08:17+09:00
+
+Direction accepted by user's continuation; actual resources remain NOT_PROVISIONED and actual configuration unapproved. New private/input-adapter and transaction-store are offline injected contracts only, NOT a deployed private API or Cloudflare storage adapter. The exported fixed schema is for new isolated private-store fixtures, never an existing/shared D1 migration. Caller cannot supply owner/policies; trusted authorize must verify identity and server mapping, store head authorization epoch must advance on revocation, and getPolicy must bind policy epoch. SQL factory requires synchronous transaction semantics; it neither creates nor seeds a store. Async preparation finishes before synchronous commit. Raw failures return fixed generic codes. Existing domain result capabilities and quality limits survive sealing. Strict event-commit failure preserves authoritative state and never initializes it.
+
+Adapter17/17 and unchanged-public-boundary2/2 local tests passed; auth/crypto doubles do not establish JWT/AEAD/provider security. Pending: concrete crypto+identity providers, provider transaction compatibility, bounded runtime execution/auth entry/bypass controls, actual administrative isolation/cost/retention/key custody, provider crash/restore/load and delivery verification. No private endpoint, sender or actual input exists.
