@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "scope": "FICTIONAL_LOCAL_CASH_FUNDING_MODEL_ONLY",
+  "timestampKst": "2026-10-16T20:16:04+09:00",
+  "parentSha": "4172bc4081e94b474597e8ef11fe4c850aa04737",
+  "sourceSha256": {
+    "domain/cash-funding-scenarios.mjs": "b7adab14972d3f6088d2695a71be344cf36fe7eb6736a2baaadf1a9a35234deb",
+    "tests/cash-funding-scenarios.test.mjs": "63915125da19d72137ae1c8a4947f0779b1496ab4555fe9faf75ef1c7791676c"
+  },
+  "tests": {
+    "targeted": {
+      "pass": 31,
+      "fail": 0,
+      "newFundingTests": 14
+    },
+    "priorFull": {
+      "pass": 315,
+      "scope": "UNCHANGED_PARENT_ONLY_NOT_NEW_FUNCTION_FULL_RUN"
+    }
+  },
+  "deployment": "NOT_DEPLOYED",
+  "productionImpact": "NONE",
+  "assumptions": [
+    "SUPPLIED_QUANTITIES_NOT_AUTOMATIC_SIZING",
+    "EXPLICIT_FEES_TAXES_SETTLEMENT_ASSUMPTIONS",
+    "SAME_ACCOUNT_ONLY",
+    "PROJECTED_ASSETS_BEFORE_PAYMENT"
+  ],
+  "remaining": [
+    "LOCAL_CONSUMER_OPT_IN_INTEGRATION",
+    "NO_BROKER_CLEARANCE_TAX_LAW_BORROWING_OR_EXECUTION_VALIDATION",
+    "PRIVATE_ADMIN_ACCESS_BLOCKED"
+  ]
+}
