@@ -1731,3 +1731,16 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - safety: stale/null/missing/future/cross-day input rejection covered; deterministic output, finite evidence, source identity/version/cutoff checked. No new API reads, D1 queries/writes, Worker/binding/Secret/route/production changes.
 - blocked: VALIDATOR_DEPLOY_COMMAND_UNVERIFIED, provider metrics and existing live gates unchanged. Retry only with new authorized management/configuration evidence.
 - next_exact_step: one integration regression at accumulated helper/adapter/replay boundary, recording exact code SHA; do not deploy merely to reconfirm local results.
+
+
+## CHECKPOINT — 2026-10-16T12:04:17+09:00: accumulated integration regression
+
+- branch: feature/m2-operational-storage; tested code SHA: b9e7adfa0d8f3310f4ffc7606d3a5b27a1dc5f8d; this checkpoint commit changes evidence/documents only.
+- verified:35 GitHub blobs under cloudflare/scripts/tests/migrations exactly matched local bytes before tests. Node24.19.0, CI-equivalent command node --test tests/*.test.mjs ran once.
+- tests:107/107 PASS;0 failures,0 skipped/cancelled. Includes kinematics, opt-in v3, saved-input replay, v2 compatibility, storage/query/quality/failure/auth safety. No implementation changes required. Receipt: validation/local-regression-20261016.json.
+- CI/build: no new CI run or deploy requested. Historical successful CI/deployment reused; tested b9e7adf exact Cloudflare check completed/skipped. New checkpoint check must be observed separately.
+- validation scope: local/synthetic and saved-public-input tests only; no fresh API/D1/auth/runtime request. Existing current live/D1/persistence/Signal-runtime gates unchanged.
+- production_impact:NONE. No Worker/Secret/binding/route/writer/history/main change.
+- remaining/blocker: VALIDATOR_DEPLOY_COMMAND_UNVERIFIED and provider measurements unchanged; no retry without new evidence/access. Continuous v2 persistence remains disabled/unverified.
+- next_exact_step:Implement a local-only M2 consumer/fallback selection helper and targeted tests for candidate failure, stale/null/future inputs, and honest GitHub fallback quality. Reuse existing response schemas; no network, consumer opt-in, cadence change or deployment.
+- reasoning:Medium. Existing M2 architecture retained; actual consumer opt-in is not authorized by local contract work.
