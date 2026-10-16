@@ -55,7 +55,7 @@ test('health is machine-readable, bounded and contains no secret',async()=>{
  const database=db(),response=await worker.fetch(request('/health'),env(database));
  assert.equal(response.status,200);const body=await response.json();
  assert.equal(body.readOnly,true);assert.equal(body.collectionHealth,'OK');
- assert.equal(body.release.serviceReleaseVersion,2);
+ assert.equal(body.release.serviceReleaseVersion,3);
  assert.equal(body.latestFeatureRun.featureVersion,2);assert.equal(body.latestFeatureRun.qualityCeiling,'UNVERIFIED_TIME');
  assert.equal(body.storageGrowth.observations[0].row_count,10);
  assert.equal(body.release.workerGitSha,'abcdef0');assert.equal(body.release.deploymentId,'deployment-test');

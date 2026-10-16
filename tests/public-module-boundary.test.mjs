@@ -13,7 +13,7 @@ test('public-only entry and compatibility export are identical with unchanged sa
  assert.deepEqual(direct({githubSnapshot:fixture},policy),compatible({githubSnapshot:fixture},policy));
  assert.equal(direct({githubSnapshot:fixture},policy).sourceQuality.knownIssueCount,1);
 });
-test('native module linker traverses actual public and CLI graphs without private domain imports',()=>{
+test('native linker checks public, CLI and candidate graphs without private domain imports',()=>{
  // Native linker catches static/re-export/transitive dependencies, including multiline imports.
  // Reject dynamic loading/require/eval in the current graph so it cannot evade static linking.
  const audit=`
@@ -22,7 +22,7 @@ test('native module linker traverses actual public and CLI graphs without privat
  import {pathToFileURL,fileURLToPath} from 'node:url';
  import assert from 'node:assert/strict';
  const root=pathToFileURL(process.argv[1]+'/');
- const allowed=new Set(['cloudflare/public-consumer-summary.mjs','cloudflare/consumer-fallback.mjs','scripts/summarize-public-input.mjs']);
+ const allowed=new Set(['cloudflare/public-consumer-summary.mjs','cloudflare/consumer-fallback.mjs','scripts/summarize-public-input.mjs','cloudflare/intelligence-read-worker.mjs','cloudflare/operational-storage-policy.mjs']);
  const visited=new Set(),cache=new Map();
  function load(url){
   const path=fileURLToPath(url).slice(fileURLToPath(root).length);
@@ -43,10 +43,11 @@ test('native module linker traverses actual public and CLI graphs without privat
   return load(new URL(specifier,referencing.identifier));
  }
  await load(new URL('scripts/summarize-public-input.mjs',root)).link(linker);
- assert.equal(visited.size,3);
+ await load(new URL('cloudflare/intelligence-read-worker.mjs',root)).link(linker);
+ assert.equal(visited.size,5);
  process.stdout.write(JSON.stringify([...visited].sort()));
  `;
  const result=spawnSync(process.execPath,['--experimental-vm-modules','--input-type=module','-e',audit,fileURLToPath(root)],{encoding:'utf8'});
  assert.equal(result.status,0,result.stderr);
- assert.deepEqual(JSON.parse(result.stdout),['cloudflare/consumer-fallback.mjs','cloudflare/public-consumer-summary.mjs','scripts/summarize-public-input.mjs']);
+ assert.deepEqual(JSON.parse(result.stdout),['cloudflare/consumer-fallback.mjs','cloudflare/intelligence-read-worker.mjs','cloudflare/operational-storage-policy.mjs','cloudflare/public-consumer-summary.mjs','scripts/summarize-public-input.mjs']);
 });

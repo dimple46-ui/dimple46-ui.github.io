@@ -1,8 +1,9 @@
 import {summarizeJsonGrowth} from "./operational-storage-policy.mjs";
+import {buildPublicConsumerSummary} from "./public-consumer-summary.mjs";
 
 const API_SCHEMA_VERSION = 1;
 const SUPPORTED_FEATURE_VERSION = 2;
-const SERVICE_RELEASE_VERSION = 2;
+const SERVICE_RELEASE_VERSION = 3;
 const MAX_HISTORY_RANGE_MS = 12 * 60 * 60 * 1000;
 const MAX_HISTORY_LIMIT = 120;
 const MAX_RESPONSE_BYTES = 900000;
@@ -323,6 +324,45 @@ async function history(db, url, cutoffMs, now, scope) {
     range: {fromMs, toMs, limit, returned: rows.length}, rows, queryMeta: result.meta};
 }
 
+async function summary(db, url, cutoffMs, now, env) {
+  const allowed = new Set(["ticker", "cutoffMs", "maxObservationAgeMs", "maxFeatureAgeMs"]);
+  for (const key of url.searchParams.keys()) {
+    if (!allowed.has(key) || url.searchParams.getAll(key).length !== 1)
+      throw new ApiError(400, "INVALID_SUMMARY_QUERY");
+  }
+  const maxObservationAgeMs = boundedInteger(url.searchParams.get("maxObservationAgeMs"), {
+    name: "OBSERVATION_AGE", minimum: 0, maximum: 15 * 60 * 1000, fallback: null
+  });
+  const maxFeatureAgeMs = boundedInteger(url.searchParams.get("maxFeatureAgeMs"), {
+    name: "FEATURE_AGE", minimum: 0, maximum: 60 * 60 * 1000, fallback: null
+  });
+  if (maxObservationAgeMs == null || maxFeatureAgeMs == null)
+    throw new ApiError(400, "SUMMARY_AGE_POLICY_REQUIRED");
+  const scope = tickerScope(url);
+  const deadline = now + queryTimeoutMs(env);
+  const observation = await state(db, cutoffMs, now, scope);
+  if (Date.now() >= deadline) throw new ApiError(504, "QUERY_TIMEOUT");
+  let feature = null, featureReadStatus = "OK";
+  try {feature = await features(db, url, cutoffMs, now, scope);}
+  catch (error) {
+    if (error instanceof ApiError && error.code === "FEATURES_NOT_FOUND") featureReadStatus = "NOT_FOUND";
+    else {featureReadStatus = "FAILED"; runtime.failures++;}
+  }
+  const projected = buildPublicConsumerSummary({candidateState: observation, candidateFeatures: feature}, {
+    nowMs: cutoffMs, maxObservationAgeMs, maxFeatureAgeMs
+  });
+  const workerGitSha = /^[0-9a-f]{7,64}$/i.test(String(env.INTELLIGENCE_WORKER_GIT_SHA || "")) ?
+    env.INTELLIGENCE_WORKER_GIT_SHA : null;
+  return {...projected, generatedAtMs: now, apiSchemaVersion: API_SCHEMA_VERSION, readOnly: true,
+    evaluationReferenceMs: cutoffMs, scope: {ticker: scope.ticker},
+    // Implemented handler presence is not a deployment or scheduler validation claim.
+    integrationStatus: "ISOLATED_CANDIDATE_HANDLER_NOT_PRODUCTION_OR_SCHEDULER_VALIDATION",
+    release: {serviceReleaseVersion: SERVICE_RELEASE_VERSION, supportedFeatureVersion: SUPPORTED_FEATURE_VERSION, workerGitSha},
+    agePolicy: {maxObservationAgeMs, maxFeatureAgeMs},
+    featureRead: {status: featureReadStatus},
+    queryMeta: {observation: observation.queryMeta, feature: feature?.queryMeta ?? null}};
+}
+
 export default {
   async fetch(request, env) {
     if (!authenticated(request, env)) return response({error: "UNAUTHORIZED"}, 401);
@@ -337,6 +377,7 @@ export default {
       const cutoffMs = cutoffFrom(url, now);
       let operation;
       if (url.pathname === "/health") operation = health(env.MARKET_HISTORY, now, env, url);
+      else if (url.pathname === "/summary") operation = summary(env.MARKET_HISTORY, url, cutoffMs, now, env);
       else if (url.pathname === "/state") operation = state(env.MARKET_HISTORY, cutoffMs, now, tickerScope(url));
       else if (url.pathname === "/features") operation = features(env.MARKET_HISTORY, url, cutoffMs, now, tickerScope(url));
       else if (url.pathname === "/history") operation = history(env.MARKET_HISTORY, url, cutoffMs, now,

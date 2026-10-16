@@ -1854,3 +1854,15 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - blockers: unchanged Validator command, provider metrics, private storage and live gates; no auth retry/new token.
 - next_exact_step:Implement an authenticated GET-only /summary handler in the existing isolated intelligence candidate, reusing existing bounded state/feature SELECT helpers and public-only projector. Test auth, zero writes, missing/stale Feature, cutoff/quality and no private imports locally; do not change production, secrets, bindings or routing.
 - recommended_reasoning:Medium for bounded candidate handler reuse and local safety tests. Production changes remain unapproved.
+
+
+## CHECKPOINT — 2026-10-16T14:03:11.939017+09:00: isolated candidate summary source
+
+- parent:94c515c44040acdc8617a4ef854f10e74b98ee55; handler code commit contains checkpoint. Worker SHA256 a79b1a31ccb6ab9bd5c0b8a30f5905c9c621b77ef254d2d80f49e1aa37051c51; all changed-file hashes in validation/local-regression-20261016-summary-endpoint.json.
+- completed: GET /summary source, serviceRelease3/API1; existing Bearer/method/rate/deadline/select gates reused, no extra deployer/SQL writer. Mandatory bounded age policies, duplicate/unknown/ticker/future query rejection before D1, max2 bounded queries. No private-domain import in candidate graph.
+- Feature isolation: missing/corrupt/read-failed Feature unavailable with NOT_FOUND/FAILED metadata and no fake write0; fresh observation survives. Old stored Feature cutoff/age retained; source quality/UNVERIFIED_TIME not upgraded. State failure503 sanitized; pending Feature deadline504. No new full Feature computation/persistence/Signal/private service.
+- tests: initial related17/17 PASS. Final full149/149 PASS,0 failures/skips/cancelled, includes6 new summary tests and candidate graph guard. Local fake DB/credentials; NOT authenticated Cloudflare/D1 runtime validation. INTELLIGENCE_API.md updated with exact source/deployment distinction.
+- production_impact:NONE. Source/tests/docs only, no deploy, Secret/binding/route/main/history/D1/scheduler/private-store change. Historical candidate deployment remains5dc82e5; no release3 runtime claim. Existing Builds flow retained, current commit check skip to be observed.
+- blocked/retry: existing Validator command/provider measurements/private storage/live gates unchanged; no auth retry/token reissue.
+- next_exact_step:Extend the existing candidate-check script/tests to verify authenticated /summary with explicit bounded age policy, exact runtime SHA, zero/unknown D1 write telemetry, Feature failure/staleness and unavailable private capabilities. Reuse existing credential/build/artifact path; prepare checks before one candidate rollout, with no second deployer or production change.
+- recommended_reasoning:Medium, narrow existing checker extension and preparation for approved isolated candidate rollout.

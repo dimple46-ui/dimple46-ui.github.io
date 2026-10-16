@@ -68,3 +68,18 @@ total D1 database storage. Missing samples remain `INSUFFICIENT_DATA`; they are 
 - every prepared statement observed in tests starts with `SELECT`; no arbitrary SQL endpoint exists;
 - stale/null quality, Feature version and input cutoff are returned unchanged;
 - production `market-relay`, bindings, publication and writers are audited independently.
+
+
+## /summary — source implemented, local validation only
+
+New code/service release3 (API schema remains1); NOT_DEPLOYED or remotely validated by this checkpoint. Historical deployed candidate remains the previously validated SHA/release, not this source.
+
+GET /summary?maxObservationAgeMs=180000&maxFeatureAgeMs=300000 optionally accepts cutoffMs and ticker (005930/000660/ALL). Existing Bearer authentication, GET-only handling, provider+isolate rate limits, response bound and request deadline apply. Age policies are mandatory; limits are0–900000ms for observations and0–3600000ms for Features. Values in this example are request parameters, not approved portfolio or deployment defaults. Unknown/duplicate query parameters are rejected.
+
+At most two existing bounded SELECT/LIMIT1 queries are used: state then stored Feature2. No writes, new SQL interface, migration, external snapshot fetch or private-domain module is added. Public-only projector returns source-quality codes, separate observation/Feature ages/cutoffs and unavailable Signal/portfolio/decision capabilities. No price payload or compact Feature tree is echoed.
+
+Missing Feature yields NOT_FOUND; malformed/integrity/read failure yields generic FAILED with unavailable Feature while retaining observation. Missing failure telemetry is null, never a fabricated0. Feature read failures increment existing per-isolate failure count. State failure remains503; a waiting Feature read is bounded by existing QUERY_TIMEOUT504. Failed candidate requests can still be handled by the separate client fallback contract; this Worker does not fetch GitHub itself.
+
+Summary generatedAtMs is actual handler time, evaluationReferenceMs is cutoffMs for explicit as-of age evaluation. Future/unavailable input cannot be promoted. release contains service version, supported Feature version and sanitized configured Worker SHA. These fields identify code only after authenticated remote validation; local tests do not certify current deployment.
+
+Tests: new summary6 tests are covered by final full149/149 PASS. Initial related summary/read API17/17 PASS preceded the added deadline test. Native linker guard now includes actual candidate transitive dependencies and excludes all private domain modules. No current authenticated API/D1 or scheduled-consumer evidence. Source SHA256 a79b1a31ccb6ab9bd5c0b8a30f5905c9c621b77ef254d2d80f49e1aa37051c51.
