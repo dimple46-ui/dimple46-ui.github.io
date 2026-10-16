@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "validationStatus": "LOCAL_INTEGRATION_VALIDATED",
+  "validatedAtKst": "2026-10-16T20:56:36+09:00",
+  "baseSha": "3f9125225b0c3943d1f24e0d4b8743156e5a7143",
+  "sourceSha256": {
+    "domain/research-handoff.mjs": "0317215edc82d3032bf7783fb60f5d518a15a4b2079db4a54da1fd2538c84915",
+    "domain/research-monitoring-summary.mjs": "2bb975aeafbb7bbfcdac2639540a00f46b9b7e0fc7e6d840923e0a2a1aaeb5cf",
+    "scripts/validate-research-package.mjs": "966420e69bdb0463757c689df41681117e775101f8fa5a1a5f945f64da214135",
+    "tests/research-handoff.test.mjs": "e080495e541d31d92703994936cbe42d022f6b27ad756978060463d97c5daa92",
+    "schemas/research-package.schema.json": "8f6286d79b7f0c292ebc6c379eeb5ad411b115e7892665cea36a8b7f1be2bfec",
+    "examples/research-package.synthetic.json": "467321cf89c5ceef56ae6a7c90280071c93bec96885f4cd3c1c33e3680f7fe80",
+    "examples/research-approval.synthetic.json": "eec506c9a86350a8376e4904202d6186d38cdd0896d390ca3a0a78a7aac00f28",
+    "RESEARCH_HANDOFF_CONTRACT.md": "3e9ddeddc3223e2c9d00bf2d581213b299c649cb995f3009a6eef7764ee134ce"
+  },
+  "tests": {
+    "targeted": 18,
+    "full": 333,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "scope": "M2_315_PLUS_RESEARCH18_NOT_CASH_PR5_334"
+  },
+  "parentExecutableBlobsUnchanged": true,
+  "syntheticFlow": {
+    "scope": "SYNTHETIC_FIXTURE_NOT_REAL_PROJECT_HANDOFF",
+    "fixtureReferenceTimeMs": 1792148400000,
+    "realUserApproval": false,
+    "fixtureUserApprovalVerifier": true,
+    "packageId": "fictional-research-samsung",
+    "packageRevision": 1,
+    "packageHash": "3c7bc2b8548ef5878437295ca388d4a344cc3b5f76d6e5e5fbe5a82a75ce6499",
+    "intake": "REVIEW_REQUIRED",
+    "duplicate": "DUPLICATE",
+    "beforeApproval": "USER_APPROVAL_REQUIRED",
+    "afterApproval": "AVAILABLE",
+    "decisionId": "local-research:0adc1fea9f67e510ff16df5b7428ccc7fc2a4806299c8aab36a5b1a23a2f77ae",
+    "inputVersions": {
+      "market": {
+        "observation_cutoff_ms": 1792148400000,
+        "feature_cutoff_ms": 1792148399000,
+        "feature_version": 2,
+        "signal_version": 2,
+        "signal_engine_reference_sha": "1111111111111111111111111111111111111111"
+      },
+      "research": {
+        "package_id": "fictional-research-samsung",
+        "revision": 1,
+        "content_sha256": "3c7bc2b8548ef5878437295ca388d4a344cc3b5f76d6e5e5fbe5a82a75ce6499",
+        "approval_decision_id": "fictional-owner-approval-r1",
+        "report_judgment_sha256": "f019ce09d05fd2e41d849ef83fae78b1df4d02684cd48a55036ebeeb14d03be9"
+      },
+      "private_ledger": null
+    },
+    "longTerm": "SUPPORTIVE",
+    "shortTerm": "ADVERSE_DESCRIPTIVE_SIGNALS",
+    "crossHorizon": "LONG_TERM_SUPPORT_WITH_SHORT_TERM_ADVERSE",
+    "privateRisk": "UNAVAILABLE",
+    "valuation": null,
+    "tradeQuantities": null,
+    "eventIds": [
+      "research:fictional-research-samsung:005930:fictional-demand-review"
+    ],
+    "notification": "NOT_SENT",
+    "operational": "NOT_DEPLOYED_NOT_WATCH_READY"
+  },
+  "reused": [
+    "REPORT_DOCUMENT_AND_CREATE_REPORT_JUDGMENT",
+    "CANONICAL_BOUNDED_JSON",
+    "CONSUMER_FALLBACK_AND_PUBLIC_SUMMARY",
+    "DESCRIPTIVE_SIGNAL_ENGINE_V2",
+    "EXISTING_ALTERNATIVE_ENUM_CONTRACT_NO_PRIVATE_COMPARISON_WITHOUT_LEDGER"
+  ],
+  "approvedProduction": false,
+  "deploymentStatus": "NOT_DEPLOYED",
+  "runtimeValidation": "NOT_PERFORMED",
+  "ciStatus": "NO_NEW_REMOTE_TEST_SUCCESS_CLAIMED",
+  "limitations": [
+    "EPHEMERAL_SESSION_NOT_DURABLE_HISTORY",
+    "TEST_DOUBLE_NOT_AUTHENTICATED_USER_APPROVAL",
+    "DECLARED_SOURCE_READ_NOT_INDEPENDENT_TRUTH",
+    "FREE_TEXT_PRIVACY_REVIEW_REQUIRED",
+    "NO_REAL_PROJECT_MESSAGE_OR_UPLOAD_CONNECTION",
+    "NO_PRIVATE_LEDGER_OR_PORTFOLIO_CALCULATION",
+    "NO_WATCH_ACCESS_OR_DELIVERY",
+    "NO_AUTOMATIC_ORDER_CODE_URL_RULE_EXECUTION"
+  ],
+  "productionImpact": "NONE",
+  "cashRiskReviewCommit": "f64783d66ebdcfc5337c66aa00077ed0c55dc759"
+}
