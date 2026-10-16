@@ -1819,3 +1819,15 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - blocked/retry: prior Validator command/provider/private storage/current live gates unchanged; require new evidence/access before retrial.
 - next_exact_step:Read main market-live.json once at a new explicit reference time and run the saved-public-input CLI on that capture. Record current public observation age/pipeline and unavailable capabilities only; do not poll/retry unchanged input or infer authenticated D1/Feature/Signal/scheduled readiness.
 - recommended_reasoning:Medium, bounded single fresh-public-capture validation.
+
+
+## CHECKPOINT — 2026-10-16T13:40:10.974609+09:00: current public snapshot through unchanged CLI
+
+- tested CLI/code SHA:474c9e876e6bcb782e44172c34d3a7b689a4061a, script SHA256aea5546587d0595bfef002057301adb16d1762938154084037119821666edd77 matches prior targeted5/5 source. No source change or test rerun needed. Existing full132/132 remains historical integration evidence.
+- one public main snapshot fetch: relay2026-10-16T04:38:47.368Z (13:38:47 KST), schema3/day20261016; reference04:39:41.965Z, age54597ms. CLI exit0/PARTIAL, observationAVAILABLE/GITHUB_FALLBACK, advanced/private capabilitiesUNAVAILABLE. Validation-only age policies180000/300000ms, not approved operational defaults.
+- source diagnosis: both stocks source statusLIVE with exchange-trade timestamps. sourceErrors[] does not imply OK: programSTALE, source market time04:30:00Z, age527s at ingestion exceeds300s. Index/futures market-time verification absent, never promoted to LIVE/VERIFIED. Ingestion age54.597s does not replace per-source age.
+- durable evidence: validation/public-cli-20261016-1339.json; full capture hash4b8d43951e884cb0fc2b03751cad80d03e5ca02fdf50195734eda279b4a1fbcd. tests/fixtures/public-state-20261016-1338.json is a selected projection for later tests, not a claim that CLI was rerun on that projection today.
+- scope:CURRENT_PUBLIC_SNAPSHOT_LOCAL_CLI only. No authenticated API/D1 read, Feature2 persistence, Signal runtime/provider/scheduler validation. Existing blocked/live gates remain unchanged, no retries. No new full suite, build or deployment requested.
+- production_impact:NONE; evidence-only feature-branch checkpoint, no Worker/Secret/binding/route/main/history/D1/private data/scheduler changes. Current PR4 remains unmerged.
+- next_exact_step:Add allowlisted source-quality reason codes/counts to the public summary so DEGRADED explains PROGRAM_STALE and unverified market time without copying arbitrary raw descriptions. Reuse the saved 20261016-1338 selected public capture, add targeted redaction tests, and do not refetch or deploy.
+- recommended_reasoning:Medium, narrow public quality projection/redaction change.
