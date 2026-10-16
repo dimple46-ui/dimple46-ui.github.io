@@ -56,3 +56,53 @@ test('private evaluation requires explicit opt-in; missing private quotes never 
  assert.ok(r.privateResult.data.rows.every(x=>x.status==='BLOCKED'));
  assert.throws(()=>runLocalConsumerWorkflow(f,{marketPolicy,enablePrivateEvaluation:'true'}),/INVALID_PRIVATE_OPT_IN/);
 });
+function cashFundingFixture(){
+ const input=fixture(),ledger=structuredClone(input.privateComparison.ledger);
+ return {...input,privateCashFunding:{schemaVersion:1,ledger,prices:structuredClone(input.privateComparison.prices),
+  need:{accountRef:'PRIVATE_SENTINEL_ACCOUNT',amountKrw:1900,dueAtMs:now+86400000,
+   cashTreatment:'ADDITIONAL_TO_DECLARED_OUTFLOWS',cashUse:'OUTFLOW_OUTSIDE_DECLARED_FINANCIAL_SCOPE',sourceRef:'fictional-need',verifiedAtMs:now},
+  plans:[{id:'fictional-cash',kind:'CASH_ONLY',sales:[],costs:{feesKrw:0,taxesKrw:0},proceedsAvailableAtMs:null,
+   sourceRef:'fictional-model',verifiedAtMs:now,expiresAtMs:now+1000,invalidation:'PRIVATE_SENTINEL_INVALIDATION'}]}};
+}
+const cashOptions={marketPolicy,cashFundingPolicy:{nowMs:now,maxLedgerAgeMs:10000,maxPriceAgeMs:10000,accountReserveKrw:100},enableCashFundingEvaluation:true};
+test('cash scenario opt-in connects a declared liquidity gap without upgrading market fallback or creating an overall action',()=>{
+ const f=cashFundingFixture(),before=structuredClone(f),r=runLocalConsumerWorkflow(f,cashOptions);
+ assert.equal(r.privateResult.status,'DISABLED');assert.equal(r.privateCashFundingResult.status,'LOCAL_FICTIONAL_EVALUATION');
+ assert.equal(r.privateCashFundingResult.data.baseline.liquidity.cashShortfallKrw,100);
+ assert.equal(r.publicResult.observation.source,'GITHUB_FALLBACK');assert.equal(r.publicResult.capabilities.decision,'UNAVAILABLE');
+ assert.equal(r.publicResult.capabilities.portfolio,'UNAVAILABLE');assert.equal(r.publicResult.capabilities.signals,'UNAVAILABLE');
+ assert.equal(r.classification,'PRIVATE_COMBINED_RESULT_DO_NOT_PUBLISH');assert.deepEqual(f,before);
+ assert.deepEqual(r,runLocalConsumerWorkflow(f,cashOptions));
+ const wire=JSON.stringify(r.publicResult);for(const key of ['PRIVATE_SENTINEL','cashShortfall','requiredCash','privateCashFunding','invalidation'])assert.ok(!wire.includes(key));
+});
+test('disabled private opt-ins never inspect either private input; flags are independent and require booleans',()=>{
+ const f=fixture();Object.defineProperty(f,'privateCashFunding',{get(){throw Error('PRIVATE_SENTINEL');}});
+ Object.defineProperty(f,'privateComparison',{get(){throw Error('PRIVATE_SENTINEL');}});
+ const r=runLocalConsumerWorkflow(f,{marketPolicy});assert.equal(r.privateResult.status,'DISABLED');assert.equal(r.privateCashFundingResult.status,'DISABLED');
+ assert.throws(()=>runLocalConsumerWorkflow(f,{marketPolicy,enableCashFundingEvaluation:'true'}),/INVALID_PRIVATE_OPT_IN/);
+});
+test('fresh public observation cannot provide missing private prices or hide a stale/unknown private ledger',()=>{
+ for(const patch of [f=>f.privateCashFunding.prices={},f=>f.privateCashFunding.ledger.accounts[0].cash.withdrawableKrw=null,
+  f=>f.privateCashFunding.prices['005930'].quality='STALE_INPUT',f=>f.privateCashFunding.ledger.accounts[0].verifiedAtMs=now-10001]){
+  const f=cashFundingFixture(),before=buildPublicConsumerSummary(f.marketInputs,marketPolicy);patch(f);
+  const r=runLocalConsumerWorkflow(f,cashOptions);assert.equal(r.privateCashFundingResult.status,'BLOCKED');assert.equal(r.privateCashFundingResult.data.baseline,null);
+  assert.deepEqual(r.publicResult,before);assert.equal(r.publicResult.observation.status,'AVAILABLE');
+ }
+});
+test('private failure or mismatched evaluation clock cannot alter the public output or leak exceptions',()=>{
+ const f=cashFundingFixture(),before=buildPublicConsumerSummary(f.marketInputs,marketPolicy);
+ Object.defineProperty(f,'privateCashFunding',{get(){throw Error('PRIVATE_SENTINEL');}});
+ const r=runLocalConsumerWorkflow(f,cashOptions);assert.equal(r.privateCashFundingResult.code,'PRIVATE_INPUT_OR_POLICY_INVALID');
+ assert.deepEqual(r.publicResult,before);assert.ok(!JSON.stringify(r).includes('PRIVATE_SENTINEL'));
+ const mismatch=runLocalConsumerWorkflow(cashFundingFixture(),{...cashOptions,cashFundingPolicy:{...cashOptions.cashFundingPolicy,nowMs:now+1}});
+ assert.equal(mismatch.privateCashFundingResult.code,'REFERENCE_TIME_MISMATCH');assert.equal(mismatch.privateCashFundingResult.data,null);
+});
+test('old Feature remains unavailable independently of successful local cash calculation',()=>{
+ const f=cashFundingFixture();f.marketInputs.candidateState={apiSchemaVersion:1,inputCutoffMs:now,state:{schemaVersion:1,
+  observedAtMs:now-1000,availableAtMs:now-500,tradingDay:'20261016',pipelineStatus:'OK',metrics:{'samsung.price':{value:100,status:'LIVE'}}}};
+ f.marketInputs.candidateFeatures={apiSchemaVersion:1,inputCutoffMs:now,feature:{featureVersion:2,
+  inputCutoffMs:now-600000,compactFeatures:{featureVersion:2}}};
+ const r=runLocalConsumerWorkflow(f,cashOptions);assert.equal(r.privateCashFundingResult.status,'LOCAL_FICTIONAL_EVALUATION');
+ assert.equal(r.publicResult.features.ageMs,600000);assert.equal(r.publicResult.features.status,'UNAVAILABLE');
+ assert.equal(r.publicResult.capabilities.decision,'UNAVAILABLE');assert.equal(r.privateCashFundingResult.data.recommendation,null);
+});
