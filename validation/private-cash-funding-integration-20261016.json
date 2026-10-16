@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "scope": "FICTIONAL_LOCAL_CASH_FUNDING_AND_CONSUMER_INTEGRATION",
+  "timestampKst": "2026-10-16T20:19:05+09:00",
+  "branch": "feature/private-cash-funding-scenarios",
+  "baseSha": "4172bc4081e94b474597e8ef11fe4c850aa04737",
+  "modelCommit": "407277a4226cc6a3142fd257bd97facd50b2aec1",
+  "sourceSha256": {
+    "domain/cash-funding-scenarios.mjs": "b7adab14972d3f6088d2695a71be344cf36fe7eb6736a2baaadf1a9a35234deb",
+    "domain/local-consumer-workflow.mjs": "3d4f5efab8dfda60255ffacae673511c17f9a64d98298d83876f1ed00d55aa89",
+    "tests/cash-funding-scenarios.test.mjs": "63915125da19d72137ae1c8a4947f0779b1496ab4555fe9faf75ef1c7791676c",
+    "tests/local-consumer-workflow.test.mjs": "5d65419389598240d5f0181510574e82afdcefeb2650e1564e1881f716f51b17"
+  },
+  "tests": {
+    "modelAndHelpers": {
+      "pass": 31,
+      "fail": 0
+    },
+    "integrationTargeted": {
+      "pass": 23,
+      "fail": 0
+    },
+    "full": {
+      "pass": 334,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "newFunding": 14,
+    "newConsumer": 5
+  },
+  "changedExecutablePaths": [
+    "domain/cash-funding-scenarios.mjs",
+    "domain/local-consumer-workflow.mjs",
+    "tests/cash-funding-scenarios.test.mjs",
+    "tests/local-consumer-workflow.test.mjs"
+  ],
+  "otherBaseCodeBlobsMatched": true,
+  "verified": [
+    "EXACT_GIVEN_QUANTITY_FEE_TAX_CASH_MATH",
+    "DEADLINE_VS_EVENTUAL_PROCEEDS",
+    "SAME_ACCOUNT_NO_NETTING_NO_OVERSELL",
+    "MODEL_POST_FUNDING_BEFORE_PAYMENT_ASSET_CONCENTRATION_STRESS",
+    "FINITE_NULL_STALE_FUTURE_GUARDS",
+    "DETERMINISTIC_NO_INPUT_MUTATION",
+    "INDEPENDENT_DISABLED_BY_DEFAULT_PRIVATE_OPT_IN",
+    "NO_PUBLIC_PRIVATE_QUOTE_PROMOTION",
+    "PRIVATE_FAILURE_DOES_NOT_CHANGE_PUBLIC_RESULT",
+    "STALE_FEATURE_AGE_PRESERVED",
+    "NO_PUBLIC_DATA_PRIVACY_UPGRADE_OR_ACTION_RECOMMENDATION"
+  ],
+  "deployment": "NOT_DEPLOYED",
+  "ci": "NO_NEW_REMOTE_TEST_SUCCESS_CLAIMED",
+  "productionImpact": "NONE",
+  "unsupported": [
+    "BORROWING",
+    "DEBT_REPAYMENT",
+    "DEFERRAL",
+    "COLLATERAL_RELEASE",
+    "TAX_LAW_MAJOR_SHAREHOLDER_RULES",
+    "BROKER_SETTLEMENT_OR_FILL_GUARANTEE",
+    "LIVE_FEATURE_SIGNAL_DECISION_INTEGRATION",
+    "ACTUAL_PRIVATE_DATA_STORAGE",
+    "WATCH_ACCESS_OR_DELIVERY"
+  ]
+}
