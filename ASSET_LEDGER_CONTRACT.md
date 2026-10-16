@@ -136,3 +136,16 @@ Technical bounds:100 captured observations and1000 retained events. Capacity err
 Notification connection is NOT_CONNECTED, request NOT_REQUESTED, delivery/acknowledgement UNCONFIRMED, lastNotifiedAtMs/version null. Producing an intent is not request success, device delivery or user acknowledgement. Cross-process/durable duplicate suppression, queue receipts, retries, delivery and user confirmation are not implemented; losing caller-supplied state may regenerate intents. No private persistence/channel has been approved or connected.
 
 Tests: lifecycle10/10 plus public import-boundary2/2,12/12 targeted PASS. Existing full197/197 at parent22a6f06 is reused only for unchanged prior source; no full-suite, real notification or live-validation claim for this standalone module. A cash-result adapter is the next separate integration unit.
+
+
+## Private cash-risk event adapter
+
+`createCashRiskEventState` and `advanceCashRiskEvents` in domain/cash-risk-events.mjs connect calculated cash-deadline output to the standalone lifecycle reducer. Explicit caller bindings supply stable private event IDs and severities for shortage and overdue risk per account; no severity/risk threshold is invented. Up to32 bound accounts is a technical limit. Fixed horizonAtMs and exact account scope prevent a shorter horizon or missing account from clearing an existing risk. Horizon rollover is not automatic.
+
+The adapter requires CALCULATED/schema1/KRW/private-scope cash output with complete declared account scope, explicit empty issues, valid capture/cutoff and matching fixed horizon. It checks per-account cumulative deadlines/headroom/shortfall/overdue consistency, risk-event agreement and aggregate totals; at most128 deadlines per account. These checks are local consistency, not cryptographic proof or external account verification.
+
+Material shortage evidence is positive gap plus first-shortfall deadline. Material overdue evidence is count plus positive overdue due/amount buckets. Unchanged fields, later collection time and irrelevant cash changes do not automatically increment versions. Complete inactive results resolve an existing risk explicitly; an initially inactive risk creates no fictitious resolution. Reopening/changes increment an integer evidence version with overflow protection. Signatures/state contain PRIVATE financial data and must not be published or logged with real inputs.
+
+Blocked/partial/corrupt cash results, stale underlying cutoff, wrong account scope or changed horizon preserve caller state with no resolution/intents. Out-of-order snapshots are rejected. Evidence history must match lifecycle IDs/versions/type/severity; missing state is not silently reset. JSON serialization/reload preserves local duplicate suppression, but there is no durable store or exactly-once delivery guarantee. Valid schema/consistency does not externally attest source facts or prevent deliberate caller-state tampering.
+
+All notification fields remain NOT_CONNECTED/NOT_REQUESTED/UNCONFIRMED. No actual notification, private file/store or scheduler is connected. Adapter8/8 plus lifecycle10/cash8/public-boundary2,28/28 targeted PASS using the existing calculator and fictional inputs. A full cumulative run is reserved for the immediately following local workflow integration.
