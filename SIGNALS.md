@@ -68,3 +68,16 @@ Status: CONTRACT_AND_PURE_FUNCTION_TESTED; not wired into the writer or Signal o
   is authorized. Any eventual persistence representation needs a separate encoding compatibility gate.
 - Public replay availability at capture-fetch time proves those rows were available by that capture,
   not their historical first-arrival times. Reuse at earlier cutoffs is invalid without D1 availability evidence.
+
+### Stock-flow v3 opt-in adapter
+
+`generateStockFlowSignalsV3(samplesByStock, options)` is a separate pure-function candidate,
+not a replacement for `generateDescriptiveSignals`. Default disabled; enabled:true, featureVersion:2,
+explicit inputCutoffMs/generatedAtMs and engineGitSha are required. Input paths are
+samsung/skHynix → foreignFlow/institutionFlow, each exactly three kinematics-v1 samples.
+
+It recomputes normalized evidence through the helper, emits s3 stock-flow IDs and returns
+per-flow suppression diagnostics. No raw-v2 acceleration fallback, no mutation, persistence or network.
+Input-quality ceiling uses all three samples. Confidence is descriptive MEDIUM evidence confidence,
+not historical probability. This is stock-flow-only v3; other v2 Signal families remain separate.
+Missing time basis never emits an acceleration signal. Local correctness tests pass; no runtime deployment.

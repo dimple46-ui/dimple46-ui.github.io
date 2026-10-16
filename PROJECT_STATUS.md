@@ -1711,3 +1711,11 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - Conservative UNVERIFIED_TIME assigned to source-scheduled public evidence, no exchange verification claimed. All rows known available by API capture fetch, not first-arrival history; cannot reuse at earlier cutoffs.
 - Contract in SIGNALS.md: future Signalv3 explicit opt-in; no time basis ->no acceleration signal/diagnostic, no v2 raw fallback. No persistence/encoding migration approved. Existing writer/Signalv2 unchanged; new helper unconnected, LOCAL_TESTED_NOT_DEPLOYED/CI_NOT_RUN.
 - Next exact step: Medium opt-in Signalv3 stock-flow adapter under explicit contract, quality ceiling from all3 samples, deterministic IDs, insufficient-time diagnostics and compatibility tests. Validator remains blocked; production unchanged. High decision completed in this narrow scope, no model switch claimed.
+
+
+## CHECKPOINT — 2026-10-16 11:55 KST — opt-in v3 stock-flow adapter
+
+- Parent873953f. New independent cloudflare/signal-v3-stock-flow.mjs imports kinematics-v1; disabled by default, strict opt-in, explicit Feature2 context/time/SHA. Not imported by v2/Worker/writer. Raw v2 arithmetic untouched, v3 uses normalized rates/acceleration with s3 IDs.
+- Per-flow missing/stale/future/invalid input ->suppression diagnostic, no raw fallback. Oldest input quality influences ceiling; descriptive MEDIUM confidence capped by weakest3. Evidence carries units/source times/intervals/midpoint, no probability/action.
+- New adapter4 tests + existing v2 compatibility11=15/15 PASS locally. Covers Hynix v2 selling-accelerating vs v3 selling-decelerating, both stocks institution reversals, deterministic IDs, no input mutation, quality and missing-time isolation. LOCAL_TESTED_NOT_DEPLOYED/CI_NOT_RUN, synthetic correctness only.
+- No production/D1/API/Secret/binding changes. Existing deploy evidence reused, no auth/read repeated. Next: v3-aware local replay validator with explicit inputs, saved actual capture and correct source SHA; keep v2 API. Medium implementation. Checkpoint skip-ci; provider skip must be checked rather than assumed.
