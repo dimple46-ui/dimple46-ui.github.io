@@ -184,3 +184,21 @@ test('offline adapter: older input cutoff is rejected by the existing workflow b
  const r=await submit(f,request({requestId:'fictional-older-input',expectedRevision:1,inputs:inputs(now-100)}));
  assert.equal(r.code,'WORKFLOW_NOT_COMMITTABLE');assert.deepEqual(f.snapshot(),before);
 }));
+test('offline HTTP to SQLite: duplicate accepted JSON is one durable input/outbox; unauthorized/owner override cannot dispatch',async()=>withFixture(async f=>{
+ const {createPrivateHttpBoundary}=await import('../private/http-boundary.mjs');
+ const proof={...scope,roles:['OWNER_READ','OWNER_WRITE'],verified:true,expiresAtMs:now+1000};
+ const authorize=async token=>token==='Bearer fictional-http'?proof:null;
+ const inputAdapter=createPrivateInputAdapter({...f.deps,authorize});
+ const handle=createPrivateHttpBoundary({origin:'https://fictional-private.invalid',authorize,inputAdapter,clock:()=>now,
+ checkRateLimit:async()=>({allowed:true}),statusReader:async()=>{const h=f.store.readHead();return {schemaVersion:1,mode:h.mode,
+ revision:h.revision,generatedAtMs:h.revision===0?null:h.generatedAtMs,inputCutoffMs:h.revision===0?null:h.inputCutoffMs};}});
+ const post=(value,token='Bearer fictional-http')=>new Request('https://fictional-private.invalid/private/inputs',{
+ method:'POST',headers:{authorization:token,'content-type':'application/json'},body:JSON.stringify(value)});
+ assert.equal((await handle(post(request(),'wrong'))).status,401);assert.equal(f.storeCalls(),0);
+ assert.equal((await handle(post({...request(),ownerRef:'other'}))).status,400);assert.equal(f.storeCalls(),0);
+ const first=await handle(post(request()));assert.equal((await first.json()).status,'COMMITTED');
+ const again=await handle(post(request()));assert.equal((await again.json()).status,'REPLAYED');
+ assert.equal(f.snapshot().private_versions.length,1);assert.equal(f.snapshot().private_outbox.length,1);
+ const status=await handle(new Request('https://fictional-private.invalid/private/status',{headers:{authorization:'Bearer fictional-http'}}));
+ assert.equal(status.status,200);assert.equal((await status.json()).status.revision,1);
+}));

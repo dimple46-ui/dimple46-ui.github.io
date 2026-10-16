@@ -2064,3 +2064,15 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - retry_condition: chosen private account + changed/approved management access. Never retry same blocked login/auth/plugin search without changed context. Ask only one account-selection question; no Secret values in chat.
 - waiting_for_live: unchanged; local tests do not activate continuous Feature2 persistence or promote corrected Feature/Signal/live gates.
 - next_exact_step: confirm whether a separate private Cloudflare account already exists, then verify target names/permissions/plan-cost once using its approved management path before creating the ALREADY_APPROVED synthetic-only resources. Runtime Secret/key custody/intake/sending remain separately gated.
+
+
+## CHECKPOINT — bounded private HTTP factory (2026-10-16T19:37:55+09:00)
+
+- parent678c7c5b611d1e6040cd14315eec2c061ac81be3; implementation is the containing commit. Resource scope remains approved; user's latest 'next' supplies no separate-account existence evidence. No repeated account/auth question or management retry.
+- completed: shared strict private request parser; offline GET/private/status + POST/private/inputs transport factory. Fixed configured origin, no query/arbitrary SQL/export/unknown route/method; verified scoped role and expiry before body/rate/store; required injected limiter fail-closed; strict content-type/encoding/declared and streamed UTF8 byte caps; bounded deadline/abort; no cookies/CORS/browser ingress; no-store+sanitized receipt/status output. Analysis route not implemented in this checkpoint.
+- write semantics: after dispatch, timeout/client abort/network failure/malformed receipt is WRITE_OUTCOME_UNCONFIRMED/UNKNOWN, not 'not committed'. AbortSignal cooperative only; underlying remote write may finish after response. No automatic retry. Client recovery must reuse identical request ID, expectedRevision and body. A pre-dispatch failure reports NOT_DISPATCHED. CPU/synchronous provider work cannot be preempted by a JS timer; no CPU guarantee.
+- tests: targeted39/39 PASS, HTTP17/private adapter22. Includes a deliberately late write after timeout, no auto retry, early cancellation, auth no-body-read, byte/range/encoding/shape limits, independent age/null status, role/rate/expiry failures and real memory-SQLite idempotency through HTTP. Auth/rate doubles; no provider enforcement/Access/network/real financial data proof.
+- historical full275 baseline retained; no new aggregate/full-suite claim yet. Existing public candidate/auth receipt/build evidence reused without repeats.
+- deployment: NOT_DEPLOYED; no actual private endpoint/resource/Secret, public Build not requested, [skip ci]. No main/production/public runtime/D1/history impact.
+- blocked: private administrative account choice + approved management path unchanged; no Secret absence inference or token request. Live gates unchanged.
+- next_exact_step: fixed-SELECT saved-analysis reader and minimal projection, revision/epoch check after async decrypt, separate input/analysis freshness; then optional local read route. Avoid re-asking unchanged blocker while useful local work remains.

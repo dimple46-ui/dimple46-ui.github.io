@@ -1,6 +1,7 @@
 // OFFLINE PRIVATE ONLY. Trusted injected identity/crypto/store/policy; not JWT verification or a Worker.
 // No network, provisioning, initialization, scheduler, sender, actual financial input or logging.
 import {runPrivateRiskWorkflow} from '../domain/private-risk-workflow.mjs';
+import {parsePrivateInputRequest} from './input-request.mjs';
 import {PrivateStorageError,fail,opaqueId,intentId,timestamp,scopeValid,sameScope,context,canonicalJson,envelopeValid} from './storage-contract.mjs';
 const allowedErrors=new Set(['UNAUTHORIZED','INVALID_REQUEST','INVALID_OR_OVERSIZED_JSON','STORE_FROZEN_OR_SCOPE_MISMATCH',
  'REVISION_CONFLICT','REVISION_EXHAUSTED','TIME_REGRESSION','IDEMPOTENCY_CONFLICT','WORKFLOW_NOT_COMMITTABLE',
@@ -16,12 +17,7 @@ export function createPrivateInputAdapter({authorize,getStore,getPolicy,crypto,c
    const principal=await authorize(credential,'OWNER_WRITE');
    if(principal?.verified!==true||!scopeValid(principal)||!Array.isArray(principal.roles)||!principal.roles.includes('OWNER_WRITE'))fail('UNAUTHORIZED');
    const scope=Object.fromEntries(['schemaVersion','ownerRef','authorizationEpoch','policyEpoch','restoreEpoch'].map(k=>[k,principal[k]]));
-   const canonical=canonicalJson(request);
-   request=JSON.parse(canonical); // detached, immutable request snapshot across async preparation
-   if(!request||Array.isArray(request)||Object.keys(request).sort().join(',')!=='expectedRevision,inputs,requestId,schemaVersion'||
-     request.schemaVersion!==1||!opaqueId(request.requestId)||!Number.isSafeInteger(request.expectedRevision)||request.expectedRevision<0||
-     !request.inputs||Array.isArray(request.inputs)||typeof request.inputs!=='object'||
-     Object.keys(request.inputs).some(k=>!['ledger','prices','scenario','schedule','collateralInput'].includes(k)))fail('INVALID_REQUEST');
+   const parsed=parsePrivateInputRequest(request),canonical=parsed.canonical;request=parsed.request;
    const store=await getStore(scope.ownerRef),head=store.readHead();
    if(!head||!sameScope(head,scope)||head.mode!=='ACTIVE')fail('STORE_FROZEN_OR_SCOPE_MISMATCH');
    const payloadTag=await crypto.tag(canonical,context(scope,'REQUEST_TAG',request.requestId));
