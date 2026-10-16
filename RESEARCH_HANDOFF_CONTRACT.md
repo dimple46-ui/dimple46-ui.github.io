@@ -41,6 +41,18 @@
 
 현재 세션 저장은 EPHEMERAL_LOCAL_SESSION_ONLY이다. 재시작 뒤 승인·철회 이력이 유지된다고 가정하지 않는다. 영속 저장·승인 취소 전파·권한 검증은 실제 비공개 경로 연결 전 별도 검증 대상이다. 사용자 별도 승인 없이 새 저장소/API/권한/Secret을 만들지 않는다.
 
+## 미봉인 DRAFT의 로컬 검토 준비
+
+`prepareResearchDraft(draft,{nowMs})`는 해시가 없는 경우에만 봉인한 뒤 기존 검증을 적용한다. 이미 해시가 있으면 그대로 검증하며, 불일치·빈 값·null을 새 해시로 덮어쓰지 않는다. 본문·수치·시각을 자동 수정하지 않는다. 반환된 sealedPackage와 검토표는 불변 로컬 객체이며 수신 기록·사용자 승인·영속 저장을 만들지 않는다. 검토표에는 정확한 승인 대상 ID/revision/hash, 근거 참조·단위·기간, 재검토/만료 상태와 수동 확인 항목을 제공한다. 자유서술 개인정보·이용권한·원문 진실성과 중요한 반대 근거는 별도 사람이 확인해야 한다.
+
+명시적으로 전달된 로컬 DRAFT는 다음처럼 검사한다. 기준 시각은 실제 검토 시각의 epoch-ms를 사용한다.
+
+```sh
+node scripts/validate-research-package.mjs /private/path/draft.json <reference_epoch_ms> --draft
+```
+
+CLI는 해시·개수·상태 등 제한된 receipt만 출력한다. 원문·자유서술·봉인된 패키지를 출력하거나 파일로 저장하지 않는다. `--draft` 없이 실행하면 기존처럼 봉인된 입력만 받는다. EXPIRED/REVIEW_DUE는 보관용 구조 검증 성공과 구분되며 운영 반영 가능을 뜻하지 않는다. 실제 패키지 전달·승인 경로·Watch 연결은 여전히 미완료다.
+
 ## 모니터링 결과와 제한
 
 buildResearchMonitoringSummary는 decision_id, 생성/입력 cutoff·knowledge as-of, 시장/연구 버전·해시·승인 참조, 수치 변경, 장기/단기 판단, 근거/반대 근거, 제한된 대안과 수동 이벤트를 반환한다. 반환 객체는 불변이며 verifyResearchMonitoringSummary로 변경을 탐지할 수 있다. 실제 판단 장부·결과 평가·프로젝트 환류 저장은 아직 연결되지 않았다.
