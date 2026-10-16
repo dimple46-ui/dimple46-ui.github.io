@@ -1783,3 +1783,15 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - blocked/retry: unchanged Validator command/provider metrics/private storage and current live gates. New evidence/access required before blocked retries.
 - next_exact_step: minimal fictional four-alternative comparison contract (holding addition/new candidate/cash/debt repayment), separating corporate merit from portfolio suitability; explicit missing funding/cost/risk fields prevent actionable conclusions.
 - recommended_reasoning:Medium.
+
+
+## CHECKPOINT — 2026-10-16T13:24:29.262591+09:00: fictional four-alternative comparison
+
+- parent:630c7be2e9bafa8263b33455cc8abd7ce1211576; comparison code commit contains this checkpoint. Module SHA256 ec87016890ec3dc7ef95e89a3cb9cbd815aa4b359468746af85a5fedbf361aba; test SHA256 55bc03aee54e4184e72e8ed67683f9e1b4a51baf03d17bb383967eed992b215a.
+- completed: local ADD_EXISTING/ADD_NEW/KEEP_CASH/REPAY_DEBT contract reuses unchanged ledger; common hypothetical capital/horizon and separate corporate merit/portfolio fit. Explicit costs, evidence, funding, expiry/downside/catalyst/invalidation required. No ranking, recommendation, precise trade quantity or expected return generated.
+- tests:6/6 targeted PASS after final cutoff/malformed-scope guard. Real0 remains explicit; omissions block output; insufficient cash yields known gap; debt repayment checks aggregate principal only. Evidence after inputCutoff cannot pass. Existing ledger SHA256 matches prior7ff964d...; prior report4/4, ledger6/6, consumer5/5, core107/107 reused, not rerun/combined as current-suite result.
+- state:IMPLEMENTED/LOCAL_VALIDATED/NOT_DEPLOYED/NOT_OPERATIONALLY_VALIDATED/NOT_USER_READY. No actual personal holdings/cash/debt/tax/account values or reports copied. Actual outputs would remain private despite identifier projection.
+- production_impact:NONE. No scheduled task, private connection, Worker/Secret/binding/route/main/D1/history change. Builds path unchanged; no second deployer or auth retry.
+- blockers: unchanged Validator deployment command/provider metrics/private storage/current live gates. Retry conditions unchanged.
+- next_exact_step:Add one fictional end-to-end local integration test across consumer/fallback, ledger and alternative comparison, with an explicit public/private output boundary. Prove GitHub price-only fallback cannot imply Feature/Signal/portfolio readiness and private scenario data cannot enter the proposed public result. Do not connect or modify scheduled tasks.
+- recommended_reasoning:Medium.
