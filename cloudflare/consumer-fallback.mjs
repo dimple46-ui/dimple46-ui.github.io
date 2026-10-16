@@ -66,14 +66,16 @@ function featureSelection(response,now,maximum) {
   if(response.apiSchemaVersion!==1||f?.featureVersion!==2||f.compactFeatures?.featureVersion!==2)
     return unavailable('FEATURE_VERSION_MISMATCH');
   const a=age(f.inputCutoffMs,now,maximum);
-  if(a.reason) return {...unavailable(a.reason),inputCutoffMs:f.inputCutoffMs,ageMs:a.ageMs};
+  // Quality describes the stored input; rejecting its age must not erase or upgrade it.
+  const quality=['VERIFIED','RECENT_FETCH','UNVERIFIED_TIME','STALE_INPUT','MISSING_INPUT'].includes(f.qualityCeiling)?f.qualityCeiling:'UNKNOWN';
+  if(a.reason) return {...unavailable(a.reason),inputCutoffMs:f.inputCutoffMs,ageMs:a.ageMs,quality};
   if(!isTime(f.observedAtMs)||f.observedAtMs>f.inputCutoffMs||!isTime(f.generatedAtMs)||
     f.generatedAtMs<f.inputCutoffMs||f.generatedAtMs>now||!isTime(response.inputCutoffMs)||
     f.inputCutoffMs>response.inputCutoffMs||response.inputCutoffMs>now)
     return unavailable('INVALID_OR_FUTURE_FEATURE_TIME');
   if(f.tradingDay!==day(f.inputCutoffMs)) return unavailable('TRADING_DAY_MISMATCH');
   if(f.generationStatus!=='SUCCESS'||!['VERIFIED','UNVERIFIED_TIME','RECENT_FETCH'].includes(f.qualityCeiling))
-    return {...unavailable('UNUSABLE_FEATURE_QUALITY'),inputCutoffMs:f.inputCutoffMs,ageMs:a.ageMs,quality:f.qualityCeiling??null};
+    return {...unavailable('UNUSABLE_FEATURE_QUALITY'),inputCutoffMs:f.inputCutoffMs,ageMs:a.ageMs,quality};
   return {status:'AVAILABLE',featureVersion:2,inputCutoffMs:f.inputCutoffMs,ageMs:a.ageMs,
     quality:f.qualityCeiling,data:copy(f)};
 }

@@ -41,3 +41,18 @@ test('candidate quality wrapper is supported; fallback does not inherit rejected
  r=buildPublicConsumerSummary({candidateState:{apiSchemaVersion:1,inputCutoffMs:policy.nowMs,state},githubSnapshot:s},policy);
  assert.equal(r.observation.source,'GITHUB_FALLBACK');assert.deepEqual(r.sourceQuality.reasonCodes,[]);
 });
+
+test('saved authenticated receipt reproduces old Feature age with preserved STALE_INPUT; not a new runtime validation',()=>{
+ const receipt=JSON.parse(readFileSync(new URL('../validation/candidate-summary-20261016-1411.json',import.meta.url)));
+ const old=receipt.authenticatedSmoke,reference=old.summary.evaluationReferenceMs;
+ const candidateState={apiSchemaVersion:1,inputCutoffMs:reference,state:{schemaVersion:1,
+  observedAtMs:old.latestObservation,availableAtMs:old.latestObservation,tradingDay:'20261016',pipelineStatus:'DEGRADED',
+  metrics:{'samsung.price':{value:100,status:'LIVE'}},quality:{dataQuality:{issues:[],unverifiedMarketTimes:[]}}}};
+ const candidateFeatures={apiSchemaVersion:1,inputCutoffMs:reference,feature:{featureVersion:old.featureVersion,
+  inputCutoffMs:old.featureInputCutoff,qualityCeiling:old.quality,compactFeatures:{featureVersion:2}}};
+ const r=buildPublicConsumerSummary({candidateState,candidateFeatures},{...policy,nowMs:reference});
+ assert.equal(old.summary.featureQuality,'UNKNOWN'); // Historical evidence must not be rewritten.
+ assert.equal(r.features.quality,'STALE_INPUT');assert.equal(r.features.status,'UNAVAILABLE');
+ assert.equal(r.features.ageMs,old.summary.featureAgeMs);assert.equal(r.features.inputCutoffMs,old.featureInputCutoff);
+ assert.equal(r.observation.ageMs,old.summary.observationAgeMs);assert.equal(r.capabilities.features,'UNAVAILABLE');
+});

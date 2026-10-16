@@ -65,3 +65,14 @@ test('empty/null-only observations are unavailable and future per-metric time is
  assert.equal(r.observation.metrics['skHynix.price'].value,null);
  assert.equal(r.observation.metrics['skHynix.price'].status,'FUTURE_INPUT');
 });
+
+test('age rejection retains only known stored quality without making Feature available',()=>{
+ for(const qualityCeiling of ['STALE_INPUT','UNVERIFIED_TIME','MISSING_INPUT','RECENT_FETCH','VERIFIED','PRIVATE_SENTINEL',null,{}]){
+  const f=fixture();Object.assign(f.candidateFeatures.feature,{inputCutoffMs:now-600000,qualityCeiling});
+  const r=selectConsumerData(f,policy);
+  assert.equal(r.features.status,'UNAVAILABLE');assert.equal(r.features.reason,'STALE_INPUT');
+  assert.equal(r.features.data,null);assert.equal(r.features.inputCutoffMs,now-600000);assert.equal(r.features.ageMs,600000);
+  assert.equal(r.features.quality,typeof qualityCeiling==='string'&&qualityCeiling!=='PRIVATE_SENTINEL'?qualityCeiling:'UNKNOWN');
+  assert.ok(!JSON.stringify(r).includes('PRIVATE_SENTINEL'));
+ }
+});

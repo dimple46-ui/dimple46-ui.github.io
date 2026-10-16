@@ -19,7 +19,7 @@ export function assertReadMeta(meta) {
   visit(meta);
   requireCheck(count > 0, 'QUERY_META_MISSING');
 }
-export function assertSummary(summary, {expectedSha, referenceMs, maxObservationAgeMs, maxFeatureAgeMs}) {
+export function assertSummary(summary, {expectedSha, referenceMs, maxObservationAgeMs, maxFeatureAgeMs, storedFeature}) {
   requireCheck(summary?.readOnly === true && summary.apiSchemaVersion === 1 && summary.schemaVersion === 1,
     'SUMMARY_SCHEMA_MISMATCH');
   requireCheck(summary.release?.workerGitSha === expectedSha && summary.release?.serviceReleaseVersion === 3 &&
@@ -53,6 +53,13 @@ export function assertSummary(summary, {expectedSha, referenceMs, maxObservation
     observation.ageMs <= maxObservationAgeMs, 'SUMMARY_OBSERVATION_AGE_MISMATCH');
   if (feature?.inputCutoffMs != null) requireCheck(feature.ageMs === referenceMs - feature.inputCutoffMs,
     'SUMMARY_FEATURE_AGE_MISMATCH');
+  // Requests can observe different rows. Compare quality only for the same stored input.
+  if (storedFeature?.featureVersion === 2 && feature?.inputCutoffMs != null &&
+      storedFeature.inputCutoffMs === feature.inputCutoffMs) {
+    const expectedQuality = ['VERIFIED','RECENT_FETCH','UNVERIFIED_TIME','STALE_INPUT','MISSING_INPUT']
+      .includes(storedFeature.qualityCeiling) ? storedFeature.qualityCeiling : 'UNKNOWN';
+    requireCheck(feature.quality === expectedQuality, 'SUMMARY_FEATURE_QUALITY_NOT_PRESERVED');
+  }
   if (feature?.status === 'AVAILABLE') requireCheck(feature.featureVersion === 2 && feature.ageMs >= 0 &&
     feature.ageMs <= maxFeatureAgeMs && ['VERIFIED','RECENT_FETCH','UNVERIFIED_TIME'].includes(feature.quality),
     'SUMMARY_FEATURE_QUALITY_PROMOTED');
@@ -143,7 +150,8 @@ export async function checkCandidate({kind, token, expectedSha, expectedSourceHa
   await request(summaryPath, null, 401);
   await request(summaryPath, 'deliberately-invalid-candidate-smoke-token', 401);
   const summary = assertSummary(await request(summaryPath), {
-    expectedSha, referenceMs: now, maxObservationAgeMs: 180000, maxFeatureAgeMs: 300000
+    expectedSha, referenceMs: now, maxObservationAgeMs: 180000, maxFeatureAgeMs: 300000,
+    storedFeature: features.feature
   });
   const history = await request('/history?ticker=005930&limit=2');
   assertReadMeta(history.queryMeta);

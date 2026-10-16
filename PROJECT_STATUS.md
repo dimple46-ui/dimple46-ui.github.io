@@ -1891,3 +1891,16 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - production_impact:no production mutation; only previously approved isolated candidate replaced through existing Builds. No main merge, market-relay/production Secret/binding/route/history/D1 mutation or new private/scheduler connection. PR4 verified Open/Draft after code push.
 - next_exact_step:Fix the measured stale-Feature metadata gap: /features preserved STALE_INPUT but /summary returned UNKNOWN after age rejection. Retain the allowlisted original quality ceiling while keeping Feature UNAVAILABLE and its independent cutoff/age; add targeted tests using the saved authenticated receipt. Do not rerun unchanged remote validation.
 - recommended_reasoning:Medium, local quality propagation fix + targeted regression. Future deployment must use same existing candidate path, no management retries.
+
+
+## CHECKPOINT — 2026-10-16T14:23:00+09:00: preserve stale Feature quality on age rejection
+
+- source: this commit, parent 0cf3ce0c3596f8f83e023bf3f9291df822dd77cc; PR4 stays Draft/Open. One bounded metadata fix, no engine rewrite.
+- completed: consumer selector retains only allowlisted stored quality when age is rejected; Feature remains UNAVAILABLE/data null with its own cutoff and age. Unknown quality is sanitized to UNKNOWN. Existing smoke checker detects quality loss only when raw Feature version2/cutoff matches summary, avoiding false comparisons across different rows.
+- tests: targeted35/35 PASS; full157/157 PASS after shared selector/checker changes. Saved authenticated receipt647787b reused as regression input; the historical UNKNOWN result remains unchanged. Local reconstruction is not new runtime/live validation.
+- deployment: TESTED_NOT_DEPLOYED at checkpoint creation. Normal code commit uses existing approved isolated Cloudflare Builds plus existing candidate check once; no new deployer, token, Worker or binding. CI/build/auth result PENDING until evidence arrives.
+- production_impact: NONE. Existing production writer, routing, Secret, binding, history and main untouched; continuous Feature2 remains inactive/unverified, live gates unchanged.
+- operating preference: continue successive safe tasks without asking for another "next"; stop only on an actual approval/user-action dependency. Do not repeat unchanged successful checks or blocked attempts.
+- next_exact_step: Consume the exact-SHA existing build/CI/authenticated receipt for this changed code. Verify summary retains STALE_INPUT while UNAVAILABLE and writes0. Then choose the next small independent off-market task from measured gaps, without production/private-store changes.
+- blocked: VALIDATOR_DEPLOY_COMMAND_UNVERIFIED; retry only with new authorized deployment evidence/access. Provider CPU/database bytes and private/scheduler access remain unverified.
+- recommended_reasoning: Medium.

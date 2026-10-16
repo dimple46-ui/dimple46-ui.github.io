@@ -32,3 +32,13 @@ test('available Feature cannot bypass quality ceiling or age policy',()=>{
  for(const patch of [{quality:'STALE_INPUT'},{ageMs:600000,inputCutoffMs:at-600000},{featureVersion:3}])
   assert.throws(()=>assertSummary({...s,features:{...s.features,...patch}},options));
 });
+
+test('matching stored cutoff detects erased quality; different rows are not falsely compared',()=>{
+ const s=fixture(),storedFeature={featureVersion:2,inputCutoffMs:s.features.inputCutoffMs,qualityCeiling:'STALE_INPUT'};
+ assert.equal(assertSummary(s,{...options,storedFeature}).featureQuality,'STALE_INPUT');
+ s.features.quality='UNKNOWN';
+ assert.throws(()=>assertSummary(s,{...options,storedFeature}),/SUMMARY_FEATURE_QUALITY_NOT_PRESERVED/);
+ assert.doesNotThrow(()=>assertSummary(s,{...options,storedFeature:{...storedFeature,inputCutoffMs:at-700000}}));
+ s.features.quality='UNKNOWN';
+ assert.doesNotThrow(()=>assertSummary(s,{...options,storedFeature:{...storedFeature,qualityCeiling:'PRIVATE_SENTINEL'}}));
+});
