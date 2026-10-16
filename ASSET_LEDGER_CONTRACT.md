@@ -119,3 +119,20 @@ Successful matching adds reconciliation.status=MATCHED_LOCAL, while overall coll
 This is local assertion consistency, not external brokerage/ownership/debt attestation, legal eligibility or margin safety. Real formula/terms, private data access and deployment remain separate gates. No raw personal IDs/amounts/source text are echoed by this reconciliation result.
 
 Tests: new7/7, initial reconciliation+input13/13, integrated related23/23, one full197/197 local PASS. Fictional fixtures only. Public import boundary remains intact; no candidate or production deployment is required.
+
+
+## Private risk-event lifecycle and duplicate suppression
+
+`createRiskEventState` and `reduceRiskEvents` in domain/risk-event-lifecycle.mjs are standalone pure helpers, not a connected alert service. The caller explicitly supplies previous state, a capture and reference/age policies; no network, storage or scheduler runs. All IDs/state/intents remain PRIVATE. Only fictional fixture inputs have been evaluated.
+
+Capture schema1 requires sourceStatus=OK or FAILED. Accepted OK captures have nonfuture observedAtMs/inputCutoffMs, cutoff<=observation, separate maxCaptureAgeMs/maxInputAgeMs and nonregressing successful capture times. A fresh collection cannot refresh stale underlying evidence. Events require stable eventId, fixed eventType, positive integer evidenceVersion, caller-supplied severity INFO/WARNING/CRITICAL and explicit ACTIVE/RESOLVED/UNKNOWN state. Evidence versions must represent material evidence, not automatically increment every polling cycle; no financial severity threshold is invented.
+
+New active events emit a local OPENED intent. Higher material versions emit CHANGED, explicit active-to-resolved emits RESOLVED, and a resolved-to-active transition emits REOPENED. firstSeenAtMs persists across reopening; lastChangedAtMs and resolvedAtMs track distinct facts. Metadata updates to an already resolved event do not rewrite its actual resolution time. Unchanged same-version input refreshes lastSeenAtMs only, with no new intent. Same-version status/severity conflicts, regressing versions, changed type for an existing ID, future/out-of-order cutoffs and duplicate IDs reject the whole batch before state mutation. Resolution without a prior event is unsupported/BLOCKED.
+
+Absence is not resolution. Omitted active IDs and explicit UNKNOWN remain active but unverified; FAILED/stale input cannot clear a risk. Successful capture processing means only the explicit supplied observations were processed, never proof that every risk was checked. State and intent ordering is canonical; arbitrary source descriptions are not echoed. Intents carry stable ID/version/transition identity but have not been queued or sent.
+
+Technical bounds:100 captured observations and1000 retained events. Capacity errors preserve existing state; no automatic pruning or deletion. Previous state and its timestamps/notification metadata are validated. Unsupported imported transport-success fields cannot masquerade as a connected delivery path.
+
+Notification connection is NOT_CONNECTED, request NOT_REQUESTED, delivery/acknowledgement UNCONFIRMED, lastNotifiedAtMs/version null. Producing an intent is not request success, device delivery or user acknowledgement. Cross-process/durable duplicate suppression, queue receipts, retries, delivery and user confirmation are not implemented; losing caller-supplied state may regenerate intents. No private persistence/channel has been approved or connected.
+
+Tests: lifecycle10/10 plus public import-boundary2/2,12/12 targeted PASS. Existing full197/197 at parent22a6f06 is reused only for unchanged prior source; no full-suite, real notification or live-validation claim for this standalone module. A cash-result adapter is the next separate integration unit.
