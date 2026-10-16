@@ -202,3 +202,26 @@ test('offline HTTP to SQLite: duplicate accepted JSON is one durable input/outbo
  const status=await handle(new Request('https://fictional-private.invalid/private/status',{headers:{authorization:'Bearer fictional-http'}}));
  assert.equal(status.status,200);assert.equal((await status.json()).status.revision,1);
 }));
+test('offline saved analysis HTTP to SQLite: fixed snapshot reads preserve rows, ages, unavailable features and private aggregate scope',async()=>withFixture(async f=>{
+ const {createPrivateReadAdapter}=await import('../private/read-adapter.mjs');
+ const {createPrivateHttpBoundary}=await import('../private/http-boundary.mjs');
+ const proof={...scope,verified:true,roles:['OWNER_READ','OWNER_WRITE'],expiresAtMs:now+60000};
+ const authorize=async token=>token==='Bearer fictional-read'?proof:null;
+ const reader=createPrivateReadAdapter({authorize,getStore:f.deps.getStore,crypto:f.crypto,clock:f.deps.clock,maxAnalysisAgeMs:1000,maxInputAgeMs:1000});
+ const handle=createPrivateHttpBoundary({origin:'https://fictional-private.invalid',authorize,inputAdapter:f.adapter,clock:f.deps.clock,
+ checkRateLimit:async()=>({allowed:true}),statusReader:reader.readStatus,analysisReader:reader.readAnalysis});
+ const req=()=>new Request('https://fictional-private.invalid/private/analysis/latest',{headers:{authorization:'Bearer fictional-read'}});
+ const absent=await handle(req());assert.equal(absent.status,404);assert.equal((await absent.json()).error,'ANALYSIS_NOT_AVAILABLE');
+ await submit(f);const saved=f.snapshot(),changes=f.db.prepare('SELECT total_changes() AS n').get().n;
+ const response=await handle(req()),data=await response.json();assert.equal(response.status,200);
+ assert.equal(data.metricsAsOf.cashDeadlines.accountShortfallSumKrw,500);assert.equal(data.metricsAsOf.valuation.netAssetsKrw,3000);
+ assert.equal(data.metricsAsOf.valuation.investableCashKrw,null);assert.equal(data.featureVersion,null);assert.equal(data.signalVersion,null);
+ assert.ok(!JSON.stringify(data).includes('fictional-A'));assert.ok(!('events'in data));assert.ok(!('accounts'in data));
+ assert.equal(f.db.prepare('SELECT total_changes() AS n').get().n,changes);assert.deepEqual(f.snapshot(),saved);
+ f.setTime(now+2000);const stale=await handle(req()),view=await stale.json();assert.equal(stale.status,200);assert.equal(view.status,'UNAVAILABLE');
+ assert.equal(view.freshness.status,'STALE_INPUT');assert.equal(view.metricsAsOf.cashDeadlines,null);assert.equal(view.riskEventState,'RETAINED_NOT_REEVALUATED_OR_RESOLVED');
+ assert.deepEqual(f.snapshot(),saved);assert.equal(f.db.prepare('SELECT total_changes() AS n').get().n,changes);
+ const row=f.db.prepare('SELECT sealed_analysis FROM private_versions WHERE revision=1').get();
+ f.db.prepare('UPDATE private_versions SET generated_at_ms=generated_at_ms+1 WHERE revision=1').run();
+ assert.throws(()=>f.store.readAnalysisSnapshot(scope),/PRIVATE_READ_UNAVAILABLE/);assert.ok(row.sealed_analysis);
+}));

@@ -30,6 +30,16 @@ export function createPrivateTransactionStore({sql,transactionSync}){
    !timestamp(r.generatedAtMs)||!timestamp(r.inputCutoffMs)||r.inputCutoffMs>r.generatedAtMs||r.generatedAtMs>head.generatedAtMs||r.inputCutoffMs>head.inputCutoffMs))fail('STORE_FROZEN_OR_SCOPE_MISMATCH');return r;
  }
  function readReceipt(scope,requestId){return findReceipt(scope,requestId,checkHead(scope));}
+ function readAnalysisSnapshot(scope){
+  const snapshot=transactionSync(()=>{
+   const h=checkHead(scope);if(h.revision===0)return {head:h,version:null};
+   const records=rows('SELECT revision,policy_epoch,restore_epoch,generated_at_ms,input_cutoff_ms,sealed_analysis FROM private_versions WHERE revision=?',h.revision);
+   const r=records[0];if(records.length!==1||r.policy_epoch!==h.policyEpoch||r.restore_epoch!==h.restoreEpoch||
+    r.generated_at_ms!==h.generatedAtMs||r.input_cutoff_ms!==h.inputCutoffMs||!envelopeValid(r.sealed_analysis))fail('PRIVATE_READ_UNAVAILABLE');
+   return {head:h,version:{revision:r.revision,sealedAnalysis:r.sealed_analysis}};
+  });
+  if(!snapshot||typeof snapshot.then==='function')fail('PRIVATE_READ_UNAVAILABLE');return snapshot;
+ }
  function commit(p){
   if(!opaqueId(p?.requestId)||!Number.isSafeInteger(p.expectedRevision)||p.expectedRevision<0||!opaqueId(p.payloadTag)||
     p.resultStatus!=='REDUCED'||![p.sealedInput,p.sealedAnalysis,p.sealedState].every(envelopeValid)||
@@ -50,5 +60,5 @@ export function createPrivateTransactionStore({sql,transactionSync}){
    return {revision,generatedAtMs:p.generatedAtMs,inputCutoffMs:p.inputCutoffMs,replayed:false};
   });
  }
- return {readHead,readReceipt,commit};
+ return {readHead,readReceipt,readAnalysisSnapshot,commit};
 }

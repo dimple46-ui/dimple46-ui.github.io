@@ -2,6 +2,7 @@
 // All storage/identity/limiting operations are injected. No cookies/CORS, owner-selected SQL, auto retry or sender.
 import {scopeValid,timestamp,PrivateStorageError} from './storage-contract.mjs';
 import {parsePrivateInputRequest} from './input-request.mjs';
+import {privateSavedAnalysisView} from './saved-analysis-view.mjs';
 class TransportError extends Error {constructor(code,status){super(code);this.code=code;this.status=status;}}
 const stop=(code,status)=>{throw new TransportError(code,status);};
 const headers={'content-type':'application/json; charset=utf-8','cache-control':'no-store, private','pragma':'no-cache',
@@ -44,13 +45,13 @@ async function boundedBody(request,maxBytes,signal){
   try{return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{stop('INVALID_JSON_BODY',400);}
  }finally{signal.removeEventListener('abort',cancel);try{reader.releaseLock();}catch{}}
 }
-export function createPrivateHttpBoundary({origin,authorize,checkRateLimit,inputAdapter,statusReader,clock=Date.now,
+export function createPrivateHttpBoundary({origin,authorize,checkRateLimit,inputAdapter,statusReader,analysisReader,clock=Date.now,
  timeoutMs=5000,maxBodyBytes=131072,readRole='OWNER_READ'}={}){
  let parsedOrigin;try{parsedOrigin=new URL(origin);}catch{}
  if(!parsedOrigin||parsedOrigin.protocol!=='https:'||parsedOrigin.origin!==origin||
   ![authorize,checkRateLimit,statusReader,clock].every(f=>typeof f==='function')||typeof inputAdapter?.submit!=='function'||
   !Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>10000||!Number.isSafeInteger(maxBodyBytes)||maxBodyBytes<1||maxBodyBytes>131072||
-  !['OWNER_READ','MACHINE_READ'].includes(readRole))throw new TypeError('INVALID_PRIVATE_HTTP_CONFIGURATION');
+  !['OWNER_READ','MACHINE_READ'].includes(readRole)||(analysisReader!==undefined&&typeof analysisReader!=='function'))throw new TypeError('INVALID_PRIVATE_HTTP_CONFIGURATION');
  return async function handle(request){
   let dispatched=false,timer,onAbort;const controller=new AbortController();
   try{
@@ -58,7 +59,7 @@ export function createPrivateHttpBoundary({origin,authorize,checkRateLimit,input
    if(url.origin!==origin||url.username||url.password)stop('NOT_FOUND',404);
    if(url.search||url.hash)stop('QUERY_NOT_ALLOWED',400);
    if(request.headers.has('origin')||request.headers.has('cookie'))stop('BROWSER_CONTEXT_NOT_SUPPORTED',403);
-   const action=url.pathname==='/private/inputs'?'OWNER_WRITE':url.pathname==='/private/status'?readRole:null;
+   const action=url.pathname==='/private/inputs'?'OWNER_WRITE':(url.pathname==='/private/status'||url.pathname==='/private/analysis/latest'&&analysisReader)?readRole:null;
    if(!action)stop('NOT_FOUND',404);
    if(method!==(action==='OWNER_WRITE'?'POST':'GET'))stop('METHOD_NOT_ALLOWED',405);
    if(action!=='OWNER_WRITE'&&(request.body!==null||request.headers.has('content-length')))stop('BODY_NOT_ALLOWED',400);
@@ -85,7 +86,14 @@ export function createPrivateHttpBoundary({origin,authorize,checkRateLimit,input
     if(rate?.allowed===false)stop('RATE_LIMITED',429);if(rate?.allowed!==true)stop('PRIVATE_SERVICE_UNAVAILABLE',503);
     if(!valid())stop('UNAUTHORIZED',401);
     if(action!=='OWNER_WRITE'){
-     const result=await statusReader({principal,execution});expired();if(!valid())stop('UNAUTHORIZED',401);
+     let result;try{result=await (url.pathname==='/private/status'?statusReader:analysisReader)({credential,principal,execution});}
+     catch(error){if(error instanceof PrivateStorageError&&['UNAUTHORIZED','ANALYSIS_NOT_AVAILABLE','SNAPSHOT_CHANGED'].includes(error.code))
+      stop(error.code,{UNAUTHORIZED:401,ANALYSIS_NOT_AVAILABLE:404,SNAPSHOT_CHANGED:409}[error.code]);throw error;}
+     expired();if(!valid())stop('UNAUTHORIZED',401);
+     if(url.pathname==='/private/analysis/latest'){
+      if(result?.contractVersion!==1||result.scope!=='PRIVATE_SAVED_RISK_AGGREGATES_ONLY'||result.temporalScope!=='STORED_AS_OF_NOT_REEVALUATED')stop('INVALID_UPSTREAM_ANALYSIS',503);
+      const view=privateSavedAnalysisView(result,clock());return json(200,{apiSchemaVersion:1,...view});
+     }
      return json(200,statusView(result,clock()));
     }
     if(!/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(request.headers.get('content-type')??''))stop('JSON_CONTENT_TYPE_REQUIRED',415);
