@@ -1,47 +1,26 @@
 # Resume — Real-time Investment Intelligence System v4
 
-- timestamp_kst: 2026-10-14T09:38:00+09:00
-- milestone: M2 — Operational / Storage Architecture Stabilization
+- timestamp_kst: 2026-10-16T11:35:00+09:00
+- milestone: M2 — Operational / Storage Architecture Stabilization; independent M3 correctness work
 - branch: feature/m2-operational-storage
-- active_pr: #4 Draft/Open; PR #3 merged. No main merge authorized.
-- verified_head_sha: 5dc82e5d819a135bcf4832a588066d507350962f (authenticated candidate)
-- completed: today's first0930 stock-flow estimates confirmed for both stocks in093647 snapshot, CURRENT_BUCKET/businessDate20261014. Before-due093447 snapshot not a collection failure.
-- last_successful_test: full regression94/94 PASS atf8eddf438574c52213da79bc20391149f9c1d36d;24 source/script/test blobs plus2 migrations and candidate workflow exactly matched GitHub. New M3 code LOCAL_INTEGRATION_VALIDATED_NOT_DEPLOYED.
-- last_successful_ci: node-tests115584120675/local-checks115584094195 SUCCESS at5dc82e5.
-- last_successful_build: existing intelligence Builds115584344473 SUCCESS at5dc82e5.
-- authenticated_validation: job115611968326/run38481246040 attempt2 PASS today; deploymentId8cd941c5-130a-42d0-a46e-805318b11035; artifact11860559151; healthQueryCount2/d1Writes0; state age86832ms, stored Feature age587011275ms/cutoff1791350328109/STALE_INPUT.
-- candidate_status: CANDIDATE_VALIDATED including Feature age; prior504 did not recur, original endpoint/root cause remain unknown. Do not claim underlying timeout cause fixed.
-- production_impact: NONE. No production Worker/Secret/binding/route change or D1 mutation.
-- quality: stored Feature2 cutoff1791350328109 remains STALE_INPUT; continuous v2 persistence not enabled. Historical receipts are not current health.
-- blocked: VALIDATOR_DEPLOY_COMMAND_UNVERIFIED. Existing Git connection, MARKET_HISTORY binding, VALIDATION_TOKEN existence, write=false, compatibility_date2026-10-02 verified; Disable builds ON.
-- last_attempt: validator Dashboard2026-10-13 14:42KST. Build section lacks command; Manage leads to GitHub permissions.
-- retry_condition: new deploy-command evidence or authorized management access only. No repeated screenshots/login/token lookup/reconnection. Provider audit lacks management credential; no new token requested.
-- waiting_for_live: preserve existing live-only gates; historical source-time correction replay1791778965346 pending validator deployment, not live-only. Provider storage measurement needs20-day sample.
-- verified_complete_lock: existing intelligence auth/build/receipt pipeline; prior Oct12 real three-bucket Signal replay and D1/state comparison. Do not repeat without changed input/code/environment.
-- approved_scope: isolated candidate code/tests/deploy/read-only validation. No production changes, main merge, destructive migration or history rewrite.
-- next_exact_step: after10:05 plus next relay publication, read one new snapshot; compare actual1000 bucket with saved0930 baseline, verify signed quantity deltas/direction. No acceleration PASS before third valid bucket after11:25. GPT-6.1 Sol Medium.
+- active_pr: #4 Draft/Open/unmerged; PR #3 merged. No main merge approval.
+- recovered_parent: 9ba45e27765b219aa567bc5645f335e139f54a30; no branch changes since20261014 before this work.
+- verified_code_sha: f8eddf438574c52213da79bc20391149f9c1d36d (M3 full local94/94); new offline snapshot auditor targeted3/3 PASS, CI_NOT_RUN.
+- last_successful_ci: Tests38481252849 and candidate38481246040 SUCCESS at5dc82e5; reused, not today live evidence.
+- last_successful_deployment_sha: 5dc82e5d819a135bcf4832a588066d507350962f; Cloudflare Build115584344473; existing single Builds deployer.
+- authenticated_validation: historical2026-10-14 job115611968326/run38481246040 attempt2 PASS, D1 writes0; no authenticated check repeated this session.
+- live_validation: PUBLIC_SNAPSHOT_BUCKET_ARITHMETIC_ONLY PASS on2026-10-16T02:28:46.739Z; both stocks0930/1000/1120, businessDate20261016, CURRENT_BUCKET. Does not prove D1/Feature/Signal runtime.
+- completed: signed flow deltas/delta differences and per-minute rates calculated from actual three-bucket rows. Added local-only scripts/validate-stock-flow-snapshot.mjs with fixed identities, same-day/past-only, quality, unique ordered buckets, latest consistency, finite-safe quantity arithmetic; null stays unknown.
+- public_evidence: samsung foreign deltas[51000,181000], deltaDifference130000; institution[111000,-219000], deltaDifference-330000. Hynix foreign[-145000,-157000], deltaDifference-12000; institution[58000,-85000], deltaDifference-143000. Intervals30/80min.
+- time_basis_gate: M3_ACCELERATION_TIME_BASIS_REVIEW_REQUIRED. Hynix foreign raw deltaDifference-12000 contrasts with per-minute flow[-4833.333333333333,-1962.5], rate change+2870.833333333333. Do not call delta difference a comparable speed or automatically change production algorithm.
+- quality: snapshot pipelineDEGRADED/programSTALE/sourceErrors[]; user earlier112446 OK receipt is older. KIS flows are cumulative intraday estimates in shares; raw institution0 legitimate. Historical stored Feature2 remains20261007 STALE_INPUT; continuous persistence disabled/unverified.
+- candidate_status: existing intelligence candidate historical validated; newest M3 guards and new auditor not deployed. Validator Builds disabled.
+- blocked: VALIDATOR_DEPLOY_COMMAND_UNVERIFIED; provider CPU/database bytes unavailable. No new evidence/access, so no login/Dashboard/token/binding retry.
+- retry_condition: validator command evidence or authorized management access must change. Prior auto-review rerun issue resolved by scoped20261014 approval; not current authentication evidence.
+- build_trigger_evidence: checkpoint9ba45e2 Cloudflare check115616776743 actually skipped; reason not exposed, so skip-ci alone is not assumed to guarantee skipping. New commit check pending.
+- production_impact: NONE; no Worker/Secret/binding/route/migration/history/main changes.
+- waiting_for_live: current D1/Feature2 persistence/latest corrected Feature replay/Signal-runtime gates unchanged. Public source arithmetic PASS is narrower.
+- next_exact_step: isolated review of bucket acceleration time basis (raw delta difference vs elapsed-time normalized flow) using today's counterexample; define version/compatibility contract and tests before altering Feature/Signal core. Keep production unchanged and validator blocked.
+- recommended_next_reasoning: High for that narrow Feature/Signal time-basis decision; Medium for subsequent implementation after contract is explicit. No model switch performed.
 
-Detailed history: PROJECT_STATUS.md. Deployment instructions: CANDIDATE_AUTOMATION.md.
-
-- query_plan_evidence: existing GROUP BY/ORDER BY/LIMIT5 uses shipped indexes and stops after five groups locally. 10→100 days has identical VM steps (observations29807, features28164 at330 rows/day); test verifies identical aggregate payload evaluations at20 rows/day, mixed versions and correct totals. These are local SQLite metrics, not Cloudflare CPU/rows_read evidence. No SQL/schema changes justified.
-
-- prior_timeout: 41647c remote504 endpoint unknown; changed diagnostic validation5dc82e5 succeeded. Retain incident, no blind retries; future failures now identify endpoint/auth stage.
-
-- diagnostic_change: fixed endpoint/auth-stage labels for HTTP, network/timeout and invalid JSON failures; no URL parameters/token/body/native errors recorded. Targeted automation12/12 PASS. Runtime code unchanged; existing Builds is sole push path, no manual rerun.
-- recommended_next_model: GPT-6.1 Sol, Medium for bounded diagnosis/tests; separate High only if evidence indicates cross-service consistency/design issue.
-
-- M2_remaining: consumer/fallback PARTIAL; provider CPU/memory/database bytes BLOCKED_BY_ACCESS;20-day database-byte history pending; production transition/main merge approval required. Candidate success does not complete these gates.
-
-- pr_summary: PR4 refreshed with94-test exact source evidence, deployed5dc82e5/runtime identity and explicit M2/M3 external/live/approval gates; Draft/Open/unmerged preserved. No new CI or deployment for checkpoint.
-
-- real_replay_boundary: saved user-provided legacy Feature source39e39bb...; validates M3 codef8eddf4 on real historical inputs, not latest corrected Feature source or today live. No captures/tokens committed. Evidence hashes recorded in PROJECT_STATUS.
-
-- authenticated_live_blocker: AUTO_REVIEW_REJECTED_JOB_RERUN at2026-10-14 regular session. Review reason: reruns already-successful old-commit job, unnecessary external execution contrary to no-repeat instruction. Today's market input differs, but no bypass/retry performed. Required change: explicit user approval or approved fresh validation path. Old runtime receipt remains historical, not today PASS.
-
-- current_live_scope: endpoint read/auth/identity/quality-age contract PASS; continuous Feature2 persistence, today's changed bucket/acceleration/Signal remain waiting. Program source091000 stale at snapshot092052; stock estimates null; exchange times unverified.
-- auto_review_resolution: user answered next after scoped1-run approval request; rerun succeeded once. Prior rejection retained in history, not current access blocker. No deploy or indirect workaround.
-
-- stock_flow_due_evidence: main code uses scheduled minute+5. Snapshot00:24:47.705Z both hasValuefalse/statusNOT_DUE, errors[], no issues. No missing-source bug established. Due bucket cached only after expected inputTime matches; delayed/empty result retried next relay, not frozen.
-
-- first_bucket_baseline: {"tradingDay":"20261014","bucket":"0930","sourceMarketTime":"2026-10-14T00:30:00.000Z","observedAt":"2026-10-14T00:36:47.070Z","status":"CURRENT_BUCKET","unit":"shares","isEstimate":true,"samsung":{"foreign":478000,"institution":0},"skHynix":{"foreign":-57000,"institution":0}}
-- bucket_validation_scope: first bucket collection/time/metadata PASS from main snapshot, not D1 Feature2 persistence/Signal PASS. Program STALE -> DEGRADED at093647; raw institutional0 differs from fabricated unchanged-delta0.
+Detailed evidence: PROJECT_STATUS.md. Existing automation: CANDIDATE_AUTOMATION.md.
