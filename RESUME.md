@@ -1,22 +1,22 @@
 # Resume — research/market local decision comparison
 
-- updated_at_kst: 2026-10-18T00:46:00+09:00
+- updated_at_kst: 2026-10-18T00:50:57+09:00
 - operating_rules: M2_OPERATIONS.md — existing Pro and ‘다음’ operating rules preserved.
 - active_branch: feature/research-handoff
 - active_pr: #6 Draft/Open; base feature/m2-operational-storage. PR4/5/7 remain separate; no main merge.
-- current_task: Samsung/SK Hynix paired research/market summary implemented and locally validated without Access.
-- verified_code_sha: 0be6dd4293d7d9fde9595ff3778651992794c37b; checkpoint document commit is separate.
-- last_completed: domain/research-pair-summary.mjs reuses existing research approval selection, consumer fallback/quality and descriptive Signal summary. Fixed two-stock mapping, common as-of, independent unavailable/expired/withdrawn state, long/short horizons, stable event IDs, no composite score/ranking/private sizing. Result hash is not authentication.
-- tests_and_evidence: targeted27/27 and full373/373 local PASS,0fail/skip, synthetic only. Baseline executable/test/example blobs match remote source tree11863abe; differing/missing historical receipt files do not change tested code. New pair tests7; prior research366 evidence retained separately, not summed with cash334.
-- ci_build_runtime_status: LOCAL_TESTED; remote test CI NOT_CONFIRMED. Latest source check-runs returned Workers Builds: market-feature-validation check117435717847 FAILURE. Earlier in-progress check117435578001 referenced buildbb1160ef-c4ee-463f-adcf-94c20ae6f1ab; final check/build association and execution stage not independently established. No deployment/runtime PASS. No manual retry.
-- unfinished_changes: code/contract committed remotely. Documentation checkpoint follows. Scratch is a source copy, not an authoritative Git checkout; do not reset unrelated work.
+- current_task: bounded Korean text/JSON display for the existing two-stock local summary completed; no Access required for this offline unit.
+- verified_code_sha: 03f492c711bc96bae57671501e294965a65863ab; checkpoint document commit is separate.
+- last_completed: domain/research-pair-view.mjs plus scripts/show-research-pair.mjs; explicit local file/display time/age policy, 256KiB/depth24/nodes20000 bounds, pair+child integrity/target/as-of checks, stale directional-state suppression, independent observation/Feature age, fixed safe projection. Korean synthetic example saved; fixture approval remains tests-only.
+- tests_and_evidence: related34/34 local PASS (pair-view7 + pair-summary7 + research-handoff18 + public-boundary2); final wording-only change revalidated pair-view7/7. Historical full373/373 belongs to source0be6dd4 and is reused for untouched code, not claimed as this source's full regression. No new actual research/private input or live validation.
+- ci_build_runtime_status: LOCAL_TESTED, current remote CI/build/runtime NOT_YET_OBSERVED. No manual deploy/build requested; source and checkpoint prepared for one branch update to reduce hooks. Checkpoint [skip ci] is a request, not proof of Cloudflare skip. Historical Validator source0be6dd4 check117435717847 FAILURE retained; no retry, unknown execution stage.
+- unfinished_changes: code/docs/fixture/tests committed; final checkpoint follows. No actual Git checkout exists in scratch; unrelated local work not reset. Existing research/market engines unchanged.
 - approved_scope: safe local code/tests/docs and isolated existing candidate work. Access activation explicitly deferred by user; no payment registration approved. No actual private finance/restricted research intake, identity credentials, production/Secret/shared-D1 change or merge.
 - completed_access_audit: existing fixed candidate settings read succeeded run38922501400 attempt3/job117431389145/artifact12105885127, checkpointdeb4ba259c1e12ba18ee7f086e3f2eb0075c6a3a on feature/candidate-access-audit. Do not repeat.
 - private_candidate_status: user reported Hello World deployment of market-private-risk-candidate. Access screen showed Zero Trust setup required; free activation requested payment method. User chose to proceed with development without activation. NOT_AUTH_PROTECTED_OR_PRIVATE_RUNTIME_VALIDATED; no actual data allowed; no DO/keys/approval-source connected or verified.
 - blocked_and_retry_condition: ACCESS_ACTIVATION_DEFERRED; PRIVATE_ADMIN_ACCOUNT_SELECTION_AND_MANAGEMENT_ACCESS_REQUIRED remains for real private identity/storage operations. Existing read token proves two settings reads only. VALIDATOR_DEPLOY_COMMAND_UNVERIFIED remains; do not retry login/token/Build without new evidence.
 - production_impact: no production/main/shared-history changes performed. Existing provider Build hook outcome is separate and unverified, not declared a successful deployment.
 - waiting_for_live: unchanged; local pair composition is not live validation. Continuous Feature v2 persistence remains inactive/unverified.
-- next_exact_step: implement the bounded local paired-summary display path using existing explicit input/approval gates; do not rerun unchanged373 tests or failed Validator Build. Real authentication/storage remains deferred; no fixture approval as actual authority.
-- next_ready_task: local paired-summary display/explicit input contract; unapproved packages must remain REVIEW_REQUIRED, not fixture-authorized.
+- next_exact_step: when explicitly delivered usable research inputs exist, run the existing DRAFT/package validation and local review path, preserving receipt-time/approval/version boundaries. Use the new display for generated local pair results; never use fixture authorizers on actual inputs. Do not repeat successful synthetic display tests or failed Validator Build unchanged.
+- next_ready_task: NONE inside this bounded display unit; concrete next integration needs explicit research input/source authority or a separately scoped capability request. No new infrastructure/fictional engines to fill the access wait.
 - recommended_model_and_reasoning: GPT-6.1 Sol Medium for bounded implementation/tests; High only for separately scoped real authentication/storage activation.
-- stop_reason: SESSION_ENDED at a saved local-validation unit; existing provider Build failed without accessible detailed diagnosis; private access deferred.
+- stop_reason: SCOPE_COMPLETE for local paired display; actual source approval/private durable integration remains ACCESS_BLOCKED and Access is user-deferred.
