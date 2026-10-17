@@ -1,6 +1,6 @@
 # Resume — research/market local decision comparison
 
-- updated_at_kst: 2026-10-18T00:43:33+09:00
+- updated_at_kst: 2026-10-18T00:46:00+09:00
 - operating_rules: M2_OPERATIONS.md — existing Pro and ‘다음’ operating rules preserved.
 - active_branch: feature/research-handoff
 - active_pr: #6 Draft/Open; base feature/m2-operational-storage. PR4/5/7 remain separate; no main merge.
@@ -8,7 +8,7 @@
 - verified_code_sha: 0be6dd4293d7d9fde9595ff3778651992794c37b; checkpoint document commit is separate.
 - last_completed: domain/research-pair-summary.mjs reuses existing research approval selection, consumer fallback/quality and descriptive Signal summary. Fixed two-stock mapping, common as-of, independent unavailable/expired/withdrawn state, long/short horizons, stable event IDs, no composite score/ranking/private sizing. Result hash is not authentication.
 - tests_and_evidence: targeted27/27 and full373/373 local PASS,0fail/skip, synthetic only. Baseline executable/test/example blobs match remote source tree11863abe; differing/missing historical receipt files do not change tested code. New pair tests7; prior research366 evidence retained separately, not summed with cash334.
-- ci_build_runtime_status: LOCAL_TESTED_NOT_DEPLOYED by Work. Remote test CI not yet confirmed. Existing provider hook check117435578001 / buildbb1160ef-c4ee-463f-adcf-94c20ae6f1ab was IN_PROGRESS at last read after source push; execution stage and resulting runtime UNVERIFIED. No manual Build/redeploy request or deployer added. Reuse stored job/build ID; no duplicate retry.
+- ci_build_runtime_status: LOCAL_TESTED; remote test CI NOT_CONFIRMED. Latest source check-runs returned Workers Builds: market-feature-validation check117435717847 FAILURE. Earlier in-progress check117435578001 referenced buildbb1160ef-c4ee-463f-adcf-94c20ae6f1ab; final check/build association and execution stage not independently established. No deployment/runtime PASS. No manual retry.
 - unfinished_changes: code/contract committed remotely. Documentation checkpoint follows. Scratch is a source copy, not an authoritative Git checkout; do not reset unrelated work.
 - approved_scope: safe local code/tests/docs and isolated existing candidate work. Access activation explicitly deferred by user; no payment registration approved. No actual private finance/restricted research intake, identity credentials, production/Secret/shared-D1 change or merge.
 - completed_access_audit: existing fixed candidate settings read succeeded run38922501400 attempt3/job117431389145/artifact12105885127, checkpointdeb4ba259c1e12ba18ee7f086e3f2eb0075c6a3a on feature/candidate-access-audit. Do not repeat.
@@ -16,7 +16,7 @@
 - blocked_and_retry_condition: ACCESS_ACTIVATION_DEFERRED; PRIVATE_ADMIN_ACCOUNT_SELECTION_AND_MANAGEMENT_ACCESS_REQUIRED remains for real private identity/storage operations. Existing read token proves two settings reads only. VALIDATOR_DEPLOY_COMMAND_UNVERIFIED remains; do not retry login/token/Build without new evidence.
 - production_impact: no production/main/shared-history changes performed. Existing provider Build hook outcome is separate and unverified, not declared a successful deployment.
 - waiting_for_live: unchanged; local pair composition is not live validation. Continuous Feature v2 persistence remains inactive/unverified.
-- next_exact_step: inspect stored source check117435578001/buildbb1160ef-c4ee-463f-adcf-94c20ae6f1ab outcome once when complete, then add a bounded local display path for the paired summary without minting approvals or persisting private inputs. Do not recreate summaries or repeat373 tests unchanged.
+- next_exact_step: implement the bounded local paired-summary display path using existing explicit input/approval gates; do not rerun unchanged373 tests or failed Validator Build. Real authentication/storage remains deferred; no fixture approval as actual authority.
 - next_ready_task: local paired-summary display/explicit input contract; unapproved packages must remain REVIEW_REQUIRED, not fixture-authorized.
 - recommended_model_and_reasoning: GPT-6.1 Sol Medium for bounded implementation/tests; High only for separately scoped real authentication/storage activation.
-- stop_reason: SESSION_ENDED at a saved local-validation unit; provider Build outcome pending, private access deferred.
+- stop_reason: SESSION_ENDED at a saved local-validation unit; existing provider Build failed without accessible detailed diagnosis; private access deferred.
