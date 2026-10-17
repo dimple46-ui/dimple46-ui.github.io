@@ -2141,3 +2141,14 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - retry_condition: existing approved management credential becomes available as repository Actions Secret CLOUDFLARE_API_TOKEN. Do not recreate or disclose tokens or repeat browser login. If no safely retained credential exists, stop for a separate credential decision.
 - next_exact_step: user connects existing management token to that one GitHub Secret; then rerun only failed provider job117426212084 once and classify actual read outcome. No need to rerun successful local tests or reopen the PR.
 - scope/model: read-only fixed candidate metadata; no deployment/private data/admin rights inferred. GPT-6.1 Sol Medium.
+
+
+## CHECKPOINT — authenticated candidate settings audit success — 2026-10-18T00:24:00+09:00
+
+- ISSUE/ROOT_CAUSE: prior attempt2 failed before network because Actions management token was unavailable. User reported no saved credential, explicitly approved a new selected-account Workers Scripts Read token after the narrower UI scope was unavailable, and registered it directly in repository Actions Secret. No value read or stored in code/logs/docs/chat.
+- VALIDATION: reran only failed provider job117426212084 once after credential input changed. Existing run38922501400 attempt3/provider117431389145 SUCCESS. Artifact12105885127 downloaded/parsed, READ_ACCESS_VERIFIED for exactly market-feature-validation and market-intelligence-read-candidate. Both runtime Secret names/D1 bindings present; same DB; Validator write DISABLED; Intelligence provider rate limiter and version metadata present. Sanitized receipt retained without database ID or token.
+- REUSED: exact-code source3cbcebd CI319/319 and targeted27/27. No successful test rerun, PR reopen, new deployer or Build request. Other runtime check jobs skipped, not passed.
+- LIMITS: selected-account credential scope is broader than two Workers but runner queries remain fixed to them. Read success is not deployment/admin/private-storage permission proof. D1 bindings are not read-only ACLs. No current runtime, Feature continuity or market quality gates promoted.
+- PRODUCTION_IMPACT: no production operation, deployment, Worker Secret/binding/route change, shared D1 mutation, migration or merge performed. Existing provider Build failure remains separate and un-retried.
+- CURRENT_BRANCH: feature/candidate-access-audit; pre-checkpoint HEAD58a1180e9066818117ec618bc8ace0cc921749f2; executable source3cbcebd unchanged; PR#7 Draft/Open.
+- NEXT_EXACT_STEP: return to feature/research-handoff/RESUME.md for its unfinished step. Private identity/admin/storage and VALIDATOR_DEPLOY_COMMAND_UNVERIFIED remain separate blockers, retry only with new evidence. Model GPT-6.1 Sol Medium.
