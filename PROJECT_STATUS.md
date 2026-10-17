@@ -2129,3 +2129,15 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - production impact: no production operation/main merge/shared DB change performed by Work; provider runtime state not newly verified. Existing actual research content approval is preserved privately and is not copied here. No live gates promoted.
 - blocker/retry: Cloud Browser login403 is not retried. Audit opt-in repository configuration requires user confirmation; connector cannot read/write variable/Secret endpoints. After CANDIDATE_ACCESS_AUDIT_ENABLED=true is confirmed, reopen this dedicated PR once and read its actual provider job result. Missing/denied token remains a blocker, not a reason to recreate it or widen permissions.
 - next_exact_step: confirm/enable the existing read-only audit repository flag, then perform that one scoped run. Model: GPT-6.1 Sol Medium. Current private identity/durable storage, deployment rights and Validator command remain unverified separately.
+
+
+## CHECKPOINT — actual candidate settings audit blocker — 2026-10-18 00:00 KST
+
+- branch/PR: feature/candidate-access-audit, #7 Draft/Open, unchanged code3cbcebd23fc50415aa3785d80bc3bf4f044d3e2f; current pre-checkpoint HEAD08c4006d14588868455486a139a1e2d3ac874bbf.
+- changed input: user confirmed CANDIDATE_ACCESS_AUDIT_ENABLED configuration completed. Existing run38922501400 local-checks was re-run once with its dependents; no new deployer/build or PR reopen. Attempt2 local job117426181073 SUCCESS.
+- real result: provider-access-audit117426212084 FAILURE, CLOUDFLARE_CREDENTIALS_UNAVAILABLE. Sanitized runner-log inspection proves account-ID matches expected configuration and API token environment variable is EMPTY. No token value read/printed; token presence in other stores remains unknown. Existing script rejected before any Cloudflare request.
+- other jobs: intelligence117426213035 and validator117426213547 SKIPPED. Existing exact-code full CI319/319 and local targeted27/27 retained, not rerun. No deployment/migration/production operation or live-gate promotion; actual provider runtime not revalidated.
+- ISSUE/ROOT_CAUSE: management credential not available to this GitHub Actions job. Account selection/ID and opt-in are not the current blockers. Cloudflare Builds credentials and Worker endpoint Secrets do not automatically populate repository Actions Secrets.
+- retry_condition: existing approved management credential becomes available as repository Actions Secret CLOUDFLARE_API_TOKEN. Do not recreate or disclose tokens or repeat browser login. If no safely retained credential exists, stop for a separate credential decision.
+- next_exact_step: user connects existing management token to that one GitHub Secret; then rerun only failed provider job117426212084 once and classify actual read outcome. No need to rerun successful local tests or reopen the PR.
+- scope/model: read-only fixed candidate metadata; no deployment/private data/admin rights inferred. GPT-6.1 Sol Medium.

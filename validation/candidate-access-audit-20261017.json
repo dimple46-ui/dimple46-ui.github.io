@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "recorded_at_kst": "2026-10-18T00:00:11+09:00",
+  "branch": "feature/candidate-access-audit",
+  "pr": 7,
+  "code_sha": "3cbcebd23fc50415aa3785d80bc3bf4f044d3e2f",
+  "workflow_run_id": 38922501400,
+  "run_attempt": 2,
+  "trigger": "RERUN_EXISTING_LOCAL_JOB_AND_DEPENDENCIES_AFTER_OPT_IN_CHANGE",
+  "local_job": {
+    "id": 117426181073,
+    "conclusion": "success"
+  },
+  "provider_job": {
+    "id": 117426212084,
+    "conclusion": "failure",
+    "code": "CLOUDFLARE_CREDENTIALS_UNAVAILABLE"
+  },
+  "configuration_evidence": {
+    "account_id_matches_user_selected": true,
+    "token_available_in_runner": false,
+    "secret_global_existence": "NOT_DETERMINED"
+  },
+  "network_stage": "REJECTED_BEFORE_CLOUDFLARE_REQUEST",
+  "authenticated_read": "NOT_VERIFIED",
+  "deployment": "NOT_PERFORMED_BY_WORKFLOW",
+  "production_operations": "NONE_PERFORMED_BY_WORKFLOW",
+  "remote_runtime_state": "NOT_NEWLY_VERIFIED",
+  "other_jobs": {
+    "intelligence": "SKIPPED",
+    "validator": "SKIPPED"
+  },
+  "retry_condition": "EXISTING_APPROVED_MANAGEMENT_TOKEN_AVAILABLE_TO_GITHUB_ACTIONS",
+  "next_job_to_retry": 117426212084
+}
