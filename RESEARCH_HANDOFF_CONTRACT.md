@@ -73,3 +73,18 @@ buildResearchMonitoringSummary는 decision_id, 생성/입력 cutoff·knowledge a
 반환은 LOCAL_PAIR_COMPARISON_ONLY / NOT_DEPLOYED_NOT_WATCH_READY다. 통합 점수·순위·추천 행동·확률·평가액·인출 가능 현금·매매수량은 null이며 execution_allowed=false다. 기존 이벤트 ID/change_hash를 보존하고 알림·예약을 실행하지 않는다. 결과 해시는 동일성/변경 탐지용이며 인증·서명·승인 증명이 아니다. 실제 연구 승인 소스/비공개 저장/Access 연결 없이 운영 승인을 생성하지 않는다. 테스트 승인기는 가상 자료 전용이다.
 
 Access 활성화는 사용자 요청으로 보류한다. 기존 로컬 분석 개발은 계속할 수 있으나 실제 개인자료 연결·원격 private API 운영은 별도 인증/저장 검증 전 차단한다. 새 private Worker는 사용자 보고상 Hello World만 배포되어 있으며 이름에 private가 있어도 접근 보호 완료를 의미하지 않는다. 결제수단 등록·유료 전환은 승인되지 않았다.
+
+
+## 로컬 비교 결과 읽기
+
+`scripts/show-research-pair.mjs`는 이미 생성된 비교 요약 파일 하나만 명시적으로 읽는다. 프로젝트 대화·승인 파일·URL을 수집하지 않으며 패키지 수신/승인/운영 활성화·파일 저장·네트워크·알림을 수행하지 않는다.
+
+```sh
+node scripts/show-research-pair.mjs /local/path/pair-summary.json <display_epoch_ms> <max_summary_age_ms> [text|json]
+```
+
+표시 시각과 허용 경과시간은 필수 입력이며, 운영 정책·투자 규칙의 기본값으로 고정하지 않는다. 출력은 항상 STORED_AS_OF_NOT_REEVALUATED다. 허용 시간을 넘으면 장기/단기 방향 상태를 숨기고 생성 시각·데이터 경과만 보존한다. 허용 시간 이내라도 현재 승인·원문 진실성·만료 재검증을 했다는 의미가 아니다. 관측 경과와 저장 Feature cutoff 경과는 각각 계산하며 서로 대체하지 않는다. 시간은 한글 출력에서 KST로 표시한다.
+
+입력 최대256KiB, JSON 깊이24, 노드20000으로 제한하고 CLI는 일반 로컬 파일만 bounded read한다. pair/종목별 요약 해시, 고정 두 종목/시장/통화, 공통 기준시각·미래시점, 지원 상태 및 개인 계산 차단 조건을 검사한다. 해시는 내용 일치만 확인하며 인증·승인 증명이 아니다. 자유서술·원문·URL·입력 경로·계좌·토큰·임의 필드는 출력하지 않는다. 오류는 RESEARCH_PAIR_DISPLAY_FAILED 고정 코드로만 반환한다. JSON 출력도 원래 요약 전체가 아닌 제한된 표시 모델이다.
+
+가상 한글 출력 예: `examples/research-pair-view.synthetic.txt`. 이는 실제 삼성전자·SK하이닉스 전망이나 실제 사용자 승인 결과가 아니다. 테스트 승인기는 `tests/fixtures/research-pair.mjs`에만 있으며 CLI/운영 코드에서 불러오지 않는다. 기존 테스트 fixture를 재사용하도록 정리했으며 실제 사용자 승인을 새로 만들지 않는다.
