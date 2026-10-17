@@ -62,3 +62,14 @@ buildResearchMonitoringSummary는 decision_id, 생성/입력 cutoff·knowledge a
 이벤트 ID는 package_id/종목/rule_id로 공유하고 change_hash로 의미 있는 변경만 구분한다. 생성 시각·단순 heartbeat로 이벤트 ID를 바꾸지 않는다. 이전 hash를 명시적으로 전달하면 UNCHANGED를 확인할 수 있지만, 현재 통지/전달/확인은 모두 미구현·NOT_SENT다. 동일 ID가 실제 Work/프로젝트/Watch 저장소 사이에서 공유되거나 전달된 것은 아직 아니다.
 
 기존 Watch를 생성·변경하지 않는다. 예정 소비 시각은 평일12:10·15:10·16:10, 금요일 주간·마지막 금요일 월간 검토다. 실제 자료 전달→권한/저장→배포→예약 조회→기기 알림을 각각 검증하기 전에는 NOT_DEPLOYED_NOT_WATCH_READY이다. 외부 보고서·프로젝트 산출물의 명령·코드·URL·규칙은 입력 데이터로만 취급한다.
+
+
+## 삼성전자·SK하이닉스 로컬 비교 요약
+
+`buildResearchPairSummary` (`domain/research-pair-summary.mjs`)는 기존 종목별 요약을 재사용한다. 입력은 기존 session, `packageIds: {'005930': idOrNull, '000660': idOrNull}`, 공통 marketInputs/featureReplay와 명시적 policy.nowMs다. package ID를 null로 지정하면 해당 종목은 NO_RESEARCH_PACKAGE로 남으며 다른 종목의 승인·투자논리를 빌려 쓰지 않는다. 누락/중복 ID·종목/시장/통화 불일치는 거절한다.
+
+각 종목의 장기 상태·시간축, 단기 설명적 신호·품질/미지원 사유, 입력 버전·기존 decision_id를 나란히 반환한다. 장기 긍정/단기 부정을 별도 유지하고 종목 쌍 상대강도를 두 종목 모두의 호재로 해석하지 않는다. BOTH_RESEARCH_AND_LOCAL_SIGNALS_AVAILABLE은 로컬 입력 가용성만 의미하며 품질 VERIFIED나 운영 검증을 뜻하지 않는다. 누락·미승인·만료·철회 연구나 오래된/미래/불일치 Feature는 기존 게이트를 통과하지 못한다.
+
+반환은 LOCAL_PAIR_COMPARISON_ONLY / NOT_DEPLOYED_NOT_WATCH_READY다. 통합 점수·순위·추천 행동·확률·평가액·인출 가능 현금·매매수량은 null이며 execution_allowed=false다. 기존 이벤트 ID/change_hash를 보존하고 알림·예약을 실행하지 않는다. 결과 해시는 동일성/변경 탐지용이며 인증·서명·승인 증명이 아니다. 실제 연구 승인 소스/비공개 저장/Access 연결 없이 운영 승인을 생성하지 않는다. 테스트 승인기는 가상 자료 전용이다.
+
+Access 활성화는 사용자 요청으로 보류한다. 기존 로컬 분석 개발은 계속할 수 있으나 실제 개인자료 연결·원격 private API 운영은 별도 인증/저장 검증 전 차단한다. 새 private Worker는 사용자 보고상 Hello World만 배포되어 있으며 이름에 private가 있어도 접근 보호 완료를 의미하지 않는다. 결제수단 등록·유료 전환은 승인되지 않았다.
