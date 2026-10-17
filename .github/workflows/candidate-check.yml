@@ -3,6 +3,14 @@ name: Candidate read-only checks
 
 on:
   workflow_dispatch:
+  # A dedicated same-repository PR can run the existing read audit before a main merge.
+  # This workflow still has to be reviewed: same-repository workflow edits are trusted code.
+  pull_request:
+    branches: [feature/m2-operational-storage]
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.github/workflows/candidate-check.yml'
+      - 'tests/candidate-access-workflow.test.mjs'
   push:
     branches: [feature/m2-operational-storage]
     paths:
@@ -37,7 +45,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: node --test tests/candidate-automation.test.mjs tests/candidate-build-wait.test.mjs tests/candidate-summary-check.test.mjs
+      - run: node --test tests/candidate-automation.test.mjs tests/candidate-build-wait.test.mjs tests/candidate-summary-check.test.mjs tests/candidate-access-workflow.test.mjs
       - name: Record scope
         run: echo 'Local tests only. Intelligence, validator and provider audit use independent opt-in flags. Disabled remote jobs are NOT_EXECUTED, not PASS. No deployment or migration is performed.' >> "$GITHUB_STEP_SUMMARY"
   remote-checks:
@@ -108,11 +116,22 @@ jobs:
         run: echo "Validator check outcome=$CHECK_STATUS. No deployment, migration or live-gate promotion." >> "$GITHUB_STEP_SUMMARY"
   provider-access-audit:
     needs: local-checks
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/feature/m2-operational-storage' && vars.CANDIDATE_ACCESS_AUDIT_ENABLED == 'true'
+    if: >-
+      vars.CANDIDATE_ACCESS_AUDIT_ENABLED == 'true' &&
+      ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/feature/m2-operational-storage') ||
+       (github.event_name == 'pull_request' &&
+        github.event.pull_request.base.repo.full_name == github.repository &&
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        github.event.pull_request.base.ref == 'feature/m2-operational-storage' &&
+        github.event.pull_request.head.ref == 'feature/candidate-access-audit'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Audit only the previously reviewed script; do not execute PR source with this token.
+          ref: ${{ github.event_name == 'pull_request' && '6ef8dfcdba2af7148a085c8026100d3ac184b2bf' || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -120,4 +139,17 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: node scripts/audit-candidate-access.mjs
+        run: node scripts/audit-candidate-access.mjs > candidate-access-audit.json
+      - name: Save sanitized read-access receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: candidate-access-audit-${{ github.run_id }}
+          path: candidate-access-audit.json
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Record audit outcome
+        if: always()
+        env:
+          AUDIT_STATUS: ${{ job.status }}
+        run: echo "Provider settings read audit=$AUDIT_STATUS. Deployment permission NOT_TESTED. No deployment or migration performed." >> "$GITHUB_STEP_SUMMARY"

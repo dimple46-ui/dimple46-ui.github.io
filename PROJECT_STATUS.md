@@ -2116,3 +2116,39 @@ Feature cutoff. Its success is replay correctness evidence, not proof of current
 - verification: documentation-only; no executable changes or repeated315-test run. Source315/315 and prior authenticated deployed c62ec46 receipts retained as source-specific historical evidence. Last checkpoint actual Cloudflare116940275450 SKIPPED; current commit requests [skip ci], not assumed provider outcome.
 - production_impact: NONE; no build/deployment requested, main merge, provider/Secret/binding/D1/history or actual private-data connection. Existing approvals and live-only gates unchanged.
 - blocked/retry/next_exact_step: PRIVATE_ADMIN_ACCOUNT_SELECTION_AND_MANAGEMENT_ACCESS_REQUIRED unchanged. New management boundary/access evidence is required before approved synthetic provider preflight. Do not repeat unchanged account/auth/Validator questions. Further fixed implementation uses Sol Medium after any needed separate High boundary review.
+
+
+## CHECKPOINT — dedicated candidate settings read audit — 2026-10-17 00:18 KST
+
+- branch/PR: feature/candidate-access-audit, #7 Draft/Open, base feature/m2-operational-storage; isolated from research PR#6/cash PR#5 and unmerged main.
+- code: 3cbcebd23fc50415aa3785d80bc3bf4f044d3e2f. Existing workflow extended for one trusted same-repository PR path; opt-in preserved; provider job executes the immutable reviewed base audit script, not PR source. No second deployer or resource/Secret changes.
+- validation: targeted27/27 local PASS; YAML syntax and immutable script checked. Exact code GitHub Tests run38922501378/job117045681443 passed319/319, Candidate checks run38922501400/local-checks117045681525 SUCCESS. This suite is separate from research366/cash334 historical evidence.
+- actual API status: provider-access-audit job117045763359 SKIPPED, NOT_EXECUTED; other two remote jobs SKIPPED. Account-ID repository variable registration is user-reported, not API authentication success. No Secret value requested/read/copied.
+- provider build: check117045864053 Workers Builds: market-feature-validation FAILED, build9a521b8d-cfcf-4814-a267-7ff6b04a83a9. No GitHub failure text/annotations; provider execution stage/runtime change unverified. Do not call this deployment success or retry without new evidence. Existing audit workflow has no deploy/migration commands.
+- preservation: restored the complete upstream CANDIDATE_AUTOMATION.md history after remote diff revealed the scratch copy omitted later upstream sections. No upstream history discarded in the final PR diff.
+- production impact: no production operation/main merge/shared DB change performed by Work; provider runtime state not newly verified. Existing actual research content approval is preserved privately and is not copied here. No live gates promoted.
+- blocker/retry: Cloud Browser login403 is not retried. Audit opt-in repository configuration requires user confirmation; connector cannot read/write variable/Secret endpoints. After CANDIDATE_ACCESS_AUDIT_ENABLED=true is confirmed, reopen this dedicated PR once and read its actual provider job result. Missing/denied token remains a blocker, not a reason to recreate it or widen permissions.
+- next_exact_step: confirm/enable the existing read-only audit repository flag, then perform that one scoped run. Model: GPT-6.1 Sol Medium. Current private identity/durable storage, deployment rights and Validator command remain unverified separately.
+
+
+## CHECKPOINT — actual candidate settings audit blocker — 2026-10-18 00:00 KST
+
+- branch/PR: feature/candidate-access-audit, #7 Draft/Open, unchanged code3cbcebd23fc50415aa3785d80bc3bf4f044d3e2f; current pre-checkpoint HEAD08c4006d14588868455486a139a1e2d3ac874bbf.
+- changed input: user confirmed CANDIDATE_ACCESS_AUDIT_ENABLED configuration completed. Existing run38922501400 local-checks was re-run once with its dependents; no new deployer/build or PR reopen. Attempt2 local job117426181073 SUCCESS.
+- real result: provider-access-audit117426212084 FAILURE, CLOUDFLARE_CREDENTIALS_UNAVAILABLE. Sanitized runner-log inspection proves account-ID matches expected configuration and API token environment variable is EMPTY. No token value read/printed; token presence in other stores remains unknown. Existing script rejected before any Cloudflare request.
+- other jobs: intelligence117426213035 and validator117426213547 SKIPPED. Existing exact-code full CI319/319 and local targeted27/27 retained, not rerun. No deployment/migration/production operation or live-gate promotion; actual provider runtime not revalidated.
+- ISSUE/ROOT_CAUSE: management credential not available to this GitHub Actions job. Account selection/ID and opt-in are not the current blockers. Cloudflare Builds credentials and Worker endpoint Secrets do not automatically populate repository Actions Secrets.
+- retry_condition: existing approved management credential becomes available as repository Actions Secret CLOUDFLARE_API_TOKEN. Do not recreate or disclose tokens or repeat browser login. If no safely retained credential exists, stop for a separate credential decision.
+- next_exact_step: user connects existing management token to that one GitHub Secret; then rerun only failed provider job117426212084 once and classify actual read outcome. No need to rerun successful local tests or reopen the PR.
+- scope/model: read-only fixed candidate metadata; no deployment/private data/admin rights inferred. GPT-6.1 Sol Medium.
+
+
+## CHECKPOINT — authenticated candidate settings audit success — 2026-10-18T00:24:00+09:00
+
+- ISSUE/ROOT_CAUSE: prior attempt2 failed before network because Actions management token was unavailable. User reported no saved credential, explicitly approved a new selected-account Workers Scripts Read token after the narrower UI scope was unavailable, and registered it directly in repository Actions Secret. No value read or stored in code/logs/docs/chat.
+- VALIDATION: reran only failed provider job117426212084 once after credential input changed. Existing run38922501400 attempt3/provider117431389145 SUCCESS. Artifact12105885127 downloaded/parsed, READ_ACCESS_VERIFIED for exactly market-feature-validation and market-intelligence-read-candidate. Both runtime Secret names/D1 bindings present; same DB; Validator write DISABLED; Intelligence provider rate limiter and version metadata present. Sanitized receipt retained without database ID or token.
+- REUSED: exact-code source3cbcebd CI319/319 and targeted27/27. No successful test rerun, PR reopen, new deployer or Build request. Other runtime check jobs skipped, not passed.
+- LIMITS: selected-account credential scope is broader than two Workers but runner queries remain fixed to them. Read success is not deployment/admin/private-storage permission proof. D1 bindings are not read-only ACLs. No current runtime, Feature continuity or market quality gates promoted.
+- PRODUCTION_IMPACT: no production operation, deployment, Worker Secret/binding/route change, shared D1 mutation, migration or merge performed. Existing provider Build failure remains separate and un-retried.
+- CURRENT_BRANCH: feature/candidate-access-audit; pre-checkpoint HEAD58a1180e9066818117ec618bc8ace0cc921749f2; executable source3cbcebd unchanged; PR#7 Draft/Open.
+- NEXT_EXACT_STEP: return to feature/research-handoff/RESUME.md for its unfinished step. Private identity/admin/storage and VALIDATOR_DEPLOY_COMMAND_UNVERIFIED remain separate blockers, retry only with new evidence. Model GPT-6.1 Sol Medium.

@@ -1,5 +1,42 @@
 # Candidate automation — staged activation
 
+## Dedicated read-access audit PR (2026-10-17)
+
+The existing `candidate-check.yml` now accepts a narrowly scoped `pull_request` event targeting
+`feature/m2-operational-storage`, from the same repository's exact `feature/candidate-access-audit`
+branch, only when `CANDIDATE_ACCESS_AUDIT_ENABLED=true`. This removes the default-branch/manual-dispatch
+dependency for this read audit without merging main or introducing a deployer. Existing dispatch and
+intelligence push checks keep their previous scope. Intelligence and validator jobs do not run on this PR.
+
+For the PR audit, checkout is pinned to reviewed source
+`6ef8dfcdba2af7148a085c8026100d3ac184b2bf`, with Git credential persistence disabled. Only the existing
+fixed-target GET settings script runs with the existing Cloudflare API credential. Its code was checked
+against this immutable repository object. The PR workflow itself remains trusted/reviewed same-repository
+code; this is not a security boundary against a malicious repository writer editing that workflow.
+
+The existing account-ID repository variable can be used without sharing the token with Work. A missing
+or denied token fails closed. No credential is generated, copied into source, or printed. The sanitized
+receipt includes existing candidate binding names/types and shared market D1 identifiers, so its Actions
+artifact is not a destination for private research or personal financial data. It expires after seven days.
+
+Successful execution proves candidate settings read access only: deployment permission is `NOT_TESTED`.
+A disabled job is `NOT_EXECUTED`, not PASS. No deployment, migration, token edit, provider change,
+private resource creation, or live-gate promotion is performed. Cloud Browser login errors are separate
+from Cloudflare API-token authentication and are not retried to run this audit.
+
+Source `3cbcebd23fc50415aa3785d80bc3bf4f044d3e2f`: local targeted27/27 PASS and workflow YAML parsing;
+GitHub Tests run38922501378/job117045681443 passed319/319, and Candidate checks
+run38922501400/local-checks117045681525 passed. The provider audit job117045763359 was SKIPPED;
+its opt-in configuration and authenticated management access are not verified. Intelligence and
+validator jobs were also SKIPPED as intended on this PR.
+
+The separate provider-created `Workers Builds: market-feature-validation` check117045864053 FAILED
+(build9a521b8d-cfcf-4814-a267-7ff6b04a83a9). GitHub supplied no failure detail/annotations. This is
+not a successful deployment; its provider execution stage and runtime effect remain unverified.
+Do not rerun the build or blocked Cloud Browser login without new evidence. The audit workflow
+contains no deploy/migration commands. Account-ID variable registration is user-reported configuration
+evidence only, not a successful API-token authentication test.
+
 ## Latest result (2026-10-13)
 
 After the user saved a new build token, Work triggered the existing branch integration with
