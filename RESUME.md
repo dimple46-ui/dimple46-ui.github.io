@@ -1,22 +1,22 @@
-# Resume — Real-time Investment Intelligence System v4
+# Resume — research/market local decision comparison
 
-Repository code checkpoint. Private user decisions and runtime records belong in the existing non-public recovery checkpoint when available; repository-only readers must not infer them.
-
-- updated_at_kst: 2026-10-16T22:33:32+09:00
-- operating_rules: M2_OPERATIONS.md — ‘다음’ 기반 자율 재개 — 단일 운영 규칙; retain existing Pro rules.
-- active_branch: feature/research-handoff (actual source branch); M2 entry pointer is not the current executable source.
-- active_pr: #6 Draft/Open, base feature/m2-operational-storage; main merge remains gated. Cash-funding work stays separate on PR5.
-- current_task: offline ResearchPackage handoff, approval import staging and strict request/preflight boundaries are implemented and locally tested; actual identity/storage/runtime activation is unconnected.
-- verified_code_sha: b91fa4a0094acb94f2fed7da245ee002f9b12913. Following documentation checkpoint does not change executable source.
-- last_completed: closed request parser; trusted injected authorization before request inspection; exact package binding and scoped resolver; clock/credential/research deadline gates. Staging plans are not engine approval or durable commits.
-- tests_and_evidence: full366/366 local PASS,0fail/skip at verified_code_sha; related boundary14/14 PASS. Synthetic only; independent cash PR5 regression is not included. Reuse unchanged-source evidence; do not rerun tests for this documentation unit.
-- ci_build_runtime_status: exact code SHA provider check116995297488 SKIPPED. No new remote test, deployment, authenticated runtime or production PASS inferred. Existing Builds/CI route retained.
-- unfinished_changes: current unit changes operating/recovery documentation only. Scratch source copy is not an authoritative Git working tree; uncommitted user work elsewhere is not asserted clean and must not be reset.
-- approved_scope: ordinary branch code/contracts/tests/docs and existing isolated candidate scope. No automatic main/production/Secret/binding/routing/shared-D1/history changes or actual personal financial connection.
-- blocked_and_retry_condition: PRIVATE_ADMIN_ACCOUNT_SELECTION_AND_MANAGEMENT_ACCESS_REQUIRED; VALIDATOR_DEPLOY_COMMAND_UNVERIFIED. No new management/source identity evidence supplied. Keep blocked until approved access/configuration evidence changes; ‘다음’ alone is not such a change. Existing non-public approval metadata must not be published to update this file.
-- next_exact_step: when approved private identity/source management access is available, wire an actual RESEARCH_APPROVAL_IMPORT authorizer and trusted resolver, then durable sealed storage/commit-time recording through the reviewed contract. No fixture callbacks as operational authority; no repeated unchanged authentication attempts.
-- next_ready_task: NONE within the current offline preflight unit; implementation/local correctness scope is complete. Select another independent unit only when a concrete unmet need, input and testable completion condition exist.
-- stop_reason: ACCESS_BLOCKED for actual connection; SCOPE_COMPLETE for the current offline unit. Do not manufacture abstractions or request the same prior approval again.
-- recommended_model_and_reasoning: current available development model Medium for bounded implementation; GPT-6.1 Sol Medium if selectable. High only for a separately scoped actual trust-source/durable activation/restore policy review. Access shortages do not require a model change.
-
-References: RESEARCH_HANDOFF_CONTRACT.md; RESEARCH_APPROVAL_IMPORT_CONTRACT.md; PROJECT_STATUS.md for historical detailed evidence. This file describes code status; later private runtime/decision checkpoints take precedence for those separate facts.
+- updated_at_kst: 2026-10-18T00:43:33+09:00
+- operating_rules: M2_OPERATIONS.md — existing Pro and ‘다음’ operating rules preserved.
+- active_branch: feature/research-handoff
+- active_pr: #6 Draft/Open; base feature/m2-operational-storage. PR4/5/7 remain separate; no main merge.
+- current_task: Samsung/SK Hynix paired research/market summary implemented and locally validated without Access.
+- verified_code_sha: 0be6dd4293d7d9fde9595ff3778651992794c37b; checkpoint document commit is separate.
+- last_completed: domain/research-pair-summary.mjs reuses existing research approval selection, consumer fallback/quality and descriptive Signal summary. Fixed two-stock mapping, common as-of, independent unavailable/expired/withdrawn state, long/short horizons, stable event IDs, no composite score/ranking/private sizing. Result hash is not authentication.
+- tests_and_evidence: targeted27/27 and full373/373 local PASS,0fail/skip, synthetic only. Baseline executable/test/example blobs match remote source tree11863abe; differing/missing historical receipt files do not change tested code. New pair tests7; prior research366 evidence retained separately, not summed with cash334.
+- ci_build_runtime_status: LOCAL_TESTED_NOT_DEPLOYED by Work. Remote test CI not yet confirmed. Existing provider hook check117435578001 / buildbb1160ef-c4ee-463f-adcf-94c20ae6f1ab was IN_PROGRESS at last read after source push; execution stage and resulting runtime UNVERIFIED. No manual Build/redeploy request or deployer added. Reuse stored job/build ID; no duplicate retry.
+- unfinished_changes: code/contract committed remotely. Documentation checkpoint follows. Scratch is a source copy, not an authoritative Git checkout; do not reset unrelated work.
+- approved_scope: safe local code/tests/docs and isolated existing candidate work. Access activation explicitly deferred by user; no payment registration approved. No actual private finance/restricted research intake, identity credentials, production/Secret/shared-D1 change or merge.
+- completed_access_audit: existing fixed candidate settings read succeeded run38922501400 attempt3/job117431389145/artifact12105885127, checkpointdeb4ba259c1e12ba18ee7f086e3f2eb0075c6a3a on feature/candidate-access-audit. Do not repeat.
+- private_candidate_status: user reported Hello World deployment of market-private-risk-candidate. Access screen showed Zero Trust setup required; free activation requested payment method. User chose to proceed with development without activation. NOT_AUTH_PROTECTED_OR_PRIVATE_RUNTIME_VALIDATED; no actual data allowed; no DO/keys/approval-source connected or verified.
+- blocked_and_retry_condition: ACCESS_ACTIVATION_DEFERRED; PRIVATE_ADMIN_ACCOUNT_SELECTION_AND_MANAGEMENT_ACCESS_REQUIRED remains for real private identity/storage operations. Existing read token proves two settings reads only. VALIDATOR_DEPLOY_COMMAND_UNVERIFIED remains; do not retry login/token/Build without new evidence.
+- production_impact: no production/main/shared-history changes performed. Existing provider Build hook outcome is separate and unverified, not declared a successful deployment.
+- waiting_for_live: unchanged; local pair composition is not live validation. Continuous Feature v2 persistence remains inactive/unverified.
+- next_exact_step: inspect stored source check117435578001/buildbb1160ef-c4ee-463f-adcf-94c20ae6f1ab outcome once when complete, then add a bounded local display path for the paired summary without minting approvals or persisting private inputs. Do not recreate summaries or repeat373 tests unchanged.
+- next_ready_task: local paired-summary display/explicit input contract; unapproved packages must remain REVIEW_REQUIRED, not fixture-authorized.
+- recommended_model_and_reasoning: GPT-6.1 Sol Medium for bounded implementation/tests; High only for separately scoped real authentication/storage activation.
+- stop_reason: SESSION_ENDED at a saved local-validation unit; provider Build outcome pending, private access deferred.
