@@ -32,7 +32,7 @@ export function compareAlternatives(input,{nowMs,maxLedgerAgeMs,maxPriceAgeMs,ma
   requireField(!!o,'ALTERNATIVE_REQUIRED');
   const security=type==='ADD_EXISTING'||type==='ADD_NEW';
   if(security){
-   requireField(/^\d{6}$/.test(o?.ticker??''),'TICKER_REQUIRED');
+   requireField(typeof o?.ticker==='string'&&/^\d{6}$/.test(o.ticker),'TICKER_REQUIRED');
    requireField(type==='ADD_EXISTING'?holdings.has(o?.ticker):!holdings.has(o?.ticker),'HOLDING_MEMBERSHIP_MISMATCH');
    requireField(STATES.includes(o?.companyMerit?.state)&&o.companyMerit.state!=='UNASSESSED'&&
      text(o.companyMerit.rationale)&&linked(o.companyMerit.evidenceRefs),'COMPANY_MERIT_EVIDENCE_REQUIRED');

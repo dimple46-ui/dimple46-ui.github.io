@@ -63,3 +63,9 @@ test('evidence newer than the declared input cutoff and malformed account scopes
  const malformed=fixture();malformed.ledger.accounts={};
  assert.ok(compareAlternatives(malformed,policy).rows.every(r=>r.status==='BLOCKED'));
 });
+test('numeric candidate ticker cannot pass a six-digit regex through implicit string coercion',()=>{
+ const f=fixture();f.alternatives[1].ticker=123456;
+ const r=compareAlternatives(f,policy);
+ assert.equal(r.rows[1].status,'BLOCKED');assert.ok(r.rows[1].missing.includes('TICKER_REQUIRED'));
+ assert.equal(r.rows[1].requiredCashKrw,null);assert.equal(r.rows[2].status,'INPUT_COMPLETE_NOT_RECOMMENDED');
+});

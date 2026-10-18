@@ -67,6 +67,14 @@ test('bad concentration policy or missing quote cannot suppress independent cash
  assert.equal(r.components.concentration.status,'BLOCKED');assert.equal(r.capabilities.cashDeadlines,'AVAILABLE');
  assert.equal(r.components.cashDeadlines.totals.accountShortfallSumKrw,500);
 });
+test('numeric holding identity blocks valuation, stress and concentration while independent cash timing stays available',()=>{
+ const f=fixture();f.ledger.accounts[0].holdings[0].ticker=123456;
+ f.prices['123456']={...f.prices['005930']};f.scenario.shocksBps['123456']=-1000;
+ const r=buildPrivateRiskSummary(f,{...policy,concentrationDenominator:'DECLARED_GROSS_ASSETS'});
+ for(const key of ['valuation','priceStress','concentration'])assert.equal(r.capabilities[key],'UNAVAILABLE');
+ assert.equal(r.capabilities.cashDeadlines,'AVAILABLE');
+ assert.equal(r.components.cashDeadlines.totals.accountShortfallSumKrw,500);
+});
 
 function collateralFixture(){const f=fixture();f.ledger.accounts[0].holdingBasis='OWNED_SETTLED_SHARES';
  Object.assign(f.ledger.accounts[0].debts[0],{debtRef:'fictional-secured',accruedChargesKrw:0,securityType:'SECURED_TO_THIS_ACCOUNT'});
