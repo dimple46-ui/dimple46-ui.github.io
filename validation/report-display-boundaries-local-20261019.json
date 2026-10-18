@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "base_saved_checkpoint_sha": "f9f8d40a790cecec9d4d8323e98fdc99bea00ce8",
+  "status": "LOCAL_TESTED_BRANCH_NOT_UPDATED",
+  "scope": [
+    "REPRESENTABLE_REPORT_AND_DISPLAY_TIMESTAMPS",
+    "INCOMING_REPORT_APPEND_CHRONOLOGY",
+    "STRICT_REPORT_TICKER_STRING_IDENTITY"
+  ],
+  "reproduced_before_fix": [
+    "Out-of-Date-range report generation succeeds",
+    "Out-of-Date-range pair display reference succeeds",
+    "Matching numeric report tickers accepted",
+    "Empty report log accepts rehashed missing/invalid timestamps and reversed chronology",
+    "Append accepts source acquisition before publication and a normalized invalid calendar date"
+  ],
+  "targeted_before_final_publication_helper_refactor": {
+    "passed": 50,
+    "failed": 0
+  },
+  "final_full": {
+    "passed": 439,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "related_tests_in_final_full": 50,
+  "new_tests": 4,
+  "existing_historical_example_and_hash_unchanged": true,
+  "valid_Date_max_boundary_preserved": 8640000000000000,
+  "incoming_hash_is_not_authentication": true,
+  "append_is_not_a_new_general_schema_or_fact_validator": true,
+  "financial_models_limits_signal_approval_changed": false,
+  "watch_scheduler_or_runtime_changed": false,
+  "remote_ci_or_live_validation": false,
+  "branch_ref_updated": false,
+  "files": [
+    {
+      "path": "domain/report-judgment.mjs",
+      "sha256": "89ce906f74f12136948d821e72b150486497dad43c52aeaf798edaccdeeefb94"
+    },
+    {
+      "path": "domain/research-pair-view.mjs",
+      "sha256": "552d8343e2a3a8a83d30a27ee617ddcd6ee9b4d852d2fed23c9170aa875db040"
+    },
+    {
+      "path": "tests/report-judgment.test.mjs",
+      "sha256": "f2936923b11b078fabd2c7622d67f130e61da93097f4609cddc6ef08fe995ca2"
+    },
+    {
+      "path": "tests/research-pair-view.test.mjs",
+      "sha256": "cfec250474639e6963045652627968f22404c723305a097aac0e510b1c75aa32"
+    }
+  ]
+}

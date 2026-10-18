@@ -54,6 +54,14 @@ test('tampered hashes, future display baseline, unsafe policy numbers and nested
   const child = structuredClone(r); child.stocks[0].summary.long_term.state = 'ADVERSE';
   assert.throws(() => buildResearchPairView(reseal(child), options));
 });
+test('JSON and text display reject reference timestamps outside the Date range', async () => {
+  const r = await fixture();
+  for (const nowMs of [8640000000000001, Number.MAX_SAFE_INTEGER]) {
+    assert.throws(() => buildResearchPairView(r, {...options, nowMs}), /INVALID_PAIR_DISPLAY_INPUT/);
+    assert.throws(() => renderResearchPairText(r, {...options, nowMs}), /INVALID_PAIR_DISPLAY_INPUT/);
+  }
+  assert.equal(buildResearchPairView(r, {...options, nowMs: 8640000000000000}).status, 'LOCAL_DISPLAY_ONLY');
+});
 test('rehashed extra content is omitted from fixed projection, including prose, URL, private values and terminal control characters', async () => {
   const r = structuredClone(await fixture());
   r.extra = {token: 'SENTINEL_PRIVATE', prose: '\u001b[2J https://example.invalid/instruction'};

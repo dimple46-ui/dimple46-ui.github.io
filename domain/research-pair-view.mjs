@@ -3,7 +3,7 @@ import {verifyResearchPairSummary} from './research-pair-summary.mjs';
 import {verifyResearchMonitoringSummary} from './research-monitoring-summary.mjs';
 
 export const MAX_PAIR_DISPLAY_BYTES = 262144;
-const time = value => Number.isSafeInteger(value) && value > 0;
+const time = value => Number.isSafeInteger(value) && value > 0 && Number.isFinite(new Date(value).getTime());
 const requireValue = ok => { if (!ok) throw Error('INVALID_PAIR_DISPLAY_INPUT'); };
 const longStates = new Set(['SUPPORTIVE', 'MIXED', 'ADVERSE']);
 const shortStates = new Set(['ADVERSE_DESCRIPTIVE_SIGNALS', 'SUPPORTIVE_DESCRIPTIVE_SIGNALS',
