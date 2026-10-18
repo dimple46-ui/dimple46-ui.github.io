@@ -1,0 +1,39 @@
+{
+  "status": "LOCAL_TESTED",
+  "scope": "Closed local general research DRAFT validation; not an operational receiver or legacy consumer adapter",
+  "base_code_commit": "a06a1d44c4df4e5ecc28e85eb9fa8b8cc76cde7e",
+  "checked_at_utc": "2026-10-18T03:50:23.825742+00:00",
+  "tests": {
+    "targeted": {
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Before final unread-comparison guard; final full suite includes that guard"
+    },
+    "full_local": {
+      "passed": 402,
+      "failed": 0,
+      "skipped": 0,
+      "command": "node --test tests/*.test.mjs"
+    }
+  },
+  "base_snapshot_match": {
+    "checked_blobs": 97,
+    "different": 0,
+    "missing": 0,
+    "scope": "existing domain/private/tests/schemas/scripts/workers mjs/js/json/toml blobs"
+  },
+  "modified_files_sha256": {
+    "domain/research-general-draft.mjs": "c2ec1d2b6bbd072f9de5e31b5877489c287c9773871b973a5b8584b7ebe3d4dd",
+    "schemas/research-general-draft.schema.json": "f9f3f1f7f3b8d57ad89eeb58e06a163017c98e79dd46ac3100ba64e23aa09117",
+    "tests/research-general-draft.test.mjs": "97c530ab247eb294f485678c0f12f72dc8f6ba36722bdede1dcecaed04acfeed",
+    "RESEARCH_GENERAL_ADMISSION_REVIEW.md": "efc9e1c8cfd54967c3636086e3c8123cf8130a39276c2dfe7da30720e05d0f7b"
+  },
+  "schema_v1_changed": false,
+  "source_attestation": false,
+  "approval_recorded": false,
+  "operational_intake": false,
+  "historical_replay_enabled": false,
+  "deployment_performed": false,
+  "production_validation": false
+}

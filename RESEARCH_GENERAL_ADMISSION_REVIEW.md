@@ -1,6 +1,6 @@
 # General research admission — bounded compatibility review
 
-Status: design reviewed; decimal preparation primitive locally tested only. No new package receiver or schema v2 is active.
+Status: design reviewed; decimal primitive and separate local-only schema v2 DRAFT validator implemented. No operational receiver or schema v2 consumer is active.
 
 ## Preserve existing behavior
 
@@ -24,4 +24,12 @@ Maintain publication date, declared acquisition precision and actual engine rece
 - New/derived content requires its own package/version/hash approval; fixtures cannot authorize real research.
 - New general research is rejected by legacy consumers until an explicit version-aware adapter exists.
 
-Next implementation: a closed, local-only general research DRAFT schema/validator with explicit unsupported-consumer status. It must not modify operational receipt, approval, storage, Watch or deployment paths.
+## Implemented local DRAFT review
+
+`schemas/research-general-draft.schema.json` and `prepareGeneralResearchDraft` in `domain/research-general-draft.mjs` accept a closed schema2 GENERAL_RESEARCH_DRAFT body. This is a new review envelope, not a renamed v1 package. It supports one to eight sources, exact monetary decimal strings, four financial metrics (revenue, operatingProfit, netIncome, netCash), consolidated KRW billion/trillion quantities and optional same-period report comparison. Broad industry percentages, EPS, forecasts across arbitrary units, portfolio alternatives and monitoring-rule execution are outside this first validator.
+
+Every acquisition explicitly declares INSTANT, DATE_ONLY (Asia/Seoul) or UNKNOWN; irrelevant time fields must be null. Publication, cutoff and generation are checked; unknown/date-only precision never receives an invented instant. Even declared exact instants do not enable historical replay, because this pure helper cannot independently attest knowledge or receipt. `checked_at_ms` is a caller-supplied review reference, not an engine receipt or trusted acquisition proof.
+
+The canonical hash covers the entire unchanged draft body, including decimal lexical precision, and excludes review execution time. No input digest is accepted or repaired. The output always says REVIEW_REQUIRED, NOT_RECORDED approval/receipt, UNSUPPORTED_BY_LEGACY_CONSUMER and NOT_WATCH_READY. It preserves expired/review-due status. Declared source access is never independent verification; text and URLs are inert input. Extra authority/private fields, invalid links, numeric coercion, ambiguous precision, unsafe URLs and oversized/accessor inputs reject. Validation cannot prove free text contains no private information or that source statements are true; those remain explicit manual review requirements.
+
+Next implementation: an explicit local conversion manifest for a concrete research input, recording field mappings, unsupported claims and provenance without changing the original or creating approval. Operational adapters/receipt/approval/storage/Watch remain separate and unconnected.
