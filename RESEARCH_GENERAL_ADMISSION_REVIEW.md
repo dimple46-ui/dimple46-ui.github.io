@@ -32,4 +32,12 @@ Every acquisition explicitly declares INSTANT, DATE_ONLY (Asia/Seoul) or UNKNOWN
 
 The canonical hash covers the entire unchanged draft body, including decimal lexical precision, and excludes review execution time. No input digest is accepted or repaired. The output always says REVIEW_REQUIRED, NOT_RECORDED approval/receipt, UNSUPPORTED_BY_LEGACY_CONSUMER and NOT_WATCH_READY. It preserves expired/review-due status. Declared source access is never independent verification; text and URLs are inert input. Extra authority/private fields, invalid links, numeric coercion, ambiguous precision, unsafe URLs and oversized/accessor inputs reject. Validation cannot prove free text contains no private information or that source statements are true; those remain explicit manual review requirements.
 
+## Lifecycle precision and unresolved author classifications
+
+Existing exact review/expiry instants retain their original interpretation. An explicit null instant requires its own closed condition: DATE_ONLY with Asia/Seoul calendar date, EVENT with an inert event identifier/description, or UNKNOWN. An exact instant and a second condition cannot both be supplied. Impossible dates, definite reverse review/expiry ordering and inconsistent condition fields reject.
+
+DATE_ONLY is compared with the review reference's KST calendar date. On or after that date the result requires manual review; no exact expiry instant is invented and date-only expiry is never labeled EXPIRED. EVENT conditions are never executed or declared satisfied by this helper. UNKNOWN remains unspecified. Exact expiry still takes precedence when it has passed. All states remain local review, not operational eligibility.
+
+`UNSPECIFIED` horizon and `UNCLASSIFIED` thesis explicitly preserve unresolved choices. Optional `original_research` keeps a declared source package/revision/raw-byte hash, original horizon/state text and date-only author context. These fields are declared provenance, not verified lineage or approval. A current derived draft never rewrites the original analysis or acquisition date. Pending classification is explicit and legacy consumption remains unavailable.
+
 Next implementation: an explicit local conversion manifest for a concrete research input, recording field mappings, unsupported claims and provenance without changing the original or creating approval. Operational adapters/receipt/approval/storage/Watch remain separate and unconnected.

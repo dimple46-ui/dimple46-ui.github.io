@@ -29,11 +29,47 @@ function dateMs(s,offset='Z'){
  if(!Number.isFinite(at)||new Date(Date.parse(s+'T00:00:00Z')).toISOString().slice(0,10)!==s)fail('INVALID_GENERAL_RESEARCH_DATE');
  return at;
 }
+const kstDate=ms=>new Date(ms+9*3600000).toISOString().slice(0,10);
+function lifecycle(d,nowMs){
+ const result={};
+ for(const [name,timeKey,conditionKey]of [['review','review_at_ms','review_condition'],['expiry','expires_at_ms','expiry_condition']]){
+  const at=d[timeKey],c=d[conditionKey];
+  if(at!==null){
+   if(!time(at)||at<=d.generated_at_ms||c!==undefined)fail('INVALID_GENERAL_LIFECYCLE');
+   result[name]={status:nowMs>=at?'DUE':'NOT_DUE',basis:'DECLARED_INSTANT',at_ms:at};continue;
+  }
+  if(!c)fail('GENERAL_LIFECYCLE_CONDITION_REQUIRED');
+  if(c.kind==='DATE_ONLY'){
+   if(c.date===null||c.timezone!=='Asia/Seoul'||c.event_id!==null||c.description!==null)fail('INVALID_GENERAL_LIFECYCLE');
+   dateMs(c.date,'+09:00');
+   result[name]={status:kstDate(nowMs)>=c.date?'DATE_REQUIRES_REVIEW':'NOT_DUE',basis:'DATE_ONLY_NO_EXACT_INSTANT',date:c.date,timezone:c.timezone,at_ms:null};
+  }else if(c.kind==='EVENT'){
+   if(c.date!==null||c.timezone!==null||c.event_id===null||c.description===null)fail('INVALID_GENERAL_LIFECYCLE');
+   result[name]={status:'MANUAL_EVENT_REVIEW_REQUIRED',basis:'EVENT_NOT_EVALUATED',event_id:c.event_id,at_ms:null};
+  }else{
+   if(c.date!==null||c.timezone!==null||c.event_id!==null||c.description!==null)fail('INVALID_GENERAL_LIFECYCLE');
+   result[name]={status:'UNSPECIFIED',basis:'UNKNOWN',at_ms:null};
+  }
+ }
+ if(d.review_at_ms!==null&&d.expires_at_ms!==null&&d.expires_at_ms<d.review_at_ms)fail('INVALID_GENERAL_LIFECYCLE');
+ const r=result.review,e=result.expiry;
+ const rd=r.basis==='DECLARED_INSTANT'?kstDate(r.at_ms):r.date,ed=e.basis==='DECLARED_INSTANT'?kstDate(e.at_ms):e.date;
+ if(rd!==undefined&&ed!==undefined&&ed<rd)fail('INVALID_GENERAL_LIFECYCLE');
+ return {conditions:result,status:e.status==='DUE'?'EXPIRED':r.status==='DUE'?'REVIEW_DUE':
+  [r,e].some(x=>x.status==='DATE_REQUIRES_REVIEW')?'DATE_REQUIRES_MANUAL_REVIEW':
+  [r,e].some(x=>x.status==='MANUAL_EVENT_REVIEW_REQUIRED')?'MANUAL_EVENT_REVIEW_REQUIRED':
+  [r,e].some(x=>x.status==='UNSPECIFIED')?'LIFECYCLE_UNSPECIFIED':'WITHIN_DECLARED_REVIEW_WINDOW'};
+}
 export function prepareGeneralResearchDraft(input,{nowMs}={}){
  if(!time(nowMs))fail('INVALID_REFERENCE_TIME');
  let text,d;
  try{text=canonicalJson(input,65536);d=JSON.parse(text);shape(d,schema);}catch{fail('GENERAL_DRAFT_SCHEMA_REJECTED');}
- if(![d.analysis_cutoff_ms,d.generated_at_ms,d.review_at_ms,d.expires_at_ms].every(time)||d.analysis_cutoff_ms>d.generated_at_ms||d.generated_at_ms>nowMs||d.review_at_ms<=d.generated_at_ms||d.expires_at_ms<d.review_at_ms)fail('INVALID_GENERAL_RESEARCH_TIME');
+ if(![d.analysis_cutoff_ms,d.generated_at_ms].every(time)||d.analysis_cutoff_ms>d.generated_at_ms||d.generated_at_ms>nowMs)fail('INVALID_GENERAL_RESEARCH_TIME');
+ const life=lifecycle(d,nowMs);
+ if(d.original_research){
+  const o=d.original_research;dateMs(o.declared_analysis_date);dateMs(o.declared_created_date);
+  if(o.declared_analysis_date>kstDate(d.analysis_cutoff_ms)||o.declared_created_date>kstDate(d.generated_at_ms))fail('FUTURE_ORIGINAL_RESEARCH');
+ }
  const sources=new Map(),quantities=new Map();let historicalKnowledge=true;
  for(const s of d.sources){
   if(sources.has(s.source_id))fail('DUPLICATE_GENERAL_SOURCE');sources.set(s.source_id,s);
@@ -76,7 +112,8 @@ export function prepareGeneralResearchDraft(input,{nowMs}={}){
  }
  return freeze({schema_version:2,status:'REVIEW_REQUIRED',draft:d,content_sha256:createHash('sha256').update(text).digest('hex'),
   checked_at_ms:nowMs,input_cutoff_ms:d.analysis_cutoff_ms,
-  temporal_status:nowMs>=d.expires_at_ms?'EXPIRED':nowMs>=d.review_at_ms?'REVIEW_DUE':'WITHIN_DECLARED_REVIEW_WINDOW',
+  temporal_status:life.status,lifecycle:life.conditions,
+  classification_pending:d.horizon==='UNSPECIFIED'||d.thesis.state==='UNCLASSIFIED',
   historical_availability:historicalKnowledge?'DECLARED_INSTANTS_NOT_INDEPENDENTLY_VERIFIED':'INSUFFICIENT_ACQUISITION_PRECISION',
   historical_replay_allowed:false,source_verification:'DECLARED_METADATA_NOT_INDEPENDENT_SOURCE_VERIFICATION',
   report_comparison:comparison,approval:'NOT_RECORDED',receipt:'NOT_RECORDED',consumer_status:'UNSUPPORTED_BY_LEGACY_CONSUMER',

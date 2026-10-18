@@ -1,0 +1,32 @@
+{
+  "status": "LOCAL_TESTED",
+  "base_code_commit": "925baf1e3243cfc38c657d7dc6525764e78688f7",
+  "checked_at_utc": "2026-10-18T04:03:45.335410+00:00",
+  "scope": "Explicit lifecycle precision and unresolved author classifications in local-only general research DRAFT",
+  "tests": {
+    "targeted": {
+      "passed": 44,
+      "failed": 0,
+      "skipped": 0
+    },
+    "full_local": {
+      "passed": 407,
+      "failed": 0,
+      "skipped": 0,
+      "command": "node --test tests/*.test.mjs"
+    }
+  },
+  "modified_files_sha256": {
+    "domain/research-general-draft.mjs": "9cfc5b22d42539ddaa95b1be194b87177d46ac2372e9ae9094782835ab59b487",
+    "schemas/research-general-draft.schema.json": "60e2ece87606e342abc8d10c2e55c06d6daa411b9e9da3eebef66f9983c347ec",
+    "tests/research-general-draft.test.mjs": "bddc8855f577c7217c9ec1ee0881af44771e73b478151d97a20b7cbe654f5a70",
+    "RESEARCH_GENERAL_ADMISSION_REVIEW.md": "98e23a68ecb5ef5810c3b2fe1bdbce8dab8bdb2aef5f7349cc2907d3f1a77be0"
+  },
+  "schema_v1_changed": false,
+  "exact_instant_semantics_changed": false,
+  "date_only_promoted_to_instant": false,
+  "event_rules_executed": false,
+  "approval_or_admission": false,
+  "production_changes": false,
+  "deployment_requested": false
+}

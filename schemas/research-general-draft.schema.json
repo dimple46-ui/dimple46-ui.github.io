@@ -50,7 +50,8 @@
         "1M",
         "3M",
         "6M",
-        "12M"
+        "12M",
+        "UNSPECIFIED"
       ]
     },
     "analysis_cutoff_ms": {
@@ -64,12 +65,18 @@
       "maximum": 8640000000000000
     },
     "review_at_ms": {
-      "type": "integer",
+      "type": [
+        "integer",
+        "null"
+      ],
       "minimum": 1,
       "maximum": 8640000000000000
     },
     "expires_at_ms": {
-      "type": "integer",
+      "type": [
+        "integer",
+        "null"
+      ],
       "minimum": 1,
       "maximum": 8640000000000000
     },
@@ -98,7 +105,8 @@
           "enum": [
             "SUPPORTIVE",
             "MIXED",
-            "ADVERSE"
+            "ADVERSE",
+            "UNCLASSIFIED"
           ]
         },
         "supporting_claim_refs": {
@@ -154,6 +162,58 @@
       "required": [
         "baseline_quantity_id",
         "current_quantity_id"
+      ],
+      "additionalProperties": false
+    },
+    "review_condition": {
+      "$ref": "#/$defs/lifecycle_condition"
+    },
+    "expiry_condition": {
+      "$ref": "#/$defs/lifecycle_condition"
+    },
+    "original_research": {
+      "type": "object",
+      "properties": {
+        "package_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        },
+        "revision_text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "original_bytes_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "declared_horizon": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "declared_thesis_state": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "declared_analysis_date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "declared_created_date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        }
+      },
+      "required": [
+        "package_id",
+        "revision_text",
+        "original_bytes_sha256",
+        "declared_horizon",
+        "declared_thesis_state",
+        "declared_analysis_date",
+        "declared_created_date"
       ],
       "additionalProperties": false
     }
@@ -381,6 +441,55 @@
         "text",
         "source_refs",
         "quantity_ref"
+      ],
+      "additionalProperties": false
+    },
+    "lifecycle_condition": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "DATE_ONLY",
+            "EVENT",
+            "UNKNOWN"
+          ]
+        },
+        "date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "timezone": {
+          "enum": [
+            "Asia/Seoul",
+            null
+          ]
+        },
+        "event_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "kind",
+        "date",
+        "timezone",
+        "event_id",
+        "description"
       ],
       "additionalProperties": false
     }

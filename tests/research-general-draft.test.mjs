@@ -66,3 +66,30 @@ test('unsafe URLs and oversize/accessor input fail without execution or echo',()
  let calls=0;const p=fixture();Object.defineProperty(p,'evil',{enumerable:true,get(){calls++;return 1;}});assert.throws(()=>run(p),/SCHEMA_REJECTED/);assert.equal(calls,0);
  const q=fixture();q.claims[0].text='x'.repeat(70000);assert.throws(()=>run(q),/SCHEMA_REJECTED/);
 });
+const dateCondition=date=>({kind:'DATE_ONLY',date,timezone:'Asia/Seoul',event_id:null,description:null});
+const eventCondition=()=>({kind:'EVENT',date:null,timezone:null,event_id:'fictional.new.results',description:'Review on new official financial results; not an executable rule'});
+const unknownCondition=()=>({kind:'UNKNOWN',date:null,timezone:null,event_id:null,description:null});
+test('date-only review preserves day precision across the KST date boundary',()=>{
+ const p=fixture();p.review_at_ms=null;p.review_condition=dateCondition('2026-10-19');p.expires_at_ms=null;p.expiry_condition=eventCondition();
+ const before=prepare(p,{nowMs:Date.parse('2026-10-18T14:59:59.999Z')}),at=prepare(p,{nowMs:Date.parse('2026-10-18T15:00:00Z')});
+ assert.equal(before.lifecycle.review.status,'NOT_DUE');assert.equal(at.lifecycle.review.status,'DATE_REQUIRES_REVIEW');
+ assert.equal(at.lifecycle.review.at_ms,null);assert.equal(at.draft.review_at_ms,null);assert.equal(at.temporal_status,'DATE_REQUIRES_MANUAL_REVIEW');
+ assert.equal(at.lifecycle.expiry.status,'MANUAL_EVENT_REVIEW_REQUIRED');assert.equal(at.content_sha256,before.content_sha256);
+});
+test('date-only expiry is not falsely given an exact expired instant',()=>{
+ const p=fixture();p.review_at_ms=null;p.review_condition=dateCondition('2026-10-18');p.expires_at_ms=null;p.expiry_condition=dateCondition('2026-10-19');
+ const r=prepare(p,{nowMs:Date.parse('2026-10-19T00:00:00Z')});assert.equal(r.lifecycle.expiry.at_ms,null);assert.equal(r.temporal_status,'DATE_REQUIRES_MANUAL_REVIEW');assert.notEqual(r.temporal_status,'EXPIRED');
+});
+test('event and unknown conditions cannot grant freshness, approval or evaluation',()=>{
+ const p=fixture();p.review_at_ms=null;p.expires_at_ms=null;p.review_condition=eventCondition();p.expiry_condition=unknownCondition();
+ const r=run(p);assert.equal(r.temporal_status,'MANUAL_EVENT_REVIEW_REQUIRED');assert.equal(r.lifecycle.expiry.status,'UNSPECIFIED');assert.equal(r.approval,'NOT_RECORDED');assert.equal(r.historical_replay_allowed,false);
+ p.review_condition=unknownCondition();assert.equal(run(p).temporal_status,'LIFECYCLE_UNSPECIFIED');
+});
+test('ambiguous lifecycle fields, impossible dates and contradictory ordering reject',()=>{
+ for(const mutate of [p=>p.review_condition=dateCondition('2026-10-19'),p=>p.review_at_ms=null,p=>{p.review_at_ms=null;p.review_condition={...eventCondition(),date:'2026-10-19'};},p=>{p.review_at_ms=null;p.review_condition=dateCondition('2026-02-30');},p=>{p.review_at_ms=null;p.expires_at_ms=null;p.review_condition=dateCondition('2026-10-20');p.expiry_condition=dateCondition('2026-10-19');},p=>{p.expires_at_ms=null;p.expiry_condition=dateCondition('2026-10-17');}]){const p=fixture();mutate(p);assert.throws(()=>run(p),/LIFECYCLE|DATE/);}
+});
+test('original horizon/state may stay explicitly unclassified rather than inventing analyst intent',()=>{
+ const p=fixture();p.horizon='UNSPECIFIED';p.thesis.state='UNCLASSIFIED';p.original_research={package_id:'synthetic.original',revision_text:'draft.0.2',original_bytes_sha256:'a'.repeat(64),declared_horizon:'3-12 months and 1-3 years',declared_thesis_state:'maintain with conditions',declared_analysis_date:'2026-10-16',declared_created_date:'2026-10-16'};
+ const r=run(p);assert.equal(r.classification_pending,true);assert.equal(r.draft.original_research.declared_thesis_state,'maintain with conditions');assert.equal(r.consumer_status,'UNSUPPORTED_BY_LEGACY_CONSUMER');
+ p.original_research.declared_analysis_date='2026-10-20';assert.throws(()=>run(p),/FUTURE_ORIGINAL_RESEARCH/);
+});
