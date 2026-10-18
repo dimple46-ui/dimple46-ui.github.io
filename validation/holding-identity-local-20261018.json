@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "verified_code_sha": "b9280b9aff82bb61d59bd97addb1d9acca821e35",
+  "base_checkpoint": "210f057f69acbb6b1b6e1efa46680f388e1eab4c",
+  "status": "LOCAL_TESTED_NOT_DEPLOYED",
+  "reproduction": {
+    "new_regressions_failed_before_fix": 3,
+    "actual_wrong_states": [
+      "CALCULATED",
+      "INPUT_COMPLETE_NOT_RECOMMENDED",
+      "AVAILABLE"
+    ]
+  },
+  "targeted": {
+    "passed": 40,
+    "failed": 0,
+    "skipped": 0
+  },
+  "full": {
+    "passed": 430,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "changes": "Require ticker string type before six-digit regex in ledger and alternative candidate; no coercion or financial algorithm change",
+  "independence": "Cash timing remains calculated when malformed holding blocks valuation/stress/concentration",
+  "files": [
+    {
+      "path": "domain/asset-ledger-contract.mjs",
+      "sha256": "1ac2ebf9521dcb49d81d070dc40aca6890d9f2d084e950cbf8aa8df962facd78"
+    },
+    {
+      "path": "domain/alternative-comparison.mjs",
+      "sha256": "b0e20901a21901cc4aa1c95f803123ec8eae9303a93cee2edb579ce5063841bf"
+    },
+    {
+      "path": "tests/asset-ledger-contract.test.mjs",
+      "sha256": "a89b86732f1d0a9cf4cb8cd44f5902baa97e1df3c7d71234eaed80fe7f02b2ee"
+    },
+    {
+      "path": "tests/alternative-comparison.test.mjs",
+      "sha256": "32e10e1b86553886cfaeb820196130fee9c29eb228f33b4e64f63d7225d967dc"
+    },
+    {
+      "path": "tests/private-risk-summary.test.mjs",
+      "sha256": "e2d4f6083793ff8ef22550ca07808c0e2206068083979e8c69a3a53a903cccda"
+    }
+  ],
+  "base_sync": {
+    "base_head": "6ef8dfcdba2af7148a085c8026100d3ac184b2bf",
+    "common": "3f9125225b0c3943d1f24e0d4b8743156e5a7143",
+    "incoming_changed_files": [
+      "RESUME.md"
+    ],
+    "three_way_conflict_blocks": 1,
+    "resolution": "Retain current research RESUME; preserve incoming historical content in Git ancestry",
+    "executable_changes_from_incoming": 0
+  },
+  "actual_data": false,
+  "production_main_secret_db_watch_change": false
+}

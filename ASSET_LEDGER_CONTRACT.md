@@ -389,3 +389,14 @@ Reader requires crypto.open AND crypto.tag, validates supported payload/source/w
 Minimal authorized response provenance contains only envelope/workflow/input versions, configured historical engine SHA, revision chain and policy version/tag. Raw policy parameters, request ID/inputTag, restore/owner/auth epochs and ledger/events are not exposed. Existing independent freshness suppresses stale aggregates while retaining historical provenance; response time never replaces calculation/input cutoff. releaseEvidence is always CONFIGURED_REFERENCE_NOT_ATTESTATION. This improves traceability, not external account verification or full forecast/backtest reproducibility. Keys/archived code/prior-state retention/provider restore and actual operational verification remain separate gates.
 
 All provider and approval boundaries in earlier sections remain. Public graph/production/shared D1/market history untouched, no migration or remote rows changed, no actual HTTP routes published.
+
+
+### Holding identity type guard — 2026-10-18
+
+Ledger holdings and alternative candidate tickers must be six-digit STRINGS. A numeric123456
+previously passed RegExp coercion and could produce calculated valuations and concentration/stress
+results. Both entry points now reject it; zero quantity does not waive identity validation and valid
+leading-zero strings remain unchanged. Independent cash-deadline calculation does not depend on
+holdings and remains available. Three regressions failed before the two-line fix; targeted40/40 and
+full430/430 local PASS. Source/hash receipt: validation/holding-identity-local-20261018.json. No
+quantity/cash/debt formula, security rule, broker clearance or runtime connection changed.
