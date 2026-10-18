@@ -3,7 +3,7 @@ const TYPES=['ADD_EXISTING','ADD_NEW','KEEP_CASH','REPAY_DEBT'];
 const STATES=['SUPPORTIVE','MIXED','ADVERSE','UNASSESSED'];
 const money=n=>Number.isSafeInteger(n)&&n>=0;
 const text=s=>typeof s==='string'&&s.trim().length>0;
-const time=n=>Number.isSafeInteger(n)&&n>0;
+const time=n=>Number.isSafeInteger(n)&&n>0&&Number.isFinite(new Date(n).getTime());
 
 // Input-completeness comparison, not an optimizer. No network, private storage or orders.
 export function compareAlternatives(input,{nowMs,maxLedgerAgeMs,maxPriceAgeMs,maxEvidenceAgeMs,reserveKrw}={}) {

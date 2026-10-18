@@ -69,3 +69,15 @@ test('numeric candidate ticker cannot pass a six-digit regex through implicit st
  assert.equal(r.rows[1].status,'BLOCKED');assert.ok(r.rows[1].missing.includes('TICKER_REQUIRED'));
  assert.equal(r.rows[1].requiredCashKrw,null);assert.equal(r.rows[2].status,'INPUT_COMPLETE_NOT_RECOMMENDED');
 });
+test('unrepresentable risk expiry timestamps cannot make an alternative input-complete',()=>{
+ for(const expiresAtMs of [8640000000000001,Number.MAX_SAFE_INTEGER]){
+  const f=fixture();f.alternatives[0].risk.expiresAtMs=expiresAtMs;
+  const r=compareAlternatives(f,policy);
+  assert.equal(r.rows[0].status,'BLOCKED');
+  assert.ok(r.rows[0].missing.includes('RISK_EXPIRY_EVIDENCE_REQUIRED'));
+  assert.equal(r.rows[0].requiredCashKrw,null);
+  assert.equal(r.rows[2].status,'INPUT_COMPLETE_NOT_RECOMMENDED');
+ }
+ const f=fixture();f.alternatives[0].risk.expiresAtMs=8640000000000000;
+ assert.equal(compareAlternatives(f,policy).rows[0].status,'INPUT_COMPLETE_NOT_RECOMMENDED');
+});
