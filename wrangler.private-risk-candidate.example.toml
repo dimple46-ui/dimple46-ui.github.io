@@ -1,0 +1,16 @@
+# Reviewed candidate template only; no existing deploy command is changed here.
+# Applying it creates a namespace and changes the existing candidate's settings.
+# Verify the selected account, capabilities and applicable approval before use.
+name = "market-private-risk-candidate"
+main = "private/cloudflare-candidate.mjs"
+compatibility_date = "2026-10-17"
+workers_dev = false
+preview_urls = false
+
+[[durable_objects.bindings]]
+name = "PRIVATE_RISK_STORE"
+class_name = "PrivateRiskStore"
+
+[[migrations]]
+tag = "private-risk-sqlite-v1"
+new_sqlite_classes = ["PrivateRiskStore"]
