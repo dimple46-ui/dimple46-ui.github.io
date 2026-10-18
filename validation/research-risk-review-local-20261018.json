@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "verified_code_sha": "0ef6970ce0ea6cad8a4f1fbcbab0a256989067d6",
+  "parent_head": "d1ffb72f69914c500a1e8490e3d7e58c7fb39d17",
+  "status": "LOCAL_TESTED_NOT_DEPLOYED_NOT_WATCH_READY",
+  "targeted": {
+    "passed": 29,
+    "failed": 0,
+    "skipped": 0
+  },
+  "full": {
+    "passed": 427,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "new_tests": 6,
+  "fixtures": "SYNTHETIC_RESEARCH_APPROVAL_AND_PRIVATE_ROUND_NUMBERS_ONLY",
+  "public_pair_changed": false,
+  "private_runtime_changed": false,
+  "approval_or_actual_intake": false,
+  "scheduler_watch_sender_changed": false,
+  "production_main_secret_shared_db_changed": false,
+  "files": [
+    {
+      "path": "domain/research-risk-review.mjs",
+      "sha256": "0ef0b615ebe3b886ba351e53d4bdad12516d57b87c8f190d0291a45467433ca3"
+    },
+    {
+      "path": "tests/research-risk-review.test.mjs",
+      "sha256": "39661e57f68fbf8b571e0dc6137faaf524faa6be59ad2fc3db2176bb3ded85ec"
+    }
+  ]
+}

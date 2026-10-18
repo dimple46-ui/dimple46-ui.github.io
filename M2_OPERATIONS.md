@@ -137,3 +137,16 @@ Cloudflare Secret and never committed.
 - **복구 필드:** updated_at_kst, active_branch, active_pr, current_task, verified_code_sha, last_completed, tests_and_evidence, ci_build_runtime_status, unfinished_changes, approved_scope, blocked_and_retry_condition, next_exact_step, next_ready_task, recommended_model_and_reasoning. 상세 이력은 PROJECT_STATUS/기존 receipt에 연결한다. 비공개 판단·승인 기록은 기존 비공개 체크포인트를 재사용하며 공개 파일에 복제하지 않는다.
 - **멈춤 판단:** APPROVAL_REQUIRED / MODEL_CHANGE_REQUIRED / ACCESS_BLOCKED / WAITING_FOR_JOB / SCOPE_COMPLETE / SESSION_ENDED / EXECUTION_LIMIT을 구별한다. 명확한 독립 작업만 계속하고 없으면 next_ready_task=NONE으로 남긴다. 자료·권한 부족을 High로 해결하려 하지 않는다. 현재 모델 설정·남은 사용량·백그라운드 연속 실행을 추정하지 않는다.
 - **저장·상태:** 검증 코드 SHA와 문서 commit을 구분하고 실제 저장 성공만 보고한다. IMPLEMENTED → LOCAL_TESTED → CI_VALIDATED → CANDIDATE_DEPLOYED → RUNTIME_VALIDATED → PRODUCTION_VALIDATED를 별도 증거로 기록한다. 문서 변경에도 provider skip 결과를 확인한다. 이 규칙은 파일 지침이며 앱 설정·영구 메모리 변경이나 자동 읽기 보장이 아니다.
+
+
+## Continuous execution override — user instruction2026-10-18
+
+A completed subtask, passing test or saved checkpoint is a recovery boundary, not an instruction to
+end execution. After each unit, continue the next concrete safe task from the existing asset/cash,
+research, market integration, consumer delivery or evaluation/stability roadmap. Before declaring
+NONE, assess the overall prepared queue once. Keep prior successful validation, private/public
+separation and all operational approval gates. No repeated Access/Validator/admin attempts or new
+scheduler/Watch modifications. Stop only for an actually needed user decision/model change or an
+honestly identified execution limit, unresolved safety issue, all prepared tasks blocked or entire
+approved scope completed. Save exact source, pending changes and NEXT_EXACT_STEP first; never
+claim background continuation after execution ends. Earlier per-unit stop wording is superseded.
