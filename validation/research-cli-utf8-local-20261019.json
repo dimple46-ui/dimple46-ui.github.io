@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "base_source_sha": "631a8f95877dd05b2553017ffc3ec2ef01df401a",
+  "checked_at_utc": "2026-10-19T01:56:25.781304+00:00",
+  "status": "LOCAL_TESTED_NOT_DEPLOYED",
+  "scope": "Strict UTF-8 in all official research validator CLI modes; no replacement or BOM normalization",
+  "before_fix": {
+    "new_regression_failed": true,
+    "sealed_v1_invalid_byte_ff_exit_code": 0,
+    "note": "A digest bound to the decoder-substituted text did not prevent malformed raw bytes from passing."
+  },
+  "after_fix": {
+    "targeted": {
+      "pass": 28,
+      "fail": 0,
+      "skip": 0,
+      "cancelled": 0
+    },
+    "full": {
+      "pass": 441,
+      "fail": 0,
+      "skip": 0,
+      "cancelled": 0
+    },
+    "new_tests": 2,
+    "malformed_sequences_per_mode": 4,
+    "modes": [
+      "sealed-v1",
+      "--draft",
+      "--general-draft"
+    ],
+    "valid_unicode_and_literal_replacement_hashes_preserved": true,
+    "bom_rejection_preserved": true,
+    "original_fixture_unchanged": true
+  },
+  "files": [
+    {
+      "path": "scripts/validate-research-package.mjs",
+      "sha256": "482f76b8e355ba1475aed93027d956c22c289258ac6e87f96e24dca832003706"
+    },
+    {
+      "path": "tests/research-general-cli.test.mjs",
+      "sha256": "871ffec072fe2ebcb8bbef80244a78f7436d9f1ba4737d75fc1b629ea59ac7e0"
+    },
+    {
+      "path": "RESEARCH_GENERAL_ADMISSION_REVIEW.md",
+      "sha256": "3aa40d507d10181c4bfa1e049f70e82914c578aaf04909fabada7539d1d3edf2"
+    }
+  ],
+  "evidence": "Synthetic input only. Local tests do not prove original-source truth, operational admission, actual private identity/storage or Watch readiness. No resource, deployment, approval or financial-policy change."
+}

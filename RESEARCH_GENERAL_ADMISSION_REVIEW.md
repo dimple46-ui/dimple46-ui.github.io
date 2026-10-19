@@ -61,3 +61,8 @@ Three new CLI tests plus related v1/general/public boundaries:47/47 local PASS. 
 local PASS; source and hashes in validation/research-general-cli-local-20261018.json. Existing
 source-specific successful research reviews are reused, not rerun merely because this CLI exists.
 This is implementation validation, not a new actual-source review or content approval.
+
+The shared CLI read boundary rejects malformed UTF-8 before parsing in all three modes. It does
+not substitute replacement characters, normalize valid Unicode, or strip a leading BOM to make
+an otherwise rejected input acceptable. Existing literal replacement characters remain valid text;
+original bytes and canonical hashes for valid inputs retain their existing semantics.

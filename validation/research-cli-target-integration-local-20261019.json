@@ -1,0 +1,41 @@
+{
+  "validationType": "LOCAL_FEATURE_BRANCH_PR8_COMPATIBILITY_INTEGRATION",
+  "target_head": "eda22553a1fbbca1237e2cf5c493232ffae4b7b9",
+  "incoming_pr": 8,
+  "incoming_head": "b2624214dbe4e9ba31fdd01f69beead1de2b5fca",
+  "incoming_base": "5fa148024366a4617776188f5d437aeed91e919f",
+  "target_executable_source": "464e89fa9c60d62ea44fc0ff37d594f965a12cd8",
+  "changed_path_conflicts": [],
+  "isolated_materialization": {
+    "exact_existing_and_incoming_blobs": 207,
+    "mismatches": 0,
+    "original_worktree_preserved": true
+  },
+  "related": {
+    "tests": 30,
+    "pass": 30
+  },
+  "full": {
+    "tests": 451,
+    "pass": 451,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0
+  },
+  "runtime": "Node24.19.0",
+  "recorded_at_utc": "2026-10-19T03:00:00.200353+00:00",
+  "boundaries": [
+    "Feature2 scheduled bucket quality correction retained",
+    "FIFO/bounded replay reader corrections retained",
+    "Valid Unicode/literal replacement character/hash behavior retained",
+    "Malformed UTF-8 rejected in3research CLIs; final-component display symlink rejected",
+    "Historical incoming receipts retain their historical validation scope"
+  ],
+  "notPerformed": [
+    "OPERATIONAL_RESEARCH_APPROVAL",
+    "PROVIDER_DEPLOYMENT",
+    "PRODUCTION_MAIN_MERGE",
+    "D1_WRITE",
+    "WATCH_OR_SCHEDULER_CHANGE"
+  ]
+}

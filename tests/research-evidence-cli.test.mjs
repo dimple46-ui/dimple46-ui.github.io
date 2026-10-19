@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync, writeFileSync, readFileSync, statSync, symlinkSync, rmSync} from 'node:fs';
+import {mkdtempSync, writeFileSync, readFileSync, statSync, symlinkSync, existsSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {now, policy, setup, inputs} from './fixtures/research-pair.mjs';
 import {buildResearchPairSummary} from '../domain/research-pair-summary.mjs';
+import {researchHash} from '../domain/research-handoff.mjs';
 const cli = new URL('../scripts/record-research-evidence.mjs', import.meta.url);
 const run = (...args) => spawnSync(process.execPath, [cli.pathname, ...args], {encoding: 'utf8', timeout: 5000});
 
@@ -54,5 +55,36 @@ test('CLI rejects corrupt/oversized/nonregular input and redacts paths, values a
     }
     writeFileSync(path, ' '.repeat(5 * 1024 * 1024));
     assert.equal(run('history', path, String(now), '1').status, 1);
+  } finally { rmSync(dir, {recursive: true, force: true}); }
+});
+test('evidence CLI rejects malformed UTF-8 before creating a snapshot and retains valid Unicode', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'research-evidence-utf8-'));
+  try {
+    const {session} = await setup(), base = buildResearchPairSummary(inputs(session), policy);
+    const path = join(dir, 'PRIVATE_UTF8_SENTINEL.json');
+    const pairBytes = text => {
+      const pair = structuredClone(base); pair.extra = {text};
+      const {decision_id, ...body} = pair;
+      return Buffer.from(JSON.stringify({...body, decision_id: 'local-research-pair:' + researchHash(body)}));
+    };
+    for (const [index, invalid] of [Buffer.from([0xff]), Buffer.from([0xed, 0xa0, 0x80])].entries()) {
+      const replacement = invalid.toString('utf8'), valid = pairBytes('PRIVATE_UTF8_SENTINEL' + replacement);
+      const start = valid.indexOf(Buffer.from(replacement)); assert.ok(start >= 0);
+      const bytes = Buffer.concat([valid.subarray(0, start), invalid, valid.subarray(start + Buffer.byteLength(replacement))]);
+      const output = join(dir, `invalid-${index}.json`); writeFileSync(path, bytes);
+      const result = run('snapshot', path, '-', 'fictional:utf8', String(now + 1000), output);
+      assert.equal(result.status, 1); assert.equal(result.stdout, '');
+      assert.equal(result.stderr.trim(), JSON.stringify({status: 'REJECTED', code: 'RESEARCH_EVIDENCE_OPERATION_FAILED'}));
+      assert.equal(existsSync(output), false); assert.deepEqual(readFileSync(path), bytes);
+    }
+    const bytes = pairBytes('한글 😀 e\u0301 \ufffd'), output = join(dir, 'valid.json'); writeFileSync(path, bytes);
+    const result = run('snapshot', path, '-', 'fictional:utf8', String(now + 1000), output);
+    assert.equal(result.status, 0, result.stderr); assert.deepEqual(readFileSync(path), bytes);
+    const original = readFileSync(output), history = run('history', output, String(now + 1000), '120000');
+    assert.equal(history.status, 0, history.stderr); assert.deepEqual(readFileSync(output), original);
+    writeFileSync(path, Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), bytes]));
+    const bomOutput = join(dir, 'bom.json');
+    assert.equal(run('snapshot', path, '-', 'fictional:bom', String(now + 1000), bomOutput).status, 1);
+    assert.equal(existsSync(bomOutput), false);
   } finally { rmSync(dir, {recursive: true, force: true}); }
 });

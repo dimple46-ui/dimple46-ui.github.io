@@ -5,6 +5,7 @@ import {spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {prepareGeneralResearchDraft} from '../domain/research-general-draft.mjs';
+import {sealResearchPackage} from '../domain/research-handoff.mjs';
 const now=Date.parse('2026-10-18T03:00:00Z');
 function fixture(){return {
  schema_version:2,package_type:'GENERAL_RESEARCH_DRAFT',package_id:'synthetic.cli.general',revision:1,
@@ -63,5 +64,44 @@ test('all validator modes bound regular-file reads and sanitize corrupt, symlink
    }
   }
   writeFileSync(path,' '.repeat(131073));assert.equal(run(path,String(now),'--general-draft').status,1);
+ }finally{rmSync(dir,{recursive:true,force:true});}
+});
+function unicodeInput(mode,text){
+ const input=mode==='--general-draft'?fixture():JSON.parse(readFileSync(new URL('../examples/research-package.synthetic.json',import.meta.url),'utf8'));
+ input.claims[0].text=text;
+ if(mode==='--general-draft')return input;
+ delete input.content_sha256;
+ return mode==='--draft'?input:sealResearchPackage(input);
+}
+test('all validator modes reject malformed UTF-8 instead of silently replacing source bytes',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'general-cli-utf8-'));
+ try{
+  const path=join(dir,'PRIVATE_UTF8_SENTINEL.json');
+  for(const mode of ['', '--draft','--general-draft'])for(const invalid of [Buffer.from([0xff]),Buffer.from([0xc2]),Buffer.from([0xc0,0xaf]),Buffer.from([0xed,0xa0,0x80])]){
+   // Bind even sealed-v1 to the text a permissive decoder would invent. Byte validation must still reject it.
+   const replacement=invalid.toString('utf8'),valid=Buffer.from(JSON.stringify(unicodeInput(mode,'PRIVATE_UTF8_SENTINEL'+replacement)));
+   const start=valid.indexOf(Buffer.from(replacement));assert.ok(start>=0);
+   const bytes=Buffer.concat([valid.subarray(0,start),invalid,valid.subarray(start+Buffer.byteLength(replacement))]);
+   writeFileSync(path,bytes);const result=run(path,String(now),...(mode?[mode]:[]));
+   assert.equal(result.status,1,`mode=${mode||'sealed'} bytes=${invalid.toString('hex')}`);
+   assert.equal(result.stdout,'');
+   assert.equal(result.stderr.trim(),JSON.stringify({status:'REJECTED',code:'RESEARCH_PACKAGE_VALIDATION_FAILED'}));
+   assert.deepEqual(readFileSync(path),bytes);
+  }
+ }finally{rmSync(dir,{recursive:true,force:true});}
+});
+test('valid Unicode and literal replacement characters retain their hashes; BOM rejection stays unchanged',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'general-cli-utf8-'));
+ try{
+  const path=join(dir,'input.json');
+  for(const mode of ['', '--draft','--general-draft']){
+   const input=unicodeInput(mode,'한글 · 😀 · e\u0301 · \ufffd'),bytes=Buffer.from(JSON.stringify(input));writeFileSync(path,bytes);
+   const result=run(path,String(now),...(mode?[mode]:[]));assert.equal(result.status,0,result.stderr);
+   const expected=mode==='--general-draft'?prepareGeneralResearchDraft(input,{nowMs:now}).content_sha256:
+    (mode==='--draft'?sealResearchPackage(input).content_sha256:input.content_sha256);
+   assert.equal(JSON.parse(result.stdout).content_sha256,expected);assert.deepEqual(readFileSync(path),bytes);
+   writeFileSync(path,Buffer.concat([Buffer.from([0xef,0xbb,0xbf]),bytes]));
+   const bom=run(path,String(now),...(mode?[mode]:[]));assert.equal(bom.status,1);assert.equal(bom.stdout,'');
+  }
  }finally{rmSync(dir,{recursive:true,force:true});}
 });

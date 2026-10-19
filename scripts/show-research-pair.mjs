@@ -10,7 +10,7 @@ try {
   let fd;
   let bytes;
   try {
-    fd = openSync(path, constants.O_RDONLY | constants.O_NONBLOCK);
+    fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
     const stat = fstatSync(fd);
     if (!stat.isFile() || stat.size > MAX_PAIR_DISPLAY_BYTES) throw Error('INVALID_INPUT_FILE');
     bytes = Buffer.alloc(MAX_PAIR_DISPLAY_BYTES + 1);
@@ -20,7 +20,7 @@ try {
     if (length > MAX_PAIR_DISPLAY_BYTES) throw Error('INPUT_TOO_LARGE');
     bytes = bytes.subarray(0, length);
   } finally { if (fd !== undefined) closeSync(fd); }
-  const record = parseResearchPairDisplay(bytes.toString('utf8'));
+  const record = parseResearchPairDisplay(new TextDecoder('utf-8', {fatal: true, ignoreBOM: true}).decode(bytes));
   const options = {nowMs: Number(nowText), maxSummaryAgeMs: Number(ageText)};
   console.log(format === 'json' ? JSON.stringify(buildResearchPairView(record, options)) : renderResearchPairText(record, options));
 } catch {

@@ -17,7 +17,7 @@ function read(path, maxBytes) {
     while (length < bytes.length && (count = readSync(fd, bytes, length, bytes.length - length, null)) > 0)
       length += count;
     if (length > maxBytes) throw Error('OVERSIZED_FILE');
-    return bytes.subarray(0, length).toString('utf8');
+    return new TextDecoder('utf-8', {fatal: true, ignoreBOM: true}).decode(bytes.subarray(0, length));
   } finally { if (fd !== undefined) closeSync(fd); }
 }
 function document(path) {
