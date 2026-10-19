@@ -1,5 +1,14 @@
 # Project Status — Real-time Investment Intelligence System v4
 
+## Current recovery pointer — 2026-10-19
+
+Use RESUME.md for the active feature/research-handoff source/checkpoint, PR6 and exact-source CI. Dated entries below are historical evidence, not the current task queue. In particular, old login/scope/build blockers and old “research not supplied” statements must not override newer evidence in the existing private checkpoint.
+
+Validated executable source remains48b3b04a5f2747e225f81097866aa8c05a85b38e, local466/466 and exact GitHub Tests39221997243 SUCCESS. This follow-up is a documentation/state consistency review only; no code/test rerun or runtime validation is claimed. Health intentionally reports latest stored diagnostics, including FUTURE_TIME; features/summary separately restrict eligibility by both input cutoff and generation time. No additional reproduced defect was found in this bounded read/summary review.
+
+Local implementation is distinct from actual integration: market selection/Feature/Signal and research comparison, asset/cash/concentration/input reconciliation, decision journal/raw price follow-up and consumer projections exist with their source-specific checks. Actual research admission, real ledger/broker calculations, current continuous Feature persistence and authorized Watch consumption remain separately gated. Missing forecast/horizon/benchmark input concerns optional predictive evaluation only. It is not a global development prerequisite. Preserve deferred approvals and original dirty work; do not retry unchanged authentication or add fictional work merely to extend execution.
+
+
 Last updated: 2026-10-13 12:07 KST
 Source-of-truth order: production evidence > GitHub `main` > Cloudflare/D1 evidence > PRs > documents.
 
