@@ -1,0 +1,125 @@
+{
+  "scope": "PUBLIC_SOURCE_AND_FICTIONAL_OFFLINE_INPUTS_ONLY",
+  "base_head": "fdb5259c635dbe47d6517ebf9f469144d0bac873",
+  "recorded_at_utc": "2026-10-19T21:40:16.496511+00:00",
+  "findings": [
+    {
+      "id": "LOCAL-001",
+      "classification": "REPRODUCED_ON_CURRENT_SOURCE_THEN_FIXED",
+      "issue": "A transient clock rollback between outer authorization and approval planner could pass if later clock readings recovered.",
+      "compatibility": "Existing valid formats and successful paths retained"
+    },
+    {
+      "id": "LOCAL-002",
+      "classification": "REPRODUCED_ON_CURRENT_SOURCE_THEN_FIXED",
+      "issue": "Schema2 date comparisons using ISO string slices could misorder extended years and throw on maximum valid timestamps.",
+      "compatibility": "Existing valid formats and successful paths retained"
+    },
+    {
+      "id": "LOCAL-003",
+      "classification": "REPRODUCED_ON_CURRENT_SOURCE_THEN_FIXED",
+      "issue": "Schema2 string limits counted UTF-16 units instead of Unicode code points, rejecting valid schema-boundary text.",
+      "compatibility": "Existing valid formats and successful paths retained"
+    },
+    {
+      "id": "LOCAL-004",
+      "classification": "REPRODUCED_ON_CURRENT_SOURCE_THEN_FIXED",
+      "issue": "Mutable property accessors could change a quoted price between validation and copy.",
+      "compatibility": "Existing valid formats and successful paths retained"
+    },
+    {
+      "id": "LOCAL-005",
+      "classification": "REPRODUCED_ON_CURRENT_SOURCE_THEN_FIXED",
+      "issue": "Direct status and analysis reads could return metadata or a view after credentials expired or execution aborted during their final head read.",
+      "compatibility": "Existing valid formats and successful paths retained"
+    },
+    {
+      "id": "LOCAL-006",
+      "classification": "REPRODUCED_ON_CURRENT_SOURCE_THEN_FIXED",
+      "issue": "Report append accepted corrupted existing records and structurally invalid or rehashed calculated fields in new records.",
+      "compatibility": "LOCAL-006 preserves existing append-time error contract; other already-correct checks retained"
+    },
+    {
+      "id": "LOCAL-007",
+      "classification": "REPRODUCED_ON_CURRENT_SOURCE_THEN_FIXED",
+      "issue": "Ticker allowlist lookup accepted inherited Object.prototype keys on scoped candidate routes.",
+      "compatibility": "Existing valid formats and successful paths retained"
+    },
+    {
+      "id": "LOCAL-008",
+      "classification": "REPRODUCED_ON_CURRENT_SOURCE_THEN_FIXED",
+      "issue": "Candidate checker accepted AVAILABLE/VERIFIED features with null or missing cutoff and null or zero age.",
+      "compatibility": "Existing valid formats and successful paths retained"
+    },
+    {
+      "id": "LOCAL-009",
+      "classification": "REPRODUCED_ON_CURRENT_SOURCE_THEN_FIXED",
+      "issue": "Read-only telemetry validator accepted a flat zero-write leaf containing an ignored nested write record.",
+      "compatibility": "Existing valid formats and successful paths retained"
+    }
+  ],
+  "regressions": {
+    "new_failing_before_fix": 13,
+    "new_tests_total": 15,
+    "new_other_cases": "Valid JSON record roundtrip and already-rejected hash-only record are compatibility controls, not new reproduced defects.",
+    "related_after": {
+      "consumer": 20,
+      "records": 21,
+      "private_boundaries": 40,
+      "schema": 34
+    },
+    "full_after": {
+      "tests": 508,
+      "passed": 508,
+      "failed": 0,
+      "skipped": 0,
+      "concurrency": 4
+    },
+    "initial_full_attempt": "INCOMPLETE_NO_FINAL_SUMMARY_DESPITE_EXIT_ZERO_NOT_COUNTED; bounded concurrency rerun completed. Cause not established.",
+    "prior_493": "REUSED_AS_HISTORICAL_BASELINE_NOT_RERUN_WITHOUT_CHANGES"
+  },
+  "reconciliation": {
+    "PR8": "ALREADY_INTEGRATED_NOT_REAPPLIED",
+    "source_reuse": "12 exact Git-blob-matching recovered baseline files reused; two current public baseline blobs fetched and verified for diff review. Old aggregate source patch not applied.",
+    "A": "Old PROJECT_STATUS466-source statement corrected to defer current identity to RESUME; old queued CI not rerun.",
+    "C": "Existing compact preparer compatibility/syntax/call/SQLite cases retained; no missing condition or implementation change justified. No private Production source acquired/transmitted/revalidated this run.",
+    "D": "Existing simulated historical/next-day, availability cutoff, first/missing bucket, duplicate/unequal interval, future/stale/session/calendar cases cover requested input boundaries; no new live-market evidence claimed.",
+    "E": "Existing futures-to-pair/view/journal restore/history and explicit private-input blocking cases retained; no concrete new connection gap reproduced beyond fixed record integrity.",
+    "additional_roadmap_review": "Once reviewed existing roadmap: real ledger/broker terms, admitted research/provider context and Watch runtime access remain input/approval gates. No unrelated new engine/task created."
+  },
+  "source_files": [
+    "cloudflare/intelligence-read-worker.mjs",
+    "domain/report-judgment.mjs",
+    "domain/research-approval-import.mjs",
+    "domain/research-general-draft.mjs",
+    "domain/research-price-followup.mjs",
+    "private/read-adapter.mjs",
+    "private/research-approval-preflight.mjs",
+    "scripts/check-candidate.mjs",
+    "tests/candidate-summary-check.test.mjs",
+    "tests/intelligence-read.test.mjs",
+    "tests/private-read-adapter.test.mjs",
+    "tests/research-approval-preflight.test.mjs",
+    "tests/research-general-draft.test.mjs",
+    "tests/research-price-followup.test.mjs",
+    "tests/report-judgment-integrity.test.mjs"
+  ],
+  "contract_change": {
+    "internal_only": "Optional trusted per-call planner notBeforeMs, automatically supplied by existing preflight.",
+    "schema_changed": false,
+    "research_packages_modified": false,
+    "G2_content_work_required": false,
+    "cross_chat_delivery_performed": false
+  },
+  "operating_changes": {
+    "deployment": false,
+    "version_upload": false,
+    "feature_write_enablement": false,
+    "remote_db_write": false,
+    "secret_or_permission_change": false,
+    "watch_or_schedule_change": false,
+    "main_merge": false
+  },
+  "runtime_validation": "NOT_PERFORMED",
+  "ready_for_live_use": false
+}

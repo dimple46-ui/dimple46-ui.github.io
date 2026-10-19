@@ -13,7 +13,10 @@ function shape(v,s){
  const matches=t=>t==='null'?v===null:t==='array'?Array.isArray(v):t==='object'?v!==null&&typeof v==='object'&&!Array.isArray(v):t==='integer'?Number.isSafeInteger(v):typeof v===t;
  if(types.length&&!types.some(matches))fail('GENERAL_DRAFT_SCHEMA_REJECTED');
  if(v===null)return;
- if(typeof v==='string'&&(v.length<(s.minLength??0)||v.length>(s.maxLength??Infinity)||s.pattern&&!new RegExp(s.pattern).test(v)))fail('GENERAL_DRAFT_SCHEMA_REJECTED');
+ if(typeof v==='string'){
+  const length=[...v].length;
+  if(length<(s.minLength??0)||length>(s.maxLength??Infinity)||s.pattern&&!new RegExp(s.pattern).test(v))fail('GENERAL_DRAFT_SCHEMA_REJECTED');
+ }
  if(typeof v==='number'&&(v<(s.minimum??-Infinity)||v>(s.maximum??Infinity)))fail('GENERAL_DRAFT_SCHEMA_REJECTED');
  if(Array.isArray(v)){
   if(v.length<(s.minItems??0)||v.length>(s.maxItems??1024)||s.uniqueItems&&new Set(v.map(x=>canonicalJson(x))).size!==v.length)fail('GENERAL_DRAFT_SCHEMA_REJECTED');
@@ -29,7 +32,8 @@ function dateMs(s,offset='Z'){
  if(!Number.isFinite(at)||new Date(Date.parse(s+'T00:00:00Z')).toISOString().slice(0,10)!==s)fail('INVALID_GENERAL_RESEARCH_DATE');
  return at;
 }
-const kstDate=ms=>new Date(ms+9*3600000).toISOString().slice(0,10);
+const kstDay=ms=>Math.floor((ms+9*3600000)/86400000);
+const calendarDay=date=>Math.floor(dateMs(date)/86400000);
 function lifecycle(d,nowMs){
  const result={};
  for(const [name,timeKey,conditionKey]of [['review','review_at_ms','review_condition'],['expiry','expires_at_ms','expiry_condition']]){
@@ -42,7 +46,7 @@ function lifecycle(d,nowMs){
   if(c.kind==='DATE_ONLY'){
    if(c.date===null||c.timezone!=='Asia/Seoul'||c.event_id!==null||c.description!==null)fail('INVALID_GENERAL_LIFECYCLE');
    dateMs(c.date,'+09:00');
-   result[name]={status:kstDate(nowMs)>=c.date?'DATE_REQUIRES_REVIEW':'NOT_DUE',basis:'DATE_ONLY_NO_EXACT_INSTANT',date:c.date,timezone:c.timezone,at_ms:null};
+   result[name]={status:kstDay(nowMs)>=calendarDay(c.date)?'DATE_REQUIRES_REVIEW':'NOT_DUE',basis:'DATE_ONLY_NO_EXACT_INSTANT',date:c.date,timezone:c.timezone,at_ms:null};
   }else if(c.kind==='EVENT'){
    if(c.date!==null||c.timezone!==null||c.event_id===null||c.description===null)fail('INVALID_GENERAL_LIFECYCLE');
    result[name]={status:'MANUAL_EVENT_REVIEW_REQUIRED',basis:'EVENT_NOT_EVALUATED',event_id:c.event_id,at_ms:null};
@@ -53,7 +57,8 @@ function lifecycle(d,nowMs){
  }
  if(d.review_at_ms!==null&&d.expires_at_ms!==null&&d.expires_at_ms<d.review_at_ms)fail('INVALID_GENERAL_LIFECYCLE');
  const r=result.review,e=result.expiry;
- const rd=r.basis==='DECLARED_INSTANT'?kstDate(r.at_ms):r.date,ed=e.basis==='DECLARED_INSTANT'?kstDate(e.at_ms):e.date;
+ const rd=r.basis==='DECLARED_INSTANT'?kstDay(r.at_ms):r.date===undefined?undefined:calendarDay(r.date),
+  ed=e.basis==='DECLARED_INSTANT'?kstDay(e.at_ms):e.date===undefined?undefined:calendarDay(e.date);
  if(rd!==undefined&&ed!==undefined&&ed<rd)fail('INVALID_GENERAL_LIFECYCLE');
  return {conditions:result,status:e.status==='DUE'?'EXPIRED':r.status==='DUE'?'REVIEW_DUE':
   [r,e].some(x=>x.status==='DATE_REQUIRES_REVIEW')?'DATE_REQUIRES_MANUAL_REVIEW':
@@ -68,7 +73,7 @@ export function prepareGeneralResearchDraft(input,{nowMs}={}){
  const life=lifecycle(d,nowMs);
  if(d.original_research){
   const o=d.original_research;dateMs(o.declared_analysis_date);dateMs(o.declared_created_date);
-  if(o.declared_analysis_date>kstDate(d.analysis_cutoff_ms)||o.declared_created_date>kstDate(d.generated_at_ms))fail('FUTURE_ORIGINAL_RESEARCH');
+  if(calendarDay(o.declared_analysis_date)>kstDay(d.analysis_cutoff_ms)||calendarDay(o.declared_created_date)>kstDay(d.generated_at_ms))fail('FUTURE_ORIGINAL_RESEARCH');
  }
  const sources=new Map(),quantities=new Map();let historicalKnowledge=true;
  for(const s of d.sources){

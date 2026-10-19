@@ -180,3 +180,20 @@ readback and derived-failure isolation. Local SQLite/CI validation is distinct f
 continuous-production validation. Do not enable the older full-tree v2 flag as a substitute.
 No deployment, variable registration, new schedule, migration or retention change is authorized
 by this source preparation. Existing private checkpoints own current operational evidence.
+
+## Morning verification after the 2026-10-20 offline review
+
+These are pending observations, not completed live checks. Use existing authorized read paths;
+do not enable writes, deploy, create schedules or widen credentials to obtain them.
+
+| When / input | Success criterion | Missing or failed evidence |
+| --- | --- | --- |
+| Before the open: existing snapshot and source timestamps | Preserve its original session/day and market times; a quiet overnight quote alone is not a collection failure | Show closed/unknown/stale status; never replace market time with read time |
+| After the calendar confirms an open regular session: new observation | Requested trading day, source market time, observation and availability agree with the as-of cutoff | Retain unavailable/degraded state; isolate the affected source |
+| New Feature if an authorized writer is actually active | Stored version, engine identity, input cutoff and generation time remain distinct; old Feature cannot inherit a new observation's age | Keep Feature unavailable; an inactive writer is not fixed by claiming local tests are deployed |
+| First / second / third scheduled flow buckets | Insufficient history stays explicit; duplicate buckets do not create a new interval; unequal intervals retain their actual durations | Wait for the next real source bucket; do not synthesize flow or average long/short judgments |
+| Existing authorized consumer read | Read-only evidence, independent ages/quality and disabled private capabilities remain visible | Preserve fallback limitations; no Watch changes or private readiness claim |
+
+Recovered source fixes are development-branch changes only. Source handling, nondeployed
+version upload, deployment, continuous writing and Watch adoption are distinct approval gates.
+Overnight operational prohibitions defer the affected gate without blocking independent local work.

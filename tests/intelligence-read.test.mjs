@@ -115,6 +115,15 @@ test('state accepts only Samsung, SK Hynix or the explicit combined scope',async
  assert.equal(response.status,400);assert.equal((await response.json()).error,'INVALID_TICKER');
 });
 
+test('inherited object keys are rejected as tickers on every scoped route before any query',async()=>{
+ for(const route of ['/state','/features','/history','/summary'])for(const ticker of ['__proto__','constructor','toString','hasOwnProperty']){
+  const database=db(),policy=route==='/summary'?'&maxObservationAgeMs=1000&maxFeatureAgeMs=1000':'';
+  const res=await worker.fetch(request(`${route}?ticker=${encodeURIComponent(ticker)}${policy}`,{ip:'192.0.2.242'}),env(database));
+  assert.equal(res.status,400,`${route} ${ticker}`);assert.equal((await res.json()).error,'INVALID_TICKER');
+  assert.equal(database.statements.length,0);
+ }
+});
+
 test('history rejects unbounded ranges and returns chronological read-only rows',async()=>{
  const from=now-60*60*1000,to=now-1000,database=db();
  let response=await worker.fetch(request(`/history?ticker=005930&fromMs=${from}&toMs=${to}&limit=30`,{ip:'192.0.2.6'}),env(database));

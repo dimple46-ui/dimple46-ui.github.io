@@ -17,7 +17,7 @@ export function createResearchApprovalPreflight({authorize,resolveDecision,clock
    const scope=Object.freeze(Object.fromEntries(['schemaVersion','ownerRef','authorizationEpoch','policyEpoch','restoreEpoch'].map(k=>[k,p[k]])));
    const expiresAt=p.expiresAtMs;
    const parsed=parseResearchApprovalImportRequest(request,{nowMs:now});
-   const plan=await planner.prepare({request:parsed.request.approval_request,package:parsed.request.package,expectedScope:scope});
+   const plan=await planner.prepare({request:parsed.request.approval_request,package:parsed.request.package,expectedScope:scope,notBeforeMs:now});
    const end=clock();if(!timestamp(end)||end<now||plan.imported_at_ms<now||end<plan.imported_at_ms)return denied('IMPORT_CLOCK_REGRESSION');
    if(end>=expiresAt)return denied('UNAUTHORIZED');
    if(plan.request.decision==='APPROVE'&&(end>=parsed.request.package.review_at_ms||end>=parsed.request.package.expires_at_ms))return denied('RESEARCH_REVIEW_OR_EXPIRY_DUE');

@@ -1,6 +1,7 @@
 // Descriptive price observations after a saved decision. No forecast scoring or portfolio returns.
 import {researchHash} from './research-handoff.mjs';
 import {verifyResearchDecisionJournal} from './research-decision-journal.mjs';
+import {canonicalJson} from '../private/storage-contract.mjs';
 
 const requireValue = ok => { if (!ok) throw Error('INVALID_RESEARCH_PRICE_FOLLOWUP'); };
 const time = n => Number.isSafeInteger(n) && n > 0 && Number.isFinite(new Date(n).getTime());
@@ -12,6 +13,7 @@ const freeze = value => {
 const quoteKeys = ['ticker','market','currency','venue','price_basis','price_krw','observed_at_ms',
   'available_at_ms','source_id','source_sha256'];
 function quote(value, ticker, recordedAtMs) {
+  try { value = JSON.parse(canonicalJson(value)); } catch { requireValue(false); }
   requireValue(value && Object.keys(value).sort().join('|') === [...quoteKeys].sort().join('|') &&
     value.ticker === ticker && value.market === 'KRX' && value.currency === 'KRW' &&
     value.venue === 'KRX_REGULAR' && value.price_basis === 'UNADJUSTED' &&

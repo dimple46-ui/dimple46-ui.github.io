@@ -28,6 +28,10 @@ unless this dependency has done its job. Tests use an explicitly fictional resol
 Three times are retained: original user decision, original source recording and local import.
 Decision must not predate package generation; decision <= source recording <= import. Future
 input, asynchronous clock rollback and a review deadline crossed during lookup fail closed.
+The trusted preflight passes its per-call authorization time as optional `notBeforeMs` to
+`prepare()`. The planner rejects an earlier clock reading before decision lookup, even if
+later readings recover. This is an internal server-context bound, never a package/body field;
+existing direct planner callers may omit it. Package schema and approval evidence format are unchanged.
 New approvals are blocked once review/expiry is due. Withdrawal may still be staged afterwards.
 Source acquisition time remains the separately declared/verified research property.
 

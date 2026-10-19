@@ -59,3 +59,9 @@ test('outer authorization/parser clock cannot roll back before planner, or cross
  calls=0;const b=body(),g=fixture({clock:()=>++calls===4?b.package.review_at_ms:at,authorize:async()=>({...principal(),expiresAtMs:b.package.review_at_ms+1})});
  assert.equal((await g.boundary.prepare({request:b})).code,'RESEARCH_REVIEW_OR_EXPIRY_DUE');
 });
+test('temporary outer clock rollback rejects before lookup even if later readings recover',async()=>{
+ const ticks=[at,at-1,at,at];let reads=0;
+ const f=fixture({clock:()=>ticks[reads++]}),r=await f.boundary.prepare({request:body()});
+ assert.equal(r.code,'IMPORT_CLOCK_REGRESSION');assert.equal(r.status,'REJECTED');
+ assert.equal(r.plan,undefined);assert.equal(r.write_outcome,'NOT_ATTEMPTED');assert.equal(f.lookups(),0);
+});

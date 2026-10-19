@@ -17,10 +17,14 @@ export const approvalImportGenesis=()=>freeze(genesis());
 export function createResearchApprovalImportPlanner({clock,resolveDecision}={}){
  if(typeof clock!=='function'||typeof resolveDecision!=='function')fail('TRUSTED_IMPORT_DEPENDENCIES_REQUIRED');
  const readClock=()=>{let n;try{n=clock();}catch{fail('IMPORT_CLOCK_FAILED');}if(!timestamp(n))fail('INVALID_IMPORT_TIME');return n;};
- return Object.freeze({async prepare({request,package:input,expectedScope}={}){
+ return Object.freeze({async prepare({request,package:input,expectedScope,notBeforeMs}={}){
   let r,scope;try{r=copy(request);scope=copy(expectedScope);}catch{fail('INVALID_IMPORT_REQUEST');}
   if(!requestOk(r)||!scopeOk(scope))fail('INVALID_IMPORT_REQUEST');
   const started=readClock();
+  if(notBeforeMs!==undefined){
+   if(!timestamp(notBeforeMs))fail('INVALID_IMPORT_TIME');
+   if(started<notBeforeMs)fail('IMPORT_CLOCK_REGRESSION');
+  }
   const p=validateResearchPackage(input,{nowMs:started}).package;
   if(!['package_id','revision','content_sha256'].every(k=>r[k]===p[k]))fail('IMPORT_PACKAGE_BINDING_MISMATCH');
   if(r.decision==='APPROVE'&&(p.review_at_ms<=started||p.expires_at_ms<=started))fail('RESEARCH_REVIEW_OR_EXPIRY_DUE');

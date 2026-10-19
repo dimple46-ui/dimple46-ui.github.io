@@ -53,8 +53,14 @@ export function createReportJudgment(input){
  const contentSha256=createHash('sha256').update(JSON.stringify(body)).digest('hex');
  return freeze({...body,contentSha256});
 }
+function validateRecord(record){
+ const {contentSha256,...body}=record??{};
+ requireValue(typeof contentSha256==='string'&&createHash('sha256').update(JSON.stringify(body)).digest('hex')===contentSha256,'JUDGMENT_HASH_MISMATCH');
+ requireValue(createReportJudgment(record).contentSha256===contentSha256,'JUDGMENT_HASH_MISMATCH');
+}
 export function appendReportJudgment(records,record){
  requireValue(Array.isArray(records),'INVALID_JUDGMENT_LOG');
+ records.forEach(validateRecord);
  requireValue(!records.some(r=>r.judgmentId===record?.judgmentId),'JUDGMENT_ALREADY_EXISTS');
  const {contentSha256,...body}=record??{};
  requireValue(typeof contentSha256==='string'&&createHash('sha256').update(JSON.stringify(body)).digest('hex')===contentSha256,'JUDGMENT_HASH_MISMATCH');
@@ -64,6 +70,7 @@ export function appendReportJudgment(records,record){
    return time(d?.firstSeenAtMs)&&d.firstSeenAtMs<=record.inputCutoffMs&&publishedAtMs!==null&&publishedAtMs<=d.firstSeenAtMs;
   }),
   'INVALID_JUDGMENT_APPEND_TIME');
+ validateRecord(record);
  requireValue(records.every(r=>time(r.generatedAtMs)&&r.generatedAtMs<=record.generatedAtMs),'BACKDATED_JUDGMENT_APPEND');
  return freeze([...structuredClone(records),structuredClone(record)]);
 }

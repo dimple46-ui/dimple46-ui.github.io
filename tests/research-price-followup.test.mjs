@@ -39,6 +39,12 @@ test('missing/zero/nonfinite/unsafe prices, mixed basis, ticker, currency, sourc
     assert.throws(() => createResearchPriceFollowup(journal, bad));
   }
 });
+test('quote accessors cannot change a validated price or run during input inspection', async () => {
+ const {journal,input}=await fixture();let reads=0;
+ Object.defineProperty(input.baseline,'price_krw',{enumerable:true,get(){return ++reads<3?10000:-10000;}});
+ assert.throws(()=>createResearchPriceFollowup(journal,input),/INVALID_RESEARCH_PRICE_FOLLOWUP/);
+ assert.equal(reads,0);
+});
 test('pre-record baseline, future knowledge, overlapping intervals and missing snapshot reject', async () => {
   const {journal, input} = await fixture();
   for (const change of [x => x.baseline.observed_at_ms = now,

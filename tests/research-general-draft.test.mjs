@@ -69,6 +69,22 @@ test('unsafe URLs and oversize/accessor input fail without execution or echo',()
 const dateCondition=date=>({kind:'DATE_ONLY',date,timezone:'Asia/Seoul',event_id:null,description:null});
 const eventCondition=()=>({kind:'EVENT',date:null,timezone:null,event_id:'fictional.new.results',description:'Review on new official financial results; not an executable rule'});
 const unknownCondition=()=>({kind:'UNKNOWN',date:null,timezone:null,event_id:null,description:null});
+test('date-only lifecycle comparisons cover extended years and the maximum valid timestamp',()=>{
+ const p=fixture();p.review_at_ms=null;p.expires_at_ms=null;
+ p.review_condition=dateCondition('2026-10-19');p.expiry_condition=dateCondition('2026-10-20');
+ for(const nowMs of [253402300800000,8640000000000000]){
+  const r=prepare(p,{nowMs});assert.equal(r.lifecycle.review.status,'DATE_REQUIRES_REVIEW');
+  assert.equal(r.lifecycle.expiry.status,'DATE_REQUIRES_REVIEW');assert.equal(r.temporal_status,'DATE_REQUIRES_MANUAL_REVIEW');
+ }
+ const mixed=fixture();mixed.review_at_ms=253402300800000;mixed.expires_at_ms=null;
+ mixed.expiry_condition=dateCondition('2026-10-20');
+ assert.throws(()=>prepare(mixed,{nowMs:253402300800000}),/INVALID_GENERAL_LIFECYCLE/);
+});
+test('schema text length counts Unicode code points at its documented boundary',()=>{
+ const p=fixture();p.claims[0].text='🙂'.repeat(1024);
+ assert.equal(run(p).draft.claims[0].text,p.claims[0].text);
+ p.claims[0].text+='🙂';assert.throws(()=>run(p),/GENERAL_DRAFT_SCHEMA_REJECTED/);
+});
 test('date-only review preserves day precision across the KST date boundary',()=>{
  const p=fixture();p.review_at_ms=null;p.review_condition=dateCondition('2026-10-19');p.expires_at_ms=null;p.expiry_condition=eventCondition();
  const before=prepare(p,{nowMs:Date.parse('2026-10-18T14:59:59.999Z')}),at=prepare(p,{nowMs:Date.parse('2026-10-18T15:00:00Z')});
