@@ -16,13 +16,14 @@ const REQUIRED = {FEATURE_ENGINE_GIT_SHA:'plain_text', [FLAG]:'plain_text',
   MARKET_HISTORY:'d1', VALIDATION_TOKEN:'secret_text'};
 class TrialError extends Error { constructor(code) { super(code); this.code = code; } }
 function check(value, code) { if (!value) throw new TrialError(code); }
+const wait = ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function safeCode(error) { return error instanceof TrialError ? error.code : 'UNCLASSIFIED_FAILURE'; }
 export function trialPlan() {
   return {mode:'PLAN_ONLY_NO_CREDENTIAL_OR_NETWORK_ACCESS', account:ACCOUNT, worker:WORKER,
     expectedEngineSha:ENGINE, maxFeaturePostAttempts:1, maxNewImmutableRows:1,
     purpose:'PERSISTENCE_CONTRACT_ONLY_NOT_LIVE_MARKET_READINESS',
-    sequence:['LOCAL_KEYCHAIN_OAUTH_TO_MEMORY','READ_PREFLIGHT','ENABLE','SINGLE_POST_WITH_READBACK',
-      'FINALLY_DISABLE','VERIFY_DISABLED'],
+    sequence:['LOCAL_KEYCHAIN_OAUTH_TO_MEMORY','READ_PREFLIGHT_AND_RUNTIME_DISABLED','ENABLE','CONFIRM_RUNTIME_ENABLED_WITH_BOUNDED_GETS',
+      'SINGLE_POST_WITH_READBACK','FINALLY_DISABLE','VERIFY_SETTINGS_AND_RUNTIME_DISABLED'],
     approvalRequired:'Temporary candidate flag change, at most one shared-D1 feature row, local in-memory credential use',
     excluded:['Production relay','main merge','Secret changes','research admission','personal finance','Watch','Access','payment'],
     onePostLimitScope:'This process only; no server-side lock against other authorized callers during the enabled interval',
@@ -68,26 +69,46 @@ function storedReceipt(row) {
 }
 
 // Test seam substitutes HTTP transport only; there is no synthetic approval or storage service.
-export async function runStorageTrial({oauthToken,validationToken,approved=false,fetcher=fetch,signal,recoveryOnly=false}) {
+export async function runStorageTrial({oauthToken,validationToken,approved=false,fetcher=fetch,signal,recoveryOnly=false,sleep=wait}) {
   check(approved===true, 'EXPLICIT_TRIAL_APPROVAL_REQUIRED');
   check(typeof oauthToken==='string' && oauthToken.length>0 &&
     (recoveryOnly || typeof validationToken==='string' && validationToken.trim().length>0), 'LOCAL_CREDENTIAL_UNAVAILABLE');
   let enableAttempted=false, postAttempted=false, restoreVerified=false, receipt=null, failure=null;
   async function json(url, method, body, recovery=false) {
     const admin=url.startsWith(API+'/');
-    const requestSignal=recovery ? AbortSignal.timeout(15000)
-      : signal ? AbortSignal.any([signal,AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000);
+    const timeoutMs=url.startsWith(ORIGIN+'/write-control')?3000:15000;
+    const requestSignal=recovery ? AbortSignal.timeout(timeoutMs)
+      : signal ? AbortSignal.any([signal,AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs);
     let response;
     try { response=await fetcher(url,{method,body,redirect:'error',signal:requestSignal,
       headers:{Authorization:`Bearer ${admin?oauthToken:validationToken}`}}); }
     catch { throw new TrialError(recovery?'RECOVERY_NETWORK_FAILURE':'NETWORK_OR_TIMEOUT_FAILURE'); }
-    check(response.status===200, `${recovery?'RECOVERY_':''}HTTP_${response.status}`);
+    if(response.status!==200) {
+      const endpoint=admin?'ADMIN':url.startsWith(ORIGIN+'/write-control')?'RUNTIME_CONTROL':method==='POST'?'FEATURE_POST':'REPLAY';
+      let code='UNCLASSIFIED_RESPONSE';
+      try { const body=await response.json();
+        if(['FEATURE_WRITE_DISABLED','UNAUTHORIZED','NOT_FOUND','FEATURE_VALIDATION_FAILED'].includes(body?.error)) code=body.error;
+      } catch {}
+      throw new TrialError(`${recovery?'RECOVERY_':''}HTTP_${response.status}_AT_${endpoint}_${code}`);
+    }
     let data;
     try { data=await response.json(); } catch { throw new TrialError('INVALID_JSON_RESPONSE'); }
     if(admin) { check(data.success===true, 'ADMIN_REQUEST_FAILED'); return data.result; }
     return data;
   }
   const settings=(recovery=false)=>json(API+'/settings','GET',undefined,recovery);
+  async function runtimeFlag(expected,recovery=false,observePending=false) {
+    const count=observePending?8:1;
+    for(let i=0;i<count;i++) {
+      const control=await json(ORIGIN+'/write-control','GET',undefined,recovery);
+      check(control?.mode==='WRITE_CONTROL' && control.schemaVersion===1 &&
+        typeof control.writeEnabled==='boolean' && control.engineGitSha===ENGINE &&
+        control.candidateSha256===CORE && control.scope==='RUNTIME_BINDINGS_ONLY', 'RUNTIME_CONTROL_CONTRACT_INVALID');
+      if(control.writeEnabled===expected) return;
+      if(i<count-1) await sleep(750); // Observe pending propagation, never retry a failed HTTP request.
+    }
+    throw new TrialError(expected?'RUNTIME_ENABLE_NOT_OBSERVED':'RUNTIME_DISABLE_NOT_OBSERVED');
+  }
   async function setFlag(value, current, recovery=false) {
     const form=new FormData();
     form.set('settings',new Blob([JSON.stringify({bindings:bindings(current,value)})],{type:'application/json'}));
@@ -98,6 +119,7 @@ export async function runStorageTrial({oauthToken,validationToken,approved=false
       enableAttempted=true; // Explicit recovery performs only finally-disable/readback.
     } else {
     const before=await settings(); bindings(before,false,true);
+    await runtimeFlag(false);
     const replay=await json(ORIGIN+'/','GET');
     check(replay.candidateSha256===CORE, 'FEATURE_CORE_CHANGED');
     assertReadMeta(replay.queryMeta);
@@ -108,6 +130,7 @@ export async function runStorageTrial({oauthToken,validationToken,approved=false
     enableAttempted=true; // A failed/timeout PATCH may already have applied remotely.
     await setFlag(true,current);
     check(flag(await settings())==='true', 'ENABLE_NOT_CONFIRMED');
+    await runtimeFlag(true,false,true);
     check(!signal?.aborted, 'INTERRUPTED_BEFORE_POST');
     postAttempted=true; // Never retry, including an ambiguous network outcome.
     receipt=storedReceipt(await json(ORIGIN+'/feature-runs','POST'));
@@ -120,13 +143,15 @@ export async function runStorageTrial({oauthToken,validationToken,approved=false
         // Restore only the write flag on current settings, never deploy a historical Worker version.
         await setFlag(false,current,true);
         check(flag(await settings(true))==='false', 'DISABLE_NOT_CONFIRMED');
+        if(!recoveryOnly) await runtimeFlag(false,true,true);
         restoreVerified=true;
       } catch { restoreVerified=false; }
     }
   }
   return {status:enableAttempted&&!restoreVerified?'RECOVERY_REQUIRED':failure?'FAILED':'PASS',
     failure,enableAttempted,postAttempted,restoreVerified,
-    restoreEvidenceScope:'CONTROL_PLANE_SETTING_READBACK_NOT_RUNTIME_403_PROBE',receipt,
+    restoreEvidenceScope:recoveryOnly?'CONTROL_PLANE_DISABLE_ONLY_NOT_RUNTIME_PROBE':
+      'SETTINGS_AND_OBSERVED_RUNTIME_BINDINGS_NOT_GLOBAL_PROPAGATION_OR_POST_PROBE',receipt,
     retryPolicy:'DO_NOT_REPEAT_POST_AFTER_AMBIGUOUS_FAILURE',scope:'CANDIDATE_PERSISTENCE_ONLY'};
 }
 

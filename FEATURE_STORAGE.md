@@ -81,6 +81,13 @@ their source observations and deterministic engine version remain authoritative.
 
 ## Candidate write path and rollback
 
+Authenticated `GET /write-control` is an additive read-only runtime binding contract (schemaVersion1):
+`writeEnabled`, `engineGitSha`, `candidateSha256`, and scope `RUNTIME_BINDINGS_ONLY`. It returns
+no token or market timestamp and performs no D1 access. The local controlled-trial tool must observe
+runtime enable before its only POST, and runtime disable after restoring the setting. This is not
+a global propagation guarantee; previous read/replay and immutable write contracts are unchanged.
+See FEATURE_STORAGE_TRIAL.md for bounded observations and emergency-recovery evidence limits.
+
 - `GET /` stays authenticated and read-only. It returns the full replay, compact preview, byte
   counts, quality summary and D1 query metadata.
 - `POST /feature-runs` is authenticated and writes only when

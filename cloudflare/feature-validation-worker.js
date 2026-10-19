@@ -673,10 +673,16 @@ export default {
     if(!env.VALIDATION_TOKEN||request.headers.get('Authorization')!==`Bearer ${env.VALIDATION_TOKEN}`)
       return Response.json({error:'UNAUTHORIZED'},{status:401});
     const url=new URL(request.url),started=Date.now();
-    if(request.method==='GET'&&url.pathname!=='/'&&!/^\/replay\/\d+$/.test(url.pathname))
+    if(request.method==='GET'&&url.pathname!=='/'&&url.pathname!=='/write-control'&&!/^\/replay\/\d+$/.test(url.pathname))
       return Response.json({error:'NOT_FOUND'},{status:404});
     if(request.method==='POST'&&url.pathname!=='/feature-runs') return Response.json({error:'NOT_FOUND'},{status:404});
     if(!['GET','POST'].includes(request.method)) return Response.json({error:'METHOD_NOT_ALLOWED'},{status:405});
+    // Runtime bindings, not a D1 write or market-data freshness assertion. Auth checked above.
+    if(request.method==='GET'&&url.pathname==='/write-control')
+      return Response.json({mode:'WRITE_CONTROL',schemaVersion:1,writeEnabled:featureWriteEnabled(env),
+        engineGitSha:validEngineGitSha(env.FEATURE_ENGINE_GIT_SHA)?String(env.FEATURE_ENGINE_GIT_SHA):null,
+        candidateSha256:CANDIDATE_SHA256,scope:'RUNTIME_BINDINGS_ONLY'},
+        {headers:{'Cache-Control':'no-store'}});
     try {
       if(request.method==='POST'&&!featureWriteEnabled(env))
         return Response.json({error:'FEATURE_WRITE_DISABLED'},{status:403});

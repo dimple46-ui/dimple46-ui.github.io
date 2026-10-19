@@ -179,3 +179,20 @@ test('D1 write failure is isolated and reported without storing or exposing the 
   {MARKET_HISTORY:db,VALIDATION_TOKEN:'test',FEATURE_V2_WRITE_ENABLED:'true',FEATURE_ENGINE_GIT_SHA:'abcdef0'});
  assert.equal(response.status,503);assert.deepEqual(await response.json(),{error:'FEATURE_VALIDATION_FAILED'});
 });
+
+test('authenticated write-control observes runtime bindings without D1 or token disclosure',async()=>{
+ const db={prepare(){throw new Error('write-control must not access D1');}};
+ for(const enabled of ['false','true']) {
+  const w=worker(),env={MARKET_HISTORY:db,VALIDATION_TOKEN:'fictional-sensitive-token',
+   FEATURE_ENGINE_GIT_SHA:'2222222',FEATURE_V2_WRITE_ENABLED:enabled};
+  assert.equal((await w.fetch(new Request('https://test/write-control'),env)).status,401);
+  const response=await w.fetch(new Request('https://test/write-control',{
+   headers:{Authorization:'Bearer fictional-sensitive-token'}}),env);
+  assert.equal(response.status,200);const body=await response.json();
+  assert.equal(body.mode,'WRITE_CONTROL');assert.equal(body.schemaVersion,1);
+  assert.equal(body.writeEnabled,enabled==='true');assert.equal(body.engineGitSha,'2222222');
+  assert.equal(body.scope,'RUNTIME_BINDINGS_ONLY');assert.equal(response.headers.get('Cache-Control'),'no-store');
+  assert.equal(JSON.stringify(body).includes('fictional-sensitive-token'),false);
+  assert.equal(Object.hasOwn(body,'observedAt'),false);
+ }
+});

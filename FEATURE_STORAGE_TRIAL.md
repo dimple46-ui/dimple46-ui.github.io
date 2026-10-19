@@ -31,15 +31,19 @@ OAuth is sent only to the fixed Cloudflare management API for the fixed candidat
 credential is sent only to that candidate's HTTPS origin. Redirects are rejected.
 
 The sequence reads current candidate settings, requires the expected engine SHA, database
-binding, and disabled flag, then performs an authenticated read-only replay. It rechecks settings,
-patches only the write flag while inheriting unrelated bindings, confirms enable, makes exactly
+binding, and disabled flag, then checks authenticated GET `/write-control` and performs a read-only replay.
+An older deployment without this control contract is rejected before enabling writes. It rechecks settings,
+patches only the write flag while inheriting unrelated bindings, confirms enable in management settings and observes the runtime flag via bounded GETs before making exactly
 one POST, and validates the POST's immutable stored-row readback. Finally it sets the flag false
-using current settings and separately reads it back. Ctrl+C/SIGTERM request cancellation of the
+using current settings and separately reads both the setting and runtime flag back. Ctrl+C/SIGTERM request cancellation of the
 work phase; restoration uses independent request timeouts. No automatic POST retry occurs.
 
-A partial PATCH response is not readback evidence. A successful flag readback proves the
-control-plane setting is false; it does not prove global runtime propagation or an independently
-tested 403. A second POST is deliberately excluded. There is no server-side one-shot lease or
+A partial PATCH response is not readback evidence. A successful restore proves both a false control-plane setting and a false runtime flag observed
+by authenticated GET. This does not prove global propagation to every execution location or an
+independently tested 403. Only the safe boolean/core/engine control response is used; no D1 query
+is made by `/write-control`. Up to eight successful control observations, separated by 750 ms,
+are allowed to observe a pending flag transition, with each request limited to three seconds.
+HTTP/network/contract errors stop immediately; no failed request is retried. A second POST is deliberately excluded. There is no server-side one-shot lease or
 lock: the one-request/one-row limit applies to this process, not other authorized callers while
 the flag is enabled. Run only in an exclusive controlled window.
 
@@ -55,7 +59,8 @@ the flag is enabled. Run only in an exclusive controlled window.
   verification SELECT returned in the POST response.
 - The core hash is not an attestation of the complete deployed Worker. Management deployment
   evidence is recorded separately; the trial checks reported identities and contract consistency.
-- Keep the result in the existing private operational checkpoint; no tokens or raw responses in
+- HTTP failures report only the fixed endpoint label, status and an allowlisted candidate error
+  code; response text and arbitrary error details are never printed. Keep the result in the existing private operational checkpoint; no tokens or raw responses in
   public issues, commits, logs or artifacts. Ordinary CI uses fictional transport responses only.
 
 ## Recovery
@@ -70,8 +75,9 @@ available, the same reviewed tool can perform only disable and setting readback:
 node scripts/trial-feature-storage.mjs --disable-only --approved-candidate-recovery
 ```
 
-This mode does not request the candidate token, enable writes, or send any candidate POST. It
-uses the same OAuth/keychain path and preserves unrelated bindings. A failed recovery is reported
+This mode does not request the candidate token, enable writes, or send any candidate request. It
+uses the same OAuth/keychain path and preserves unrelated bindings. Its result explicitly covers only control-plane disable readback, since it does not use the
+candidate token for a runtime GET. A failed recovery is reported
 as unresolved, never as successful rollback. It does not roll back Worker code or delete rows.
 
 The trial excludes Production relay changes, main merge, research admission, personal financial
