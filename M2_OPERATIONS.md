@@ -150,3 +150,24 @@ scheduler/Watch modifications. Stop only for an actually needed user decision/mo
 honestly identified execution limit, unresolved safety issue, all prepared tasks blocked or entire
 approved scope completed. Save exact source, pending changes and NEXT_EXACT_STEP first; never
 claim background continuation after execution ends. Earlier per-unit stop wording is superseded.
+
+## Implementation and research ownership
+
+The implementation Work is the single writer for the integration branch, common contracts,
+receivers, private approval/storage integration and PR management. The research Work owns source
+review, numerical/unit/period/acquisition-time meaning, package lineage and research revisions.
+Reuse unchanged inputs and valid receipts; do not reapply incorporated handoff patches or rewrite
+research originals. Return specific claims/fields/reasons when research changes are necessary.
+For a shared contract change, record its reason, compatibility/version impact and relevant checks
+before asking the research Work to adopt it. Recheck the actual remote HEAD before any branch
+write and preserve unrelated working changes.
+
+For actual integration, classify identity/decision, exact binding, private storage authority,
+atomic recording/recovery, withdrawal/expiry/restart and authorized readback independently as
+VERIFIED, IMPLEMENTED_NOT_RUNTIME_VERIFIED, MISSING_TRUSTED_CONTEXT or APPROVAL_REQUIRED.
+Local implementation evidence must not promote actual operation. Keep exact research/approval
+identifiers, operational audit and the short research return in the existing private checkpoint.
+If a prerequisite is absent, identify the earliest concrete unresolved decision and reuse any
+existing pending/deferred request. Do not repeatedly request the same consent or add substitute
+factories, fixture authorizers or test engines. A saved response is not proof of delivery to a
+different chat; Watch/schedules and deployment permissions remain separate.
