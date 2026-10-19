@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "scope": "LOCAL_CANDIDATE_TRIAL_TOOL_NOT_RUNTIME_EXECUTION",
+  "sourceSha": "69f28a88d2f567ca8422d6e61a34b66c70556758",
+  "unchangedWorkerSourceSha": "48b3b04a5f2747e225f81097866aa8c05a85b38e",
+  "newTests": {
+    "passed": 14,
+    "failed": 0
+  },
+  "relatedSuite": {
+    "passed": 43,
+    "failed": 0
+  },
+  "fullSuite": {
+    "passed": 480,
+    "failed": 0
+  },
+  "exactSourceCI": {
+    "runId": 39265758813,
+    "conclusion": "success"
+  },
+  "runtimeTrialExecuted": false,
+  "fixtureScope": "Fictional HTTP transport; no operational approval, remote credentials, settings or DB writes",
+  "coveredFailures": [
+    "enable response timeout after simulated application",
+    "ambiguous POST without retry",
+    "invalid persisted metadata",
+    "failed restore/readback reports RECOVERY_REQUIRED",
+    "interrupt permits independent recovery",
+    "OAuth alternatives rejected; keychain required; child output captured",
+    "disable-only recovery performs no candidate request"
+  ]
+}
