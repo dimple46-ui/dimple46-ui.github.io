@@ -1,0 +1,42 @@
+{
+  "validationType": "LOCAL_SCHEDULED_BUCKET_QUALITY_CORRECTION",
+  "validated_base_code_sha": "a8452f66bbe4a5227d7bfcaa02c6487682e34b01",
+  "recorded_at_utc": "2026-10-19T02:36:51.611702+00:00",
+  "reproduction": {
+    "actualSavedCaptureFeaturePath": "CURRENT_BUCKET/SOURCE_SCHEDULED_BUCKET classified VERIFIED before correction",
+    "beforeRegression": {
+      "tests": 2,
+      "pass": 1,
+      "fail": 1,
+      "failure": "VERIFIED != UNVERIFIED_TIME"
+    }
+  },
+  "change": "Only CURRENT_BUCKET with SOURCE_SCHEDULED_BUCKET maps to UNVERIFIED_TIME. Missing/stale precedence, source-trade classifications, legacy bucket mathematics, version and encoding remain unchanged. Generated validator rebuilt from relay source.",
+  "related": {
+    "tests": 48,
+    "pass": 48,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0
+  },
+  "full": {
+    "tests": 446,
+    "pass": 446,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0
+  },
+  "runtime": "Node24.19.0",
+  "files": {
+    "cloudflare/market-relay-worker.js": "365039e7d7f2a25bebc390ae12a4943e8b1fd4840acdea165e47396fa3fb672a",
+    "cloudflare/feature-validation-worker.js": "a8185857091ef45ce8e24d106141c85fc60346bb0cffc252a5185cbc1684d59f",
+    "tests/scheduled-bucket-quality.test.mjs": "d11ad64b4f2f3862f2ddaa7021c1c14df6092c12311b2dff49be07525fcce73a",
+    "FEATURES.md": "ba62b06150fedd82c916a6ee8504a81724c7cc0f9b6e1aaca31f2bb5291ea9ba"
+  },
+  "notPerformed": [
+    "PROVIDER_DEPLOYMENT",
+    "D1_READ_WRITE",
+    "PRODUCTION_VALIDATION",
+    "OPERATIONAL_RESEARCH_ADMISSION"
+  ]
+}

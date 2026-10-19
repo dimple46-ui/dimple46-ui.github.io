@@ -1,5 +1,5 @@
 // Generated from PR candidate; do not edit.
-const CANDIDATE_SHA256 = "b28192c567c764f5868e01bb6f5f376161be4e36929a1628b6126c584d7c0733";
+const CANDIDATE_SHA256 = "365039e7d7f2a25bebc390ae12a4943e8b1fd4840acdea165e47396fa3fb672a";
 const FEATURE_VERSION = 2;
 const SAME_TIME_TOLERANCE_MS = 150000;
 const KST_OFFSET_MS = 32400000;
@@ -130,7 +130,8 @@ function historyFeaturesV1(current, rawRows) {
 function featureMetricQuality(metric) {
   if (!metric || metric.value == null || !Number.isFinite(metric.value)) return "MISSING_INPUT";
   if (["STALE", "STALE_BUCKET"].includes(metric.status)) return "STALE_INPUT";
-  if (metric.status === "RECENT_FETCH") return "UNVERIFIED_TIME";
+  if (metric.status === "RECENT_FETCH" ||
+      (metric.status === "CURRENT_BUCKET" && metric.timeBasis === "SOURCE_SCHEDULED_BUCKET")) return "UNVERIFIED_TIME";
   return ["LIVE", "CURRENT_BUCKET"].includes(metric.status) ? "VERIFIED" : "UNUSABLE_INPUT";
 }
 function featureValue(value=null,status="INSUFFICIENT_HISTORY",sampleCount=0,quality="UNKNOWN",extra={}) {
