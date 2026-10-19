@@ -1,12 +1,7 @@
-# Resume — read the existing private recovery checkpoint
+# Resume
 
-- active_branch: feature/research-handoff; PR #6 Draft/Open; base feature/m2-operational-storage6ef8dfcd. Last observed active branch HEAD: 2d53eb6db273e14501cf6efe2f964632bf51d90e.
-- verified_code_sha: 201a0a0aef7f55891197207195b9261696208276. Report and display boundaries reject unrepresentable timestamps; report append validates incoming publication/acquisition/cutoff chronology, and report ticker identity requires a string. Earlier alternative-expiry fix27e9c6d remains in ancestry.
-- local_validation: final full439/439 PASS,0fail/skip/cancelled, Node24.19.0, including50 related report/research/display cases. Existing valid historical example and hash remain unchanged. New boundary regressions failed before their fixes. See validation/report-display-boundaries-local-20261019.json and validation/alternative-expiry-local-20261019.json. Earlier source2e015061/local434 and source27e9c6d/local435 evidence remain separate.
-- source_checkpoint: validated source201a0a0 and its predecessors are retained in this checkpoint ancestry. Determine actual branch attachment from the current GitHub ref and existing private recovery record; commit-object existence alone is not attachment evidence.
-- recovery_rule: exact environment observations, approvals, blockers, retry conditions, unfinished work and next actions remain in the existing authorized private recovery checkpoint. Public text is a generic pointer.
-- NEXT_EXACT_STEP: read the latest existing private recovery checkpoint for the current source attachment/CI state and exact next authorized action. Verify actual remote ref and exact-head checks; preserve any pending deployment, private-input or approval boundaries. Do not repeat unchanged authentication, deferred Access setup or valid local tests.
-- ci: exact-head check/run evidence is recorded in the existing private checkpoint after ref attachment. Local439 PASS is not remote/runtime/deployment success; use separate evidence for each. Do not infer execution from a skipped provider check.
-- approved_scope: this file grants no external permission, deployment, resource, credential, private intake, financial policy, operational research approval or order authority.
-- preservation: retain user/other-worker changes and existing contracts. No main merge, Production/Secret/sharedDB/Watch/scheduler/order change is implied. Keep private observations and approval material out of public source and logs.
-- checkpoint_type: public generic pointer; no background execution claim.
+- active_branch: feature/research-handoff; PR #6 Draft/Open. Verify the current GitHub ref before continuing.
+- verified_code_sha: 85d3dfcbe64dfa6724486b5820bac0e03ed19dce.
+- last_change: rejected future or unrepresentable Feature timestamps become null in the summary projection, preserving independent research display and valid historical cutoffs.
+- local_validation: related42/42 and full440/440 PASS,0fail/skip/cancelled. Receipt: validation/feature-cutoff-display-local-20261019.json. Local tests are distinct from CI and runtime validation.
+- NEXT_EXACT_STEP: read the latest existing private recovery checkpoint for current attachment, exact-head CI, authorized next task and pending boundaries. Preserve unrelated work. Do not repeat unchanged tests or blocked operations.
