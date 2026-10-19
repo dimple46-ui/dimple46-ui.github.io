@@ -43,6 +43,21 @@ test('unapproved research remains unavailable and missing/stale Feature is never
   assert.equal(view.rows[1].long_term_state, null);
   assert.ok(view.rows.every(row => row.short_term_state === null && row.trade_quantities === null));
 });
+test('rejected future or unrepresentable Feature cutoff cannot break the independent research display', async () => {
+  const {session} = await setup();
+  for (const cutoff of [now + 1, 8640000000000001, Number.MAX_SAFE_INTEGER]) {
+    const x = inputs(session); x.marketInputs.candidateFeatures.feature.inputCutoffMs = cutoff;
+    const before = structuredClone(x.marketInputs), pair = buildResearchPairSummary(x, policy);
+    const view = buildResearchPairView(parseResearchPairDisplay(JSON.stringify(pair)), options);
+    assert.ok(pair.stocks.every(stock => stock.summary.market.features.inputCutoffMs === null));
+    assert.ok(view.rows.every(row => row.short_term_status === 'UNAVAILABLE' &&
+      row.short_term_state === null && row.feature_age_at_display_ms === null));
+    assert.equal(view.rows[0].long_term_state, 'SUPPORTIVE');
+    assert.equal(view.rows[0].feature_quality_at_generation, 'UNVERIFIED_TIME');
+    assert.match(renderResearchPairText(pair, options), /Feature 경과: 확인 불가/);
+    assert.deepEqual(x.marketInputs, before);
+  }
+});
 test('tampered hashes, future display baseline, unsafe policy numbers and nested identity mismatch reject', async () => {
   const r = await fixture(), tampered = structuredClone(r); tampered.comparison[0].long_term_state = 'ADVERSE';
   assert.throws(() => buildResearchPairView(tampered, options));

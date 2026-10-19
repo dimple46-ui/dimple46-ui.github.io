@@ -1,0 +1,43 @@
+{
+  "recorded_at_utc": "2026-10-19T01:54:18.565801+00:00",
+  "parent_head": "631a8f95877dd05b2553017ffc3ec2ef01df401a",
+  "scope": "Local summary projection and saved research-pair display correctness; no deployment or operational admission",
+  "reproduced_before_fix": {
+    "rejected_feature_cutoffs": [
+      "nowMs+1",
+      "8640000000000001",
+      "Number.MAX_SAFE_INTEGER"
+    ],
+    "feature_status": "UNAVAILABLE",
+    "previous_result": "INVALID_PAIR_DISPLAY_INPUT blocked the whole pair display although long-term research remained available",
+    "regression_test_exit_code": 1
+  },
+  "change": "Only finite representable positive timestamps no later than the evaluation reference are projected. Rejected future/out-of-range Feature cutoff becomes null, without using generation/display time as replacement. Valid stale cutoff and reported quality remain unchanged.",
+  "targeted": {
+    "command": "node --test tests/research-pair-view.test.mjs tests/public-quality-summary.test.mjs tests/local-consumer-workflow.test.mjs tests/public-summary-cli.test.mjs tests/intelligence-summary.test.mjs tests/research-pair-summary.test.mjs tests/research-risk-review.test.mjs",
+    "passed": 42,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "full": {
+    "command": "node --test tests/*.test.mjs",
+    "passed": 440,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "node": "24.19.0"
+  },
+  "input_integrity": "Existing local executable/test/input tree matched parent for122 scoped blobs except the two intentional changes; all caller market inputs remain unchanged in regression. Local materialized Git HEAD is older and unrelated changes were preserved.",
+  "changed_file_sha256": {
+    "cloudflare/public-consumer-summary.mjs": "22321a43a6b46905b2f1302d3b8057825118078305cd9a623e82ea771e78b84f",
+    "tests/research-pair-view.test.mjs": "f7052bef8c93c53cd88bea6a6211838174bdf9dac94406f5b7979a5732bd6454"
+  },
+  "not_proven": [
+    "Actual provider runtime/deployment",
+    "Actual private authentication or approval",
+    "Watch delivery",
+    "Real account verification"
+  ],
+  "private_inputs_or_secrets": false
+}
