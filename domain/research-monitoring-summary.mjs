@@ -25,7 +25,8 @@ export function buildResearchMonitoringSummary({session,packageId,marketInputs,f
   else try{
    const ceiling=f.quality==='VERIFIED'?'HIGH':'MEDIUM';
    const signals=generateDescriptiveSignals(featureReplay,{generatedAt:new Date(now).toISOString(),engineGitSha:policy.signalEngineGitSha})
-    .filter(s=>s.ticker===p.target.ticker||s.ticker==='MARKET'||s.ticker==='005930/000660').map(s=>({signal_id:s.signal_id,signal_type:s.signal_type,ticker:s.ticker,horizon:s.horizon,
+    // Retain market-wide futures context without relabelling it as an individual stock signal.
+    .filter(s=>s.ticker===p.target.ticker||s.ticker==='MARKET'||s.ticker==='KOSPI200_FUTURES'||s.ticker==='005930/000660').map(s=>({signal_id:s.signal_id,signal_type:s.signal_type,ticker:s.ticker,horizon:s.horizon,
      feature_version:s.feature_version,signal_version:s.signal_version,
      source_metric_quality_ceiling:s.data_quality.ceiling,feature_quality_ceiling:f.quality,
      quality_ceiling:qualities[Math.max(qualities.indexOf(s.data_quality.ceiling),qualities.indexOf(f.quality))],

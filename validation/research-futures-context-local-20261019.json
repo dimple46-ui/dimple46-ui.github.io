@@ -1,0 +1,37 @@
+{
+  "kind": "FICTIONAL_LOCAL_RESEARCH_FUTURES_CONTEXT_REGRESSION",
+  "recorded_at_utc": "2026-10-19T07:40:31.919782+00:00",
+  "parent_checkpoint_sha": "4effa268d4df3917f494291c8bf222d9afaa8d71",
+  "change": "Retain existing KOSPI200_FUTURES signals through the research-summary scope filter, preserving originating ticker and existing Signal2/quality/confidence rules.",
+  "before_fix": {
+    "new_regressions": 2,
+    "failed": 2,
+    "symptoms": [
+      "Futures-only input produced no retained signals.",
+      "Opposed stock/futures context failed to become MIXED."
+    ]
+  },
+  "after_fix": {
+    "targeted": 60,
+    "targeted_pass": 60,
+    "full": 464,
+    "full_pass": 464,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0
+  },
+  "node": "24.19.0",
+  "source_sha256": {
+    "domain/research-monitoring-summary.mjs": "a6e9394fa9bc92ef9a12ab57d504f968d28a1d9bbfae3528d546224c4d230be1",
+    "tests/research-pair-summary.test.mjs": "be13b728f867066418e97a641f4c1e12e13305ad75074d006d39e91ae76bdf66",
+    "cloudflare/signal-engine.mjs": "444401cd7c16c736cb815cfd55e6371377368d9578a028b45204e9e70be5dc12"
+  },
+  "full_log_sha256": "4704d911e1fd3194e55b4c02f4a6bd2a1699d00676da42a47a0296d1ff445f61",
+  "compatibility": "No JSON shape, Signal2 algorithm/version, schema1/2 research payload or admission contract change. Summary state/decision hash can change for an eligible futures input; saved historical records are not rewritten.",
+  "scope_limits": [
+    "Synthetic packages and test approval verifier only; no real research admission.",
+    "No Cloudflare/Access/Secret/DB/Watch or personal-input operation.",
+    "No candidate or Production rollout. G3 deferral preserved.",
+    "Outcome hypothesis input is one optional blocked unit, not a global development gate."
+  ]
+}

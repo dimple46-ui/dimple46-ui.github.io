@@ -63,6 +63,45 @@ test('pair relative strength is evidence only, not a bullish direction assigned 
   assert.ok(r.stocks.every(s => s.summary.short_term.signals.some(signal => signal.ticker === '005930/000660')));
   assert.ok(r.comparison.every(row => row.short_term_state === 'NO_ACTIVE_DESCRIPTIVE_SIGNALS'));
 });
+test('existing futures signals reach both research summaries as futures context with the stored quality ceiling', async () => {
+  const {session} = await setup();
+  for (const [state, positionType, riskType, summaryState] of [
+    ['NEW_LONG_CANDIDATE', 'OI_NEW_LONG_CANDIDATE', 'FUTURES_RISK_ON', 'SUPPORTIVE_DESCRIPTIVE_SIGNALS'],
+    ['SHORT_COVER_CANDIDATE', 'OI_SHORT_COVER_CANDIDATE', 'FUTURES_RISK_ON', 'SUPPORTIVE_DESCRIPTIVE_SIGNALS'],
+    ['NEW_SHORT_CANDIDATE', 'OI_NEW_SHORT_CANDIDATE', 'FUTURES_RISK_OFF', 'ADVERSE_DESCRIPTIVE_SIGNALS'],
+    ['LONG_LIQUIDATION_CANDIDATE', 'OI_LONG_LIQUIDATION_CANDIDATE', 'FUTURES_RISK_OFF', 'ADVERSE_DESCRIPTIVE_SIGNALS']
+  ]) {
+    const x = inputs(session); x.featureReplay.bucketChanges = {};
+    x.featureReplay.windows = {'5m': {futuresPosition: {status: 'VALID', state, quality: 'VERIFIED',
+      supportingEvidence: [{metric: 'fictional-price'}, {metric: 'fictional-oi'}, {metric: 'fictional-flow'}],
+      contraryEvidence: []}}};
+    const before = structuredClone(x.featureReplay), r = buildResearchPairSummary(x, policy);
+    for (const stock of r.stocks) {
+      const summary = stock.summary;
+      assert.deepEqual(summary.short_term.signals.map(s => s.signal_type).sort(), [positionType, riskType].sort());
+      assert.ok(summary.short_term.signals.every(s => s.ticker === 'KOSPI200_FUTURES' &&
+        s.quality_ceiling === 'UNVERIFIED_TIME' && s.confidence === 'MEDIUM'));
+      assert.equal(summary.short_term.state, summaryState);
+      assert.equal(summary.long_term.state, 'SUPPORTIVE');
+      assert.equal(summary.private_risk.trade_quantities, null);
+    }
+    assert.deepEqual(x.featureReplay, before);
+    assert.equal(verifyResearchPairSummary(r), true);
+    assert.equal(r.execution_allowed, false);
+  }
+});
+test('futures context can conflict with stock flow and remains subject to the existing Feature gate', async () => {
+  const {session} = await setup(), x = inputs(session);
+  x.featureReplay.windows = {'5m': {futuresPosition: {status: 'VALID', state: 'NEW_LONG_CANDIDATE',
+    quality: 'VERIFIED', supportingEvidence: [], contraryEvidence: []}}};
+  let r = buildResearchPairSummary(x, policy);
+  assert.equal(r.comparison[0].short_term_state, 'MIXED_DESCRIPTIVE_SIGNALS');
+  assert.equal(r.comparison[1].short_term_state, 'SUPPORTIVE_DESCRIPTIVE_SIGNALS');
+  x.marketInputs.candidateFeatures.feature.qualityCeiling = 'STALE_INPUT';
+  r = buildResearchPairSummary(x, policy);
+  assert.ok(r.stocks.every(s => s.summary.short_term.status === 'UNAVAILABLE' &&
+    s.summary.short_term.signals.length === 0 && s.summary.long_term.state === 'SUPPORTIVE'));
+});
 test('duplicate IDs, swapped targets, missing ticker mapping and future as-of are rejected', async () => {
   const {session} = await setup();
   for (const packageIds of [{'005930': ids['005930'], '000660': ids['005930']},

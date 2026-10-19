@@ -23,10 +23,13 @@
 | 시장 | 기존 selectConsumerData/buildPublicConsumerSummary 사용. 관측·Feature cutoff/나이 별도. GitHub fallback은 시세 관측 범위뿐 |
 | Signal | 기존 generateDescriptiveSignals v2를 Work가 명시적으로 제공한 full Feature v2 fixture로 재계산. stored compact 데이터를 full tree로 간주하지 않음. cutoff·버전·관측 시차 일치 필요, LOCAL_REPLAY_ONLY. 원시 입력의 실제 D1 기원은 미검증 |
 | 상대강도 | Samsung/Hynix pair evidence로 보존. 같은 방향을 두 종목 각각의 지지 신호로 부여하지 않음 |
+| 선물 시장 맥락 | 기존 Signal v2의 OI 분류·FUTURES_RISK_ON/OFF를 KOSPI200_FUTURES 식별자로 보존한다. 시장 맥락이며 개별 종목 전망이 아니다. 기존 Feature 시점·품질·confidence 상한을 적용한다 |
 | 관측 조건 | 분기매출/영업이익 KRW_BILLION·QUARTER, 주가 KRW·5/10/30m, 종목 수급 SHARES·BUCKET, 프로그램 KRW·5/10/30m, OI CONTRACTS·5/10/30m, Basis POINTS·5/10/30m. 모두 MANUAL_REVIEW_REQUIRED, 조건문 실행 없음 |
 | 아직 미지원 | EPS/PER·통화변환·별도재무·분기/연간 자동 정렬·외부 보고서 수집·후보 순위·수량·확률·세법 확정·담보/가용현금·실사용 알림 |
 
 새 자료 범위를 지원하려면 새 검증과 계약 변경을 먼저 한다. 지원되지 않는 수치를 비슷한 단위로 임의 변환하지 않는다. 단기 신호와 장기 논리를 평균 점수로 합치지 않는다.
+
+연구 요약의 선물 Signal 누락을 수정했다. 기존 엔진의 KOSPI200_FUTURES 출력이 종목 필터에서 빠지던 연결 오류만 해소하며 Signal 계산식·버전·패키지 schema는 바뀌지 않는다. 기존 FUTURES_RISK_ON/OFF 분류가 이제 단기 맥락에 반영되므로 해당 입력의 요약 상태와 decision hash는 달라질 수 있다. 종목 수급과 상충하면 MIXED로 남기고 선물 ticker를 종목 ticker로 바꾸지 않는다. 저장된 과거 판단은 재작성하지 않으며 실제 연구 승인·운영 연결을 의미하지 않는다.
 
 ## 작성·전달·승인 절차
 
