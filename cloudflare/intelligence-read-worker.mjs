@@ -284,9 +284,9 @@ async function features(db, url, cutoffMs, now, scope) {
   });
   const result = slotMs == null ?
     await select(db, `SELECT * FROM feature_runs WHERE feature_version = ? AND input_cutoff_ms <= ?
-      ORDER BY slot_ms DESC LIMIT 1`, [featureVersion, cutoffMs]) :
+      AND generated_at_ms <= ? ORDER BY slot_ms DESC LIMIT 1`, [featureVersion, cutoffMs, cutoffMs]) :
     await select(db, `SELECT * FROM feature_runs WHERE feature_version = ? AND slot_ms = ?
-      AND input_cutoff_ms <= ? LIMIT 1`, [featureVersion, slotMs, cutoffMs]);
+      AND input_cutoff_ms <= ? AND generated_at_ms <= ? LIMIT 1`, [featureVersion, slotMs, cutoffMs, cutoffMs]);
   if (!result.rows[0]) throw new ApiError(404, "FEATURES_NOT_FOUND");
   const feature = publicFeature(result.rows[0]);
   return {apiSchemaVersion: API_SCHEMA_VERSION, inputCutoffMs: cutoffMs, scope: {ticker: scope.ticker},
