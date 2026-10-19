@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "scope": "DEFAULT_DISABLED_RELAY_COMPACT_SOURCE_ONLY_NOT_DEPLOYMENT",
+  "sourceSha": "7f8f77d3231656239225d332ac761e27e2f2c873",
+  "relaySourceSha256": "455be21906aa71b4649c1506308d650a5d2bd545f42d1dd479772afd98677e88",
+  "historyTests": {
+    "passed": 20,
+    "failed": 0
+  },
+  "fullSuite": {
+    "passed": 489,
+    "failed": 0
+  },
+  "exactSourceCI": {
+    "runId": 39270384012,
+    "conclusion": "success"
+  },
+  "newCoverage": [
+    "additivecompact preserves legacyv1 and immutable retry provenance",
+    "off/default has no derived table dependency and unchanged return contract",
+    "missingmetadata/legacyv2conflict fails compact closed after raw success",
+    "derived failure preserves raw and independently scheduled GitHub publication"
+  ],
+  "runtimeChanges": false,
+  "actualInputs": "Fictional local SQLite fixtures; no real database/credential/operational approval in tests"
+}
