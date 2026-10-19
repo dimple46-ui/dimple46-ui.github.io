@@ -1,0 +1,45 @@
+{
+  "kind": "LOCAL_IMMUTABLE_FEATURE_WRITE_RECEIPT_CORRECTION",
+  "recorded_at_utc": "2026-10-19T08:19:11.603101+00:00",
+  "parent_checkpoint_sha": "9719a6d5af78dd6e9cbeb737406349467df884c9",
+  "defects": [
+    "An immutable existing Feature row was returned with the current computation engine/quality metadata.",
+    "Missing D1 insertion counts were treated as INSERTED."
+  ],
+  "correction": "Return persisted metadata from existing readback, label it STORED_FEATURE_RUN, put the current recalculation under computed, preserve unknown stored diagnostics and write outcome.",
+  "before": {
+    "new_regressions": 2,
+    "failed_against_prior_generated_worker": 2,
+    "database": "Real Node SQLite using shipped migrations, in-memory fictional rows only."
+  },
+  "after": {
+    "related": 29,
+    "related_pass": 29,
+    "full": 466,
+    "full_pass": 466,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0
+  },
+  "source_sha256": {
+    "cloudflare/feature-validation-handler.txt": "94e37b88537da8ff4efba983d98a7e90480941e2482ea022459f27ce2dcd540b",
+    "cloudflare/feature-validation-worker.js": "d6345da3d65b1dc0c2318790e778b0d6216b0c7f659f9346c8d0d5bbaf12408c",
+    "tests/feature-validation.test.mjs": "7a906d67ae62c72c261f1cd5a9312b4e48488d1e8aebf2087cf70c8eef9d77e9",
+    "FEATURE_STORAGE.md": "bffbdbd72dabc17c5fb3b6e56ec9c3843c8e3aa032206f40e7dee8232408f100"
+  },
+  "relay_source_sha256": "f21b700675c8ca0cb312b79db65af559dafdef09e896cbbeb953677bdfdb5d2a",
+  "builder": "Existing build-feature-validation.mjs; Feature core/math/header source hash unchanged. Generated handler refreshed.",
+  "logs_sha256": {
+    "feature-write-readback-baseline-confirmed-20261019.tap": "0b48b77412f9dd39d31ad3c197a289c3366494b492c48c70ab1e660ae0180eb4",
+    "feature-write-readback-related-20261019.tap": "cf98ed5ef7a9bcd0f16340b6add11000b21665724cc80891427b99487fc62c30",
+    "feature-write-readback-full-20261019.tap": "4985404870451ca1c38f0eb7643b5f0782793f4619b697c18e6517e31e97d326"
+  },
+  "compatibility": "POST existing keys remain and now describe the stored row; computed, extended stored, metadataScope and source/time fields are additive. STORED_WRITE_OUTCOME_UNKNOWN explicitly represents missing counts. GET replay and DB schema/INSERT/read count unchanged.",
+  "documentation_correction": "Disabled POST writes do not disable authenticated GET replay.",
+  "scope": [
+    "No actual D1 query/write, migration or stored-row update.",
+    "No Feature write flag, Secret, binding, Cloudflare, Access, G3, Watch, main or Production change.",
+    "Source-only research feature branch; deployment requires a separate explicit scope.",
+    "No actual research package/approval or private financial input."
+  ]
+}

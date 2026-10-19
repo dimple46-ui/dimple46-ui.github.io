@@ -52,6 +52,19 @@ records:
 never overwritten by a later deployment or retry. Disabling writes leaves every v1 observation
 and every previously written feature run intact.
 
+The POST receipt and write log describe the row read back from storage, including its original
+engine/source identifiers, generation/cutoff times, quality/status and stored payload byte count.
+The current recomputation is separate under `computed`; an `EXISTS` retry never upgrades the
+stored row to the current engine, quality or generation time. Top-level metadata and `stored`
+refer to `metadataScope: STORED_FEATURE_RUN`. Existing response keys remain; their values now
+correctly describe persistence. `candidateSha256` still identifies the executing relay Feature core,
+not the stored row or a complete Worker deployment attestation. Missing stored size diagnostics
+remain null rather than borrowing the new computation's values.
+
+`INSERTED`/`EXISTS` require explicit positive/zero D1 changes (or rows-written fallback).
+If neither count is known, successful readback yields `STORED_WRITE_OUTCOME_UNKNOWN`, not a
+fabricated insertion result. No row is overwritten or extra write performed by this correction.
+
 ## Compact encoding contract
 
 `encodingVersion: 1` is independent from `featureVersion: 2`. The payload carries ordered field
@@ -72,8 +85,8 @@ their source observations and deterministic engine version remain authoritative.
   counts, quality summary and D1 query metadata.
 - `POST /feature-runs` is authenticated and writes only when
   `FEATURE_V2_WRITE_ENABLED=true` and `FEATURE_ENGINE_GIT_SHA` is a valid 7–64 character hex SHA.
-- The opt-in and SHA checks run before any D1 query. Setting
-  `FEATURE_V2_WRITE_ENABLED=false` therefore stops candidate reads and writes immediately.
+- The opt-in and SHA checks for POST run before any D1 query. Setting
+  `FEATURE_V2_WRITE_ENABLED=false` blocks POST reads/writes; authenticated GET replay remains read-only and available.
 - The candidate never updates `market_observations`, never publishes to GitHub, and cannot race
   with the production v1 writer.
 - Migration rollback is logical: disable the flag and retain the additive table. Do not drop the
