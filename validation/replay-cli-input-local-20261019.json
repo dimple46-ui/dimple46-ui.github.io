@@ -1,0 +1,42 @@
+{
+  "recorded_at_utc": "2026-10-19T02:18:07.143797+00:00",
+  "parent_head": "b0c7d2e9a94fe11126f6b208b2d40e1ff3fb9335",
+  "scope": "Existing local replay CLI regular-file, size and error boundaries only",
+  "before_fix": {
+    "unwritten_fifo": "All three replay CLIs reached ETIMEDOUT under1500ms harness guards",
+    "signal_cli_redaction_regression": "Failed: OS/parser error message exposed local path or malformed input sentinel",
+    "regression_exit_code": 1
+  },
+  "fix": "Reuse bounded read-only nonblocking open/fstat/read approach with a shared2MiB file reader for three existing replay CLIs. Signal CLI keeps stable uppercase validator codes but redacts OS/parser messages. No validator calculation, Signal math, quality ceiling, date/as-of or successful output changes. Existing symbolic-link behavior retained.",
+  "technical_limit": {
+    "max_input_bytes": 2097152,
+    "basis": "Same local public JSON byte budget used by existing summarize-public-input CLI; file resource bound, not a financial or operational time policy"
+  },
+  "tests": {
+    "related_passed": 14,
+    "full_passed": 444,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "node": "24.19.0",
+    "command": "node --test tests/*.test.mjs",
+    "new_cases": [
+      "Three unwritten FIFOs rejected without waiting",
+      "Missing/malformed/oversized/nonregular input redaction",
+      "Normal V3 and Signal files equal direct existing validator results; unavailable stock buckets remain WAITING_FOR_LIVE_DATA"
+    ]
+  },
+  "changed_file_sha256": {
+    "scripts/read-local-replay-json.mjs": "9d871272b431c94155607b71f47d7dfbab7da71b019b0530174f40bc4554ba60",
+    "scripts/validate-stock-flow-snapshot.mjs": "1c94a3ca1fecf04c19f9a09907eaf6a429c443a6285cf535424576a7c409d658",
+    "scripts/validate-stock-flow-v3-replay.mjs": "0dc915c2d022f7d137c959a4178db1aec6279715069eca8d2fcf7987b5c0133a",
+    "scripts/validate-signal-replay.mjs": "6f633862dad787cc89b704c78ea7c904019fa8d677dbf6143840c2eecc34a46e",
+    "tests/replay-cli-input.test.mjs": "f2e4c7734a274cbecc9c512dded7951288f3aee314d2fc4264ff080e077cf7e7"
+  },
+  "not_proven": [
+    "New provider runtime or deployment",
+    "Actual account/approval/intake",
+    "Scheduled delivery"
+  ],
+  "private_input_or_secret": false
+}
