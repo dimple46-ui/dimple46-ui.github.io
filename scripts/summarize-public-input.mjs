@@ -13,7 +13,7 @@ function loadPublicFile(path,kind){
   const buffer=Buffer.alloc(MAX_BYTES+1);let size=0;
   while(size<buffer.length){const n=readSync(fd,buffer,size,buffer.length-size,null);if(n===0)break;size+=n;}
   if(size>MAX_BYTES)fail('INVALID_OR_OVERSIZED_FILE');
-  const value=JSON.parse(buffer.subarray(0,size).toString('utf8'));
+  const value=JSON.parse(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(buffer.subarray(0,size)));
   if(!value||typeof value!=='object'||Array.isArray(value))fail('INVALID_PUBLIC_SCHEMA');
   if(['privateComparison','privateResult','ledger','accounts','authorization','token','secrets']
     .some(key=>Object.hasOwn(value,key))||String(value.classification??'').startsWith('PRIVATE'))fail('PRIVATE_INPUT_REJECTED');

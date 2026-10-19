@@ -43,6 +43,12 @@ Existing CI and Cloudflare Builds remain the sole candidate deployment path. can
 
 Historical receipts are immutable evidence for their source SHA and capture time. Local replay/synthetic tests are correctness evidence, never new live-market validation. Continuous Feature2 persistence remains inactive/unverified; old20261007 rows do not become current.
 
+The local public-summary and three replay CLIs reject malformed UTF-8 before JSON parsing instead
+of repairing source bytes. Valid Unicode and literal replacement characters remain accepted; leading
+BOM rejection, bounded regular-file reads, nonblocking FIFO handling and existing path policies remain
+unchanged. Input errors retain their existing sanitized response shapes. This does not alter validator
+mathematics, data-quality gates, timestamp policies or any provider/database access.
+
 Scheduled tasks do not automatically inherit Work, Cloudflare runtime or GitHub Actions Secrets. Candidate API authentication in CI does not establish scheduler access. No scheduled connection or notification delivery is configured here. A separately approved consumer must obtain its own authenticated access, or report only the public fallback's available scope. Do not expose token values or put personal data in public artifacts.
 
 ## Roadmap links

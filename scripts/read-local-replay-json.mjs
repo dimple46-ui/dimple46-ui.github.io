@@ -13,6 +13,6 @@ export function readLocalReplayJson(path) {
   while (length < bytes.length && (count = readSync(fd, bytes, length, bytes.length - length, null)) > 0)
    length += count;
   if (length > MAX_REPLAY_INPUT_BYTES) throw Error('REPLAY_INPUT_TOO_LARGE');
-  return JSON.parse(bytes.subarray(0, length).toString('utf8'));
+  return JSON.parse(new TextDecoder('utf-8', {fatal: true, ignoreBOM: true}).decode(bytes.subarray(0, length)));
  } finally { if (fd !== undefined) closeSync(fd); }
 }
