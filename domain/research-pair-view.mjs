@@ -92,7 +92,7 @@ export function renderResearchPairText(record, options) {
     hourCycle: 'h23'}).format(view.generated_at_ms);
   const states = {SUPPORTIVE: '우호적', MIXED: '상반된 근거', ADVERSE: '부정적',
     ADVERSE_DESCRIPTIVE_SIGNALS: '약세 신호', SUPPORTIVE_DESCRIPTIVE_SIGNALS: '강세 신호',
-    MIXED_DESCRIPTIVE_SIGNALS: '상충 신호', NO_ACTIVE_DESCRIPTIVE_SIGNALS: '활성 신호 없음'};
+    MIXED_DESCRIPTIVE_SIGNALS: '상충 신호', NO_ACTIVE_DESCRIPTIVE_SIGNALS: '방향성 분류 없음'};
   const qualityLabels = {VERIFIED: '검증됨(생성 당시)', RECENT_FETCH: '최근 수집·거래시각 미검증',
     UNVERIFIED_TIME: '거래시각 미검증', STALE_INPUT: '오래된 입력', MISSING_INPUT: '누락 입력', UNKNOWN: '확인 불가'};
   const elapsed = value => value === null ? '확인 불가' : `${(value / 1000).toFixed(1)}초`;
