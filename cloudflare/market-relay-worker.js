@@ -1169,7 +1169,8 @@ function historyFeaturesV1(current, rawRows) {
 function featureMetricQuality(metric) {
   if (!metric || metric.value == null || !Number.isFinite(metric.value)) return "MISSING_INPUT";
   if (["STALE", "STALE_BUCKET"].includes(metric.status)) return "STALE_INPUT";
-  if (metric.status === "RECENT_FETCH") return "UNVERIFIED_TIME";
+  if (metric.status === "RECENT_FETCH" ||
+      (metric.status === "CURRENT_BUCKET" && metric.timeBasis === "SOURCE_SCHEDULED_BUCKET")) return "UNVERIFIED_TIME";
   return ["LIVE", "CURRENT_BUCKET"].includes(metric.status) ? "VERIFIED" : "UNUSABLE_INPUT";
 }
 function featureValue(value=null,status="INSUFFICIENT_HISTORY",sampleCount=0,quality="UNKNOWN",extra={}) {
