@@ -1,5 +1,5 @@
 // Explicit local summary file only. No network, identity creation, approval, persistence or provider operations.
-import {openSync, fstatSync, readSync, closeSync} from 'node:fs';
+import {openSync, fstatSync, readSync, closeSync, constants} from 'node:fs';
 import {MAX_PAIR_DISPLAY_BYTES, parseResearchPairDisplay, buildResearchPairView, renderResearchPairText}
   from '../domain/research-pair-view.mjs';
 
@@ -10,7 +10,7 @@ try {
   let fd;
   let bytes;
   try {
-    fd = openSync(path, 'r');
+    fd = openSync(path, constants.O_RDONLY | constants.O_NONBLOCK);
     const stat = fstatSync(fd);
     if (!stat.isFile() || stat.size > MAX_PAIR_DISPLAY_BYTES) throw Error('INVALID_INPUT_FILE');
     bytes = Buffer.alloc(MAX_PAIR_DISPLAY_BYTES + 1);

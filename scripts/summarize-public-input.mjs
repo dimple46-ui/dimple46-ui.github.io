@@ -1,4 +1,4 @@
-import {openSync,fstatSync,readSync,closeSync} from 'node:fs';
+import {openSync,fstatSync,readSync,closeSync,constants} from 'node:fs';
 import {pathToFileURL} from 'node:url';
 import {buildPublicConsumerSummary} from '../cloudflare/public-consumer-summary.mjs';
 const MAX_BYTES=2*1024*1024;
@@ -8,7 +8,7 @@ const fail=code=>{throw new Error(code);};
 function loadPublicFile(path,kind){
  let fd;
  try {
-  fd=openSync(path,'r');const stat=fstatSync(fd);
+  fd=openSync(path,constants.O_RDONLY|constants.O_NONBLOCK);const stat=fstatSync(fd);
   if(!stat.isFile()||stat.size>MAX_BYTES)fail('INVALID_OR_OVERSIZED_FILE');
   const buffer=Buffer.alloc(MAX_BYTES+1);let size=0;
   while(size<buffer.length){const n=readSync(fd,buffer,size,buffer.length-size,null);if(n===0)break;size+=n;}

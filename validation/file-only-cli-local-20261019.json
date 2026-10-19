@@ -1,0 +1,48 @@
+{
+  "recorded_at_utc": "2026-10-19T02:13:29.370119+00:00",
+  "parent_head": "ac3c419042971ba05d32ecca38eaaefa06661767",
+  "scope": "Bounded local file-only CLI reads; no network, deployment, identity, financial algorithm or storage changes",
+  "reproduction_before_fix": {
+    "input": "Unwritten FIFO named as the explicit local JSON input",
+    "affected": [
+      "scripts/show-research-pair.mjs",
+      "scripts/summarize-public-input.mjs"
+    ],
+    "actual": "Both blocked in openSync before regular-file validation, then reached ETIMEDOUT under1500ms child-process guards",
+    "regression_exit_code": 1
+  },
+  "fix": "Open read-only with O_NONBLOCK before the existing fstat regular-file check. Reject FIFO without waiting; preserve normal-file, size, parser, error-redaction and existing symlink behavior. Reuses nonblocking input approach already present in other repository CLI readers.",
+  "validation": {
+    "related_passed": 20,
+    "full_passed": 441,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "final_command": "node --test tests/*.test.mjs",
+    "node": "24.19.0",
+    "fifo_platform": "Linux",
+    "fifo_regression_guard_ms": 5000,
+    "fifo_regression_guard_meaning": "Bounded test harness only, not new application policy or claimed runtime deadline"
+  },
+  "source_integrity": {
+    "scoped_blobs_compared_to_parent": 122,
+    "only_differences": [
+      "scripts/show-research-pair.mjs",
+      "scripts/summarize-public-input.mjs",
+      "tests/public-summary-cli.test.mjs"
+    ],
+    "missing": [],
+    "older_local_git_and_other_changes_preserved": true
+  },
+  "changed_file_sha256": {
+    "scripts/show-research-pair.mjs": "a83e4cac097a50d7bf65c338c2c610e6bf9b8571442be641de027cd61d0cedfe",
+    "scripts/summarize-public-input.mjs": "10df93671102dc9e82b166ede8ea9d29b387030b3b37e3f9cd43da7e0b197863",
+    "tests/public-summary-cli.test.mjs": "2d0cd5b6b3bd8a9d8cda73f1f5ad5d209e3239254bfa7e78def3fb466090fb4b"
+  },
+  "not_proven": [
+    "Provider runtime/deployment",
+    "Actual private intake/authentication",
+    "Watch delivery"
+  ],
+  "private_inputs_or_secrets": false
+}
