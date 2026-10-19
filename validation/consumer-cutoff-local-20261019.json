@@ -1,0 +1,12 @@
+{
+  "scope": "LOCAL_CONSUMER_AND_SQLITE_READ_SELECTION_ONLY",
+  "baseline_code_sha": "701b1b54f2c06b883600f664f985bb6a2987e04f",
+  "before_fix": "Two consumer regressions and the extended pair integration case accepted knowledge beyond the saved response cutoff; real SQLite selection reproduced a newer Feature generated after the historical query cutoff hiding an eligible older row.",
+  "changes": ["Candidate per-metric times use the response cutoff", "Feature generation must not exceed its response cutoff", "Both existing Feature SELECTs filter generation time before ORDER BY/LIMIT"],
+  "related": {"tests": 40, "pass": 40, "fail": 0},
+  "full": {"tests": 456, "pass": 456, "fail": 0, "skip": 0, "cancelled": 0},
+  "runtime": "Node24.19.0; actual local SQLite using shipped migrations, no remote database",
+  "compatibility": "Response fields, schema/Feature/Signal versions, numeric algorithms and credentials unchanged; invalid temporal inputs now reject or suppress. Eligible older Feature selection and exact generation-time boundary tested.",
+  "retained": "GitHub relayUpdatedAt is an observation timestamp, not proven availability. Existing saved-public-capture quality checks pass unchanged.",
+  "limitations": ["No provider deployment/runtime validation", "Generation timestamps do not prove persistence/first-arrival times", "No actual research admission, personal inputs, Watch, scheduler or Production change"]
+}

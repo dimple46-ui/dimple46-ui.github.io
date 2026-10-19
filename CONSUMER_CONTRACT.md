@@ -17,6 +17,8 @@ There is no approved production route, connected scheduled consumer, private por
 - An age-rejected Feature retains only its allowlisted original quality ceiling (VERIFIED, RECENT_FETCH, UNVERIFIED_TIME, STALE_INPUT, MISSING_INPUT); unknown values become UNKNOWN. Retaining a ceiling does not make that Feature available. Data remains null.
 - GitHub fallback provides no Feature, Signal, portfolio, thesis or decision. Overall PARTIAL means an observation is selected, not whole-system success. Separate cutoffs do not imply a synchronized decision.
 - Source-quality reason codes describe captured reported issues; they do not revalidate source freshness at read time.
+- Candidate per-metric market/fetch timestamps are bounded by the saved response cutoff, even when displayed later. A Feature must be generated no later than its own response cutoff. GitHub relayUpdatedAt remains an observation timestamp, not a proven collection-completion/availability time: its per-metric future check still uses the explicit display reference. These checks do not establish historical first-arrival proof.
+- Candidate /features and /summary SELECTs require both input_cutoff_ms and generated_at_ms to be no later than the requested cutoff, before ordering/LIMIT. An ineligible newer row cannot hide an eligible older row; a pinned ineligible slot returns FEATURES_NOT_FOUND. These necessary chronology checks do not prove original persistence/first-arrival times or authorize historical backtesting.
 - Public projections exclude accounts, holdings, balances, debt, private analysis and personal actions.
 
 ## Existing access paths

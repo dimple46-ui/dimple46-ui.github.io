@@ -32,7 +32,7 @@ function candidateObservation(response,now,maximum) {
     s.observedAtMs>s.availableAtMs||s.availableAtMs>response.inputCutoffMs||response.inputCutoffMs>now)
     return unavailable('INVALID_OR_FUTURE_CUTOFF');
   if(s.tradingDay!==day(s.observedAtMs)) return unavailable('TRADING_DAY_MISMATCH');
-  const metrics=safeMetrics(s.metrics,now);
+  const metrics=safeMetrics(s.metrics,response.inputCutoffMs);
   if(!Object.values(metrics).some(m=>Number.isFinite(m.value))) return unavailable('NO_USABLE_METRICS');
   return {status:'AVAILABLE',source:'CANDIDATE',schemaVersion:1,observedAtMs:s.observedAtMs,
     inputCutoffMs:response.inputCutoffMs,tradingDay:s.tradingDay,ageMs:a.ageMs,
@@ -71,7 +71,7 @@ function featureSelection(response,now,maximum) {
   if(a.reason) return {...unavailable(a.reason),inputCutoffMs:f.inputCutoffMs,ageMs:a.ageMs,quality};
   if(!isTime(f.observedAtMs)||f.observedAtMs>f.inputCutoffMs||!isTime(f.generatedAtMs)||
     f.generatedAtMs<f.inputCutoffMs||f.generatedAtMs>now||!isTime(response.inputCutoffMs)||
-    f.inputCutoffMs>response.inputCutoffMs||response.inputCutoffMs>now)
+    f.inputCutoffMs>response.inputCutoffMs||f.generatedAtMs>response.inputCutoffMs||response.inputCutoffMs>now)
     return unavailable('INVALID_OR_FUTURE_FEATURE_TIME');
   if(f.tradingDay!==day(f.inputCutoffMs)) return unavailable('TRADING_DAY_MISMATCH');
   if(f.generationStatus!=='SUCCESS'||!['VERIFIED','UNVERIFIED_TIME','RECENT_FETCH'].includes(f.qualityCeiling))

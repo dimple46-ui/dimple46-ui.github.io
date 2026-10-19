@@ -46,6 +46,7 @@ test('stale, future and cutoff-mismatched Feature suppress both tactical conclus
   for (const mutate of [x => x.marketInputs.candidateFeatures.feature.inputCutoffMs = now - 600000,
     x => x.marketInputs.candidateFeatures.feature.inputCutoffMs = now + 1,
     x => x.featureReplay.inputCutoff = new Date(now - 2000).toISOString(),
+    x => x.marketInputs.candidateFeatures.inputCutoffMs = x.marketInputs.candidateFeatures.feature.generatedAtMs - 1,
     x => x.marketInputs.candidateFeatures.feature.qualityCeiling = 'STALE_INPUT']) {
     const x = inputs(session); mutate(x);
     const r = buildResearchPairSummary(x, policy);

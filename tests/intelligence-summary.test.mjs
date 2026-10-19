@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {readFileSync} from 'node:fs';
 import worker from '../cloudflare/intelligence-read-worker.mjs';
 const cutoff=Date.now()-2000,day=ms=>new Date(ms+9*3600000).toISOString().slice(0,10).replaceAll('-','');
 const token='fictional-summary-token';
@@ -72,4 +74,37 @@ test('observation failure remains sanitized failure; auth token and source paylo
 test('existing request deadline also bounds a pending summary Feature read',async()=>{
  const database=db({featureMode:'pending'});const r=await worker.fetch(req(),env(database,{INTELLIGENCE_QUERY_TIMEOUT_MS:'100'}));
  assert.equal(r.status,504);assert.deepEqual(await r.json(),{error:'QUERY_TIMEOUT'});assert.equal(database.queries.length,2);
+});
+
+test('actual SQLite selection excludes later-generated Features before LIMIT, including slot and summary reads',async()=>{
+ const sqlite=new DatabaseSync(':memory:'),queries=[];
+ try{
+  for(const file of ['0001_market_history.sql','0002_feature_runs.sql'])
+   sqlite.exec(readFileSync(new URL(`../migrations/${file}`,import.meta.url),'utf8'));
+  const earlier=cutoff-60000,later=cutoff-1000;
+  for(const slot of [earlier,later]) sqlite.prepare('INSERT INTO market_observations VALUES(?,?,?,?,?,?,?,?,?,?)').run(
+   slot,slot,slot,day(slot),1,'fixture','OK',JSON.stringify({'samsung.price':{value:100,status:'OK'}}),'{}','{}');
+  const insert=sqlite.prepare('INSERT INTO feature_runs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)');
+  for(const [slot,generated] of [[earlier,earlier+1],[later,cutoff+1]])
+   insert.run(slot,2,slot,day(slot),'abcdef0','a'.repeat(64),generated,slot,'UNVERIFIED_TIME','SUCCESS',
+    JSON.stringify({featureVersion:2}),JSON.stringify({featureVersion:2}));
+  const database={prepare(sql){assert.match(sql.trim(),/^SELECT\b/);queries.push(sql);
+   const all=async(...params)=>{const rows=sqlite.prepare(sql).all(...params).map(r=>({...r}));
+    return {success:true,results:rows,meta:{rows_read:rows.length,rows_written:0,changes:0}};};
+   return {all:()=>all(),bind:(...params)=>({all:()=>all(...params)})};}};
+  const featurePath=`/features?cutoffMs=${cutoff}`;
+  let response=await worker.fetch(req(featurePath),env(database));
+  assert.equal(response.status,200);let body=await response.json();
+  assert.equal(body.feature.inputCutoffMs,earlier);
+  response=await worker.fetch(req(featurePath+`&slotMs=${later}`),env(database));
+  assert.equal(response.status,404);assert.equal((await response.json()).error,'FEATURES_NOT_FOUND');
+  response=await worker.fetch(req(featurePath.replace(String(cutoff),String(cutoff+1))),env(database));
+  assert.equal(response.status,200);body=await response.json();
+  assert.equal(body.feature.inputCutoffMs,later);
+  response=await worker.fetch(req(),env(database));assert.equal(response.status,200);body=await response.json();
+  assert.equal(body.features.status,'AVAILABLE');assert.equal(body.features.inputCutoffMs,earlier);
+  assert.equal(body.features.ageMs,60000);assert.equal(body.observation.status,'AVAILABLE');
+  assert.equal(body.queryMeta.feature.rowsWritten,0);
+  assert.ok(queries.every(sql=>sql.trim().startsWith('SELECT')));
+ }finally{sqlite.close();}
 });
