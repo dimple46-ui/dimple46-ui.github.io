@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "scope": "LEGACY_BASE_SOURCE_PREPARATION_ONLY_NO_RUNTIME",
+  "sourceSha": "26c69b8dad45c9e2b66bb7e16549480b751d5c60",
+  "newTests": {
+    "passed": 4,
+    "failed": 0
+  },
+  "fullSuite": {
+    "passed": 493,
+    "failed": 0
+  },
+  "evidence": [
+    "non-history source bytes preserved",
+    "compact helper lexical isolation preserves legacy function identity",
+    "unknown/repeated base shape rejected",
+    "realSQLite default-offv1 path works withoutderivedtable",
+    "realSQLite explicitcompactinsert preservesv1"
+  ],
+  "actualFullProductionModulePrepared": false,
+  "runtimeOrDeploymentChanges": false,
+  "exactSourceCI": {
+    "runId": 39277932378,
+    "jobId": 118146768836,
+    "status": "queued",
+    "conclusion": null
+  }
+}
