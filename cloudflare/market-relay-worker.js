@@ -1692,13 +1692,60 @@ async function persistMarketHistory(env,payload) {
     historyFeaturesV1(decodeHistoryRow(stored),rows.results);
   const updated=await db.prepare("UPDATE market_observations SET features_json = ? WHERE slot_ms = ? AND features_json IS NULL").bind(JSON.stringify(features),current.slot_ms).run();
   if(!updated.success) throw new Error("HISTORY_FEATURE_WRITE_FAILED");
-  return {status:"STORED",slotMs:current.slot_ms};
+  const resultStatus={status:"STORED",slotMs:current.slot_ms};
+  if(String(env.FEATURE_COMPACT_WRITE_ENABLED??"false")==="true") {
+    // Optional derived storage cannot undo the already persisted raw observation or legacy Feature.
+    try { resultStatus.compact=await persistCompactHistoryRun(env,db,stored,rows.results); }
+    catch { resultStatus.compact={status:"FAILED",reason:"COMPACT_STORAGE_FAILED"}; }
+  }
+  return resultStatus;
+}
+async function persistCompactHistoryRun(env,db,stored,rows) {
+  // The experimental full-tree writer is not a compact migration or a replacement for v1.
+  if(featureEngineV2Enabled(env)) return {status:"FAILED",reason:"LEGACY_V2_MODE_CONFLICT"};
+  const engineGitSha=String(env.FEATURE_COMPACT_ENGINE_GIT_SHA??"");
+  const engineSourceSha256=String(env.FEATURE_COMPACT_ENGINE_SOURCE_SHA256??"");
+  if(!/^[0-9a-f]{40}$/i.test(engineGitSha)||!/^[0-9a-f]{64}$/i.test(engineSourceSha256))
+    return {status:"FAILED",reason:"COMPACT_RELEASE_METADATA_REQUIRED"};
+  // All cutoffs use the immutable row selected after raw insertion, including a same-slot retry.
+  const time=(stored.observed_at_ms+KST_OFFSET_MS)%86400000;
+  const historical=await db.prepare(`WITH recent_days AS (
+    SELECT trading_day FROM market_observations WHERE trading_day < ? GROUP BY trading_day ORDER BY trading_day DESC LIMIT 20
+  ) SELECT * FROM (
+    SELECT observation.*, ROW_NUMBER() OVER (PARTITION BY trading_day ORDER BY observed_at_ms DESC) AS same_time_rank
+    FROM market_observations AS observation INNER JOIN recent_days USING (trading_day)
+    WHERE available_at_ms <= ? AND ((observed_at_ms + ?) % 86400000) BETWEEN ? AND ?
+  ) WHERE same_time_rank = 1 ORDER BY trading_day DESC LIMIT 20`).bind(stored.trading_day,stored.observed_at_ms,
+    KST_OFFSET_MS,Math.max(0,time-SAME_TIME_TOLERANCE_MS),time).all();
+  if(!historical.success) throw new Error("COMPACT_HISTORY_READ_FAILED");
+  const features=historyFeatures(decodeHistoryRow(stored),rows,historical.results);
+  const run=buildCompactFeatureRun(stored,features,{engineGitSha,engineSourceSha256,
+    queryMeta:{sameTime:normalizedD1Meta(historical)}});
+  const write=await db.prepare(`INSERT INTO feature_runs
+    (slot_ms,feature_version,observed_at_ms,trading_day,engine_git_sha,engine_source_sha256,generated_at_ms,
+      input_cutoff_ms,quality_ceiling,generation_status,compact_features_json,validation_json)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(slot_ms,feature_version) DO NOTHING`).bind(
+      run.slotMs,run.featureVersion,run.observedAtMs,run.tradingDay,run.engineGitSha,run.engineSourceSha256,
+      run.generatedAtMs,run.inputCutoffMs,run.qualityCeiling,run.generationStatus,
+      run.compactFeaturesJson,run.validationJson).run();
+  if(!write.success) throw new Error("COMPACT_RUN_WRITE_FAILED");
+  const saved=await db.prepare("SELECT * FROM feature_runs WHERE slot_ms = ? AND feature_version = ?")
+    .bind(run.slotMs,run.featureVersion).first();
+  if(!saved) throw new Error("COMPACT_RUN_NOT_VISIBLE");
+  const meta=normalizedD1Meta(write),changes=meta.changes??meta.rowsWritten;
+  return {status:changes===0?"EXISTS":changes===1?"INSERTED":"STORED_WRITE_OUTCOME_UNKNOWN",
+    metadataScope:"STORED_FEATURE_RUN",slotMs:saved.slot_ms,featureVersion:saved.feature_version,
+    engineGitSha:saved.engine_git_sha,engineSourceSha256:saved.engine_source_sha256,
+    observedAtMs:saved.observed_at_ms,inputCutoffMs:saved.input_cutoff_ms,generatedAtMs:saved.generated_at_ms,
+    qualityCeiling:saved.quality_ceiling,generationStatus:saved.generation_status,
+    compactFeaturesBytes:new TextEncoder().encode(saved.compact_features_json).length,writeMeta:meta};
 }
 function scheduleMarketHistory(env,payload,ctx) {
   if(!historyEnabled(env)) return;
   // Independent lifetime: database failures cannot block or reject GitHub writes.
   ctx.waitUntil(persistMarketHistory(env,payload).then(result=>{
     console.log("Market history",result.status,result.slotMs??null);
+    if(result.compact) console.log("Compact history",result.compact.status,result.compact.reason??null);
   }).catch(()=>{ console.error("Market history failed; inspect D1 binding and migration"); }));
 }
 

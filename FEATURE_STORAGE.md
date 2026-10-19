@@ -145,3 +145,37 @@ to 53/53 after the additive read API and pure Signal Layer candidates.
 The relay's production persistence remains Feature v1 by default. The separate validator is the
 only validated compact Feature v2 writer; do not enable the relay's experimental full-tree v2 flag
 as a substitute for compact integration.
+
+## Default-disabled relay integration source
+
+The existing relay history path can optionally append compact Feature v2 after raw observation
+and legacy Feature persistence succeed. This is source preparation only; it creates no Worker,
+Cron, binding or migration and changes no collection/publication cadence.
+
+- `FEATURE_COMPACT_WRITE_ENABLED` must be the exact string `true`; absent/false leaves the prior
+  query/write/return path unchanged and does not require `feature_runs` to exist.
+- The opt-in requires non-secret `FEATURE_COMPACT_ENGINE_GIT_SHA` (40 hex) and
+  `FEATURE_COMPACT_ENGINE_SOURCE_SHA256` (64 hex), supplied and verified as release metadata at a
+  separately approved rollout. These identifiers are provenance, not authentication or independent
+  code attestation. This source change registers no runtime variable or Secret.
+- `FEATURE_ENGINE_V2_ENABLED=true` is the older experimental full-tree legacy-column path. It
+  conflicts with compact opt-in and is never silently used as a compact migration. Production
+  compact rollout must preserve legacy v1; no existing raw/legacy data is overwritten for migration.
+- The compact path reuses `historyFeatures`, `buildCompactFeatureRun`, bounded20-prior-day/
+  same-time queries, size-limited serialization, and the existing immutable INSERT/readback contract.
+  Every cutoff uses the immutable stored observation, including on a later same-slot retry.
+- Returned compact metadata comes from the stored row, not a retry's new engine, clock or quality.
+  An existing row is retained; no history update/delete or retention change occurs. Original quality
+  remains attached, including unusable/stale data; this storage path does not manufacture Signals.
+- Compact failure is caught after successful raw/legacy persistence and reported as derived failure.
+  It cannot reject that raw result or independently scheduled GitHub publication. An ambiguous
+  compact insert failure may have stored a row; idempotent future handling must never overwrite it.
+
+Changing the relay source changes its full-file SHA even when Feature calculations are unchanged.
+The generated validator is rebuilt for source consistency, but this is not permission to redeploy it.
+Existing candidate runtime receipts and pinned local trial commands refer to their earlier exact
+release; keep their identities separate from this un-deployed relay integration source.
+
+Production deployment, actual opt-in, release variables, sustained database growth and authorized
+consumer rollout remain separate operational gates. No real financial ledger, research admission,
+Watch/BMW schedule or retention policy is changed by this implementation.

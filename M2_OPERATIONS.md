@@ -171,3 +171,12 @@ If a prerequisite is absent, identify the earliest concrete unresolved decision 
 existing pending/deferred request. Do not repeatedly request the same consent or add substitute
 factories, fixture authorizers or test engines. A saved response is not proof of delivery to a
 different chat; Watch/schedules and deployment permissions remain separate.
+
+## Continuous compact source preparation
+
+The relay has an additive, default-disabled compact write path after raw/legacy persistence.
+See FEATURE_STORAGE.md for the three opt-in/release variables, legacy-v2 conflict, immutable
+readback and derived-failure isolation. Local SQLite/CI validation is distinct from runtime or
+continuous-production validation. Do not enable the older full-tree v2 flag as a substitute.
+No deployment, variable registration, new schedule, migration or retention change is authorized
+by this source preparation. Existing private checkpoints own current operational evidence.

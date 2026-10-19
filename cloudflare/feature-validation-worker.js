@@ -1,5 +1,5 @@
 // Generated from PR candidate; do not edit.
-const CANDIDATE_SHA256 = "f21b700675c8ca0cb312b79db65af559dafdef09e896cbbeb953677bdfdb5d2a";
+const CANDIDATE_SHA256 = "455be21906aa71b4649c1506308d650a5d2bd545f42d1dd479772afd98677e88";
 const FEATURE_VERSION = 2;
 const SAME_TIME_TOLERANCE_MS = 150000;
 const KST_OFFSET_MS = 32400000;
