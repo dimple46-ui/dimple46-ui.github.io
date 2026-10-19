@@ -1,0 +1,13 @@
+{
+  "scope": "FEATURE2_CURRENT_SAMPLE_INCLUSION_LOCAL_ONLY",
+  "baseline_code_sha": "70037e1741e972ef4100b5f9c057c42f996715ec",
+  "before_fix": {"tests": 2, "fail": 2, "finding": "Explicit current price excluded from realized volatility when raw history rows omitted the current observation"},
+  "change": "Use strictly earlier eligible price rows plus the explicit current observation exactly once",
+  "related": {"tests": 32, "pass": 32, "fail": 0},
+  "full": {"tests": 462, "pass": 462, "fail": 0, "skip": 0, "cancelled": 0},
+  "equivalence": "Entire Feature output is identical with the current row present/absent from the history query for the same explicit current observation, in both relay and generated validation core",
+  "relay_source_sha256": "f21b700675c8ca0cb312b79db65af559dafdef09e896cbbeb953677bdfdb5d2a",
+  "compatibility": "RSS log-return formula, percent unit, quality filtering, Feature2/Signal2 versions and compact encoding unchanged; final return omission corrected",
+  "runtime": "Node24.19.0; no provider connection or deployment",
+  "limitations": ["Historical raw inputs do not establish actual source acquisition or runtime persistence", "No actual research/personal data/Watch/Production/authentication change"]
+}

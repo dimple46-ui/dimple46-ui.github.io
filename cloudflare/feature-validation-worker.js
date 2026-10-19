@@ -1,5 +1,5 @@
 // Generated from PR candidate; do not edit.
-const CANDIDATE_SHA256 = "14140e013893d713c2d7a2a09252d2c526ab0b5e737d840a262dcf0134d91e12";
+const CANDIDATE_SHA256 = "f21b700675c8ca0cb312b79db65af559dafdef09e896cbbeb953677bdfdb5d2a";
 const FEATURE_VERSION = 2;
 const SAME_TIME_TOLERANCE_MS = 150000;
 const KST_OFFSET_MS = 32400000;
@@ -308,7 +308,7 @@ function historyFeatures(current, rawRows, rawSameTimeRows=[]) {
       window.volumeRate[name]=featureValue(volumeDelta?.value!=null&&window.actualElapsedSeconds>0?
         volumeDelta.value/(window.actualElapsedSeconds/60):null,volumeDelta?.status??"INSUFFICIENT_HISTORY",
         volumeDelta?.sampleCount??0,volumeDelta?.quality??"UNKNOWN",{unit:"shares_per_minute"});
-      const priceField=`${name}.price`,priceRows=baseline?rows.filter(row=>row.observed_at_ms>=baseline.observed_at_ms)
+      const priceField=`${name}.price`,priceRows=baseline?[...rows.filter(row=>row.observed_at_ms>=baseline.observed_at_ms&&row.observed_at_ms<now),current]
         .filter(row=>usableHistoryMetric(row.metrics[priceField],row.observed_at_ms)):[];
       const series=priceRows.map(row=>row.metrics[priceField].value);
       const returns=[];for(let i=1;i<series.length;i++) if(series[i-1]>0&&series[i]>0) returns.push(Math.log(series[i]/series[i-1])*100);

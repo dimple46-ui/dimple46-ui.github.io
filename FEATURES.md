@@ -16,6 +16,11 @@ only quality labels and the existing downstream confidence ceilings may become m
 The generated validation Worker must be rebuilt with the existing builder. This is source/local
 validation only until a separately approved runtime rollout is verified.
 
+Realized volatility includes the explicit current observation exactly once. Its result must be
+identical whether the history query already contains that current row or returns only earlier
+rows. The existing root-sum-square log-return formula, percent unit and sample-quality filtering
+are unchanged; omission of the final return when current was not stored is corrected.
+
 The candidate keeps latest-snapshot `schemaVersion: 3` and raw history schema version 1. Production
 `market_observations.features_json` remains v1. Candidate v2 output uses the additive `feature_runs` table after explicit write opt-in; no backfill
 rewrites existing rows. Three distinct real rows were persisted and verified, then the candidate
