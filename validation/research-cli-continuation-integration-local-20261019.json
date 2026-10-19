@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "checked_at_utc": "2026-10-19T02:20:34.186008+00:00",
+  "original_base_sha": "5fa148024366a4617776188f5d437aeed91e919f",
+  "status": "LOCAL_TESTED_NOT_DEPLOYED",
+  "integration": {
+    "original_fifo_fix_preserved": true,
+    "duplicate_pair_fifo_regression_removed": true,
+    "retained_new_boundaries": [
+      "fatal UTF-8 decoder in three research CLIs",
+      "display final-component symlink rejection"
+    ],
+    "full_pass": 449,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "original_replay_reader_fix_preserved": true
+  },
+  "files": [
+    {
+      "path": "scripts/validate-research-package.mjs",
+      "sha256": "482f76b8e355ba1475aed93027d956c22c289258ac6e87f96e24dca832003706"
+    },
+    {
+      "path": "scripts/record-research-evidence.mjs",
+      "sha256": "aff08602ae4f1ebf100c99ea565391d6f2cff0341f2a1932fd8067c089e38556"
+    },
+    {
+      "path": "scripts/show-research-pair.mjs",
+      "sha256": "62dfe64c64d7fad775fab9a84240f92f6c3e6680ff466b7dd12f9549053f2941"
+    },
+    {
+      "path": "scripts/summarize-public-input.mjs",
+      "sha256": "10df93671102dc9e82b166ede8ea9d29b387030b3b37e3f9cd43da7e0b197863"
+    },
+    {
+      "path": "tests/research-general-cli.test.mjs",
+      "sha256": "871ffec072fe2ebcb8bbef80244a78f7436d9f1ba4737d75fc1b629ea59ac7e0"
+    },
+    {
+      "path": "tests/research-evidence-cli.test.mjs",
+      "sha256": "07c25b5811ad9adcaf9cc6c9201a182ec6f36d8e0bd3751a81ceda1f76160165"
+    },
+    {
+      "path": "tests/research-pair-view.test.mjs",
+      "sha256": "03ad25551d7175161a5938e663c9d9997e035d48da70a9cdba7d301266ae230f"
+    },
+    {
+      "path": "tests/public-summary-cli.test.mjs",
+      "sha256": "2d0cd5b6b3bd8a9d8cda73f1f5ad5d209e3239254bfa7e78def3fb466090fb4b"
+    }
+  ],
+  "actual_private_input_used": false,
+  "operational_validation": false
+}

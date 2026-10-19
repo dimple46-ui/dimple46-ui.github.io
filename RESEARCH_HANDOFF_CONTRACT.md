@@ -88,3 +88,9 @@ node scripts/show-research-pair.mjs /local/path/pair-summary.json <display_epoch
 입력 최대256KiB, JSON 깊이24, 노드20000으로 제한하고 CLI는 일반 로컬 파일만 bounded read한다. pair/종목별 요약 해시, 고정 두 종목/시장/통화, 공통 기준시각·미래시점, 지원 상태 및 개인 계산 차단 조건을 검사한다. 해시는 내용 일치만 확인하며 인증·승인 증명이 아니다. 자유서술·원문·URL·입력 경로·계좌·토큰·임의 필드는 출력하지 않는다. 오류는 RESEARCH_PAIR_DISPLAY_FAILED 고정 코드로만 반환한다. JSON 출력도 원래 요약 전체가 아닌 제한된 표시 모델이다.
 
 가상 한글 출력 예: `examples/research-pair-view.synthetic.txt`. 이는 실제 삼성전자·SK하이닉스 전망이나 실제 사용자 승인 결과가 아니다. 테스트 승인기는 `tests/fixtures/research-pair.mjs`에만 있으며 CLI/운영 코드에서 불러오지 않는다. 기존 테스트 fixture를 재사용하도록 정리했으며 실제 사용자 승인을 새로 만들지 않는다.
+
+로컬 표시·증거 기록 CLI는 JSON 파싱 전에 UTF-8 바이트를 엄격히 검사한다. 손상 바이트를
+대체문자로 복구하거나 BOM을 제거하지 않으며, 거절된 입력으로 증거 파일을 만들지 않는다.
+정상 Unicode와 실제 대체문자, 기존 해시·표시·새 파일 전용 저장 계약은 유지한다.
+표시 CLI도 최종 경로의 심볼릭 링크를 거절하고, FIFO를 열 때 대기하지 않는 방식으로
+파일을 연 뒤 일반 파일 여부를 검사한다. 상위 디렉터리 전체의 링크 방지나 경로 sandbox를 보장하는 것은 아니다.

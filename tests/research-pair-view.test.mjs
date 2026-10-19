@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync, writeFileSync, rmSync} from 'node:fs';
+import {mkdtempSync, writeFileSync, readFileSync, symlinkSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -107,5 +107,41 @@ test('CLI reads an explicit bounded local file, emits safe text/JSON and sanitiz
     }
     writeFileSync(path, ' '.repeat(MAX_PAIR_DISPLAY_BYTES + 1));
     assert.equal(run([path, String(now), '120000']).status, 1);
+  } finally { rmSync(dir, {recursive: true, force: true}); }
+});
+test('display CLI rejects malformed UTF-8 without repairing hashed summaries and preserves valid Unicode', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'pair-display-utf8-'));
+  const path = join(dir, 'PRIVATE_UTF8_SENTINEL.json');
+  const run = () => spawnSync(process.execPath, ['scripts/show-research-pair.mjs', path, String(options.nowMs), '120000', 'json'], {encoding: 'utf8', timeout: 5000});
+  try {
+    const base = await fixture();
+    for (const invalid of [Buffer.from([0xff]), Buffer.from([0xed, 0xa0, 0x80])]) {
+      const replacement = invalid.toString('utf8'), pair = structuredClone(base);
+      pair.extra = {text: 'PRIVATE_UTF8_SENTINEL' + replacement};
+      const valid = Buffer.from(JSON.stringify(reseal(pair))), start = valid.indexOf(Buffer.from(replacement));
+      assert.ok(start >= 0);
+      const bytes = Buffer.concat([valid.subarray(0, start), invalid, valid.subarray(start + Buffer.byteLength(replacement))]);
+      writeFileSync(path, bytes); const result = run();
+      assert.equal(result.status, 1); assert.equal(result.stdout, '');
+      assert.equal(result.stderr.trim(), JSON.stringify({status: 'REJECTED', code: 'RESEARCH_PAIR_DISPLAY_FAILED'}));
+      assert.deepEqual(readFileSync(path), bytes);
+    }
+    const pair = structuredClone(base); pair.extra = {text: '한글 😀 e\u0301 \ufffd'};
+    const sealed = reseal(pair), bytes = Buffer.from(JSON.stringify(sealed)); writeFileSync(path, bytes);
+    const result = run(); assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout), buildResearchPairView(sealed, options));
+    assert.deepEqual(readFileSync(path), bytes);
+    writeFileSync(path, Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), bytes])); assert.equal(run().status, 1);
+  } finally { rmSync(dir, {recursive: true, force: true}); }
+});
+test('display CLI rejects final-component symlinks without reading or changing their target', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'pair-display-link-'));
+  try {
+    const path = join(dir, 'input.json'), link = join(dir, 'PRIVATE_LINK_SENTINEL.json');
+    const bytes = Buffer.from(JSON.stringify(await fixture())); writeFileSync(path, bytes); symlinkSync(path, link);
+    const result = spawnSync(process.execPath, ['scripts/show-research-pair.mjs', link, String(options.nowMs), '120000', 'json'], {encoding: 'utf8', timeout: 2000});
+    assert.equal(result.status, 1); assert.equal(result.stdout, '');
+    assert.equal(result.stderr.trim(), JSON.stringify({status: 'REJECTED', code: 'RESEARCH_PAIR_DISPLAY_FAILED'}));
+    assert.deepEqual(readFileSync(path), bytes);
   } finally { rmSync(dir, {recursive: true, force: true}); }
 });

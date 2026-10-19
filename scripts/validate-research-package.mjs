@@ -12,7 +12,7 @@ function readBounded(path){
   const buffer=Buffer.alloc(MAX_INPUT_BYTES+1);let length=0,count;
   while(length<buffer.length&&(count=readSync(fd,buffer,length,buffer.length-length,null))>0)length+=count;
   if(length>MAX_INPUT_BYTES)throw Error('PACKAGE_TOO_LARGE');
-  return buffer.subarray(0,length).toString('utf8');
+  return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(buffer.subarray(0,length));
  }finally{if(fd!==undefined)closeSync(fd);}
 }
 function generalProjection(input,nowMs){
