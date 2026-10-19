@@ -179,3 +179,23 @@ release; keep their identities separate from this un-deployed relay integration 
 Production deployment, actual opt-in, release variables, sustained database growth and authorized
 consumer rollout remain separate operational gates. No real financial ledger, research admission,
 Watch/BMW schedule or retention policy is changed by this implementation.
+
+## Legacy production-base source preparation
+
+`cloudflare/legacy-compact-preparation.mjs` prepares an optional compact hook against a separately
+verified legacy raw/v1 source instead of replacing that Worker with an entire newer relay branch.
+It performs no I/O, authentication, upload or deployment. The caller must independently pin and
+verify the exact base module hash and obtain authorization to handle that source privately.
+
+The preparer requires the known legacy Feature call and return contract, preserves every byte
+outside the history function, and adds the validated compact core/helper in a separate lexical
+scope. Legacy helper names, publication, scheduled handlers and the existing v1 call remain in
+place. Default-off behavior has no derived table dependency; explicit compact behavior follows
+the existing release-metadata and immutable readback contract. Unknown bases and repeat patching
+fail rather than broad source replacement.
+
+Local tests prove source-boundary preservation, lexical isolation, unchanged legacy v1 and real
+SQLite compact insertion on fictional input. They do not establish that a complete live module
+has been exported, prepared or deployed. Do not transmit complete production source or a large
+patch through external tooling without specific source-handling authorization. Existing source,
+compatibility, bindings, schedules and rollback version require independent predeployment review.
