@@ -1,5 +1,36 @@
 # Private asset-ledger contract — local prototype
 
+## Optional life-goal cash funding — schema1
+
+`domain/life-goal-funding.mjs` connects a declared `goalPlan` to the existing ledger and dated-cash schedule. `buildPrivateRiskSummary` / `runPrivateRiskWorkflow` accept it as an optional input. The first supported funding source is **current declared withdrawable KRW cash only**. No future salary, asset sale, account transfer, borrowing, return, inflation or tax assumption is introduced. A life goal is not an operating approval or an approved asset-allocation policy.
+
+The strict schema is:
+
+| Object | Required fields |
+| --- | --- |
+| goalPlan | schemaVersion=1, positive revision, currency=KRW, ledgerAsOfMs, sourceRef, verifiedAtMs, coverageComplete=true, accounts, goals, allocations |
+| accounts[] | accountRef, protectedCashKrw |
+| goals[] | goalRef, positive revision, purpose, amountKrw, amountAsOfMs, dueAtMs, essential, priority, deferrable |
+| allocations[] | allocationRef, goalRef, accountRef, amountKrw, obligationRef |
+
+IDs are nonempty strings of at most128 UTF-16 code units. Amounts are nonnegative safe integer nominal KRW. Purpose is HOUSING, EDUCATION, RETIREMENT, FAMILY or OTHER. Unknown amount/deadline/essential/priority/deferrable must be explicit null; priority otherwise is a nonnegative safe integer. Priority/flexibility are retained as declared metadata, never used to choose allocations. Goal amount basis dates are not automatically restated for inflation. A declared timestamp must be a valid positive millisecond instant; amountAsOfMs must not exceed the ledger cutoff. A past deadline is explicitly overdue, not proof of timely funding.
+
+The plan must name exactly the cash schedule's accounts and share the ledger cutoff. Plan verification is no later than that cutoff and obeys the caller's existing maxLedgerAgeMs. The existing cash validator independently verifies ledger/schedule scope, coverage, obligation identity/timing and reconciliation to additionalOutflowsKrw. Complete declared scope is not proof that the user supplied every real account or life goal. Bounds are32accounts,64goals,256allocations and262144bytes for the standalone combined input; the existing private transport request has its smaller16384byte bound.
+
+Every declared OPEN obligation is protected, including after a goal's deadline. Per-account additional earmarks cannot exceed `withdrawable - all declared obligations - protectedCash`, floored at0. Accounts are not netted or automatically transferred. Protected cash is explicit for every account; if legacy reserveKrw is also supplied, its total must exactly reconcile to those amounts. A reserve is not deducted twice. The result's unallocatedCashKrw is a current-cash remainder, **not** trading or broker clearance.
+
+An existing obligation may instead be linked once by obligationRef. Account, whole amount and deadline must exactly match the goal/allocation. It remains deducted by the cash schedule once; linking does not deduct it again. It cannot be called funded if all declared payments plus protected cash exceed that account's withdrawable cash. Partial/split obligation links and future funding sources are unsupported. Different allocation IDs do not create additional funding capacity; both per-goal and per-account bounds apply with exact BigInt sums.
+
+Known goals return required/earmarked/shortfall amounts and the current ledger cutoff as availableAtMs for existing earmarked cash. This is not a settlement-calendar or actual withdrawal verification. Unknown target/deadline returns PARTIAL with null shortfall and unavailable complete goal aggregates. Invalid scope, stale metadata, unsupported currency, over-allocation or unsafe sums block only the goal component; valid independent cash-shortage calculations/events remain visible.
+
+When goalPlan is present, legacy investableCash is always unavailable/null: that older formula does not subtract goal earmarks. Other valuation totals retain their original declared-asset meaning. No goal input preserves the former summary shape and behavior.
+
+The existing schema1 private input request accepts the additive optional goalPlan field; old requests/envelopes remain readable. Older receivers reject that new field, so this is a coordinated receiver capability change, not silent cross-version compatibility. No research-package schema, authentication, encryption, database schema, event lifecycle or public market response changes. The existing encrypted input/provenance tag covers the goal plan, and atomic revision/idempotency storage is reused.
+
+The authorized saved-analysis path exposes only fixed goal totals (planRevision, goalCount, requiredKrw, allocatedKrw, shortfallKrw, unallocatedCashKrw, earliestUnfundedDueAtMs), never raw goal/account/allocation IDs. It retains the stored cutoff and release provenance without recalculation; stale reads suppress goal metrics/capability. Inconsistent investment clearance or unsupported goal versions/scope/currency fail the read. Goal-specific automatic alerts, actual financial connections, external persistence/runtime authentication and Watch adoption are not established by local tests.
+
+Evidence: `validation/life-goal-funding-local-20261020.json`. Fictional local request → workflow → sealed memory SQLite → authorized HTTP aggregate read/reconstructed reader/replay only; no operating deployment or actual personal finances.
+
 Status: implemented/local validated with fictional fixtures only. No private storage, public API, scheduled consumer, account connection or deployment.
 
 ## Scope

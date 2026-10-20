@@ -35,6 +35,17 @@ export function privateSavedAnalysisView(value,nowMs){
   metrics[group]=target;
  }
  if(caps.investableCash==='AVAILABLE'&&metrics.valuation?.investableCashKrw===null)reject();
+ if(Object.hasOwn(capabilitiesAsOf,'goalFunding')){
+  const capability=capabilitiesAsOf.goalFunding;if(!['AVAILABLE','UNAVAILABLE'].includes(capability))reject();caps.goalFunding=capability;
+  if(caps.investableCash!=='UNAVAILABLE'||metrics.valuation&&metrics.valuation.investableCashKrw!==null)reject();
+  if(capability==='AVAILABLE'){
+   const g=metricsAsOf.goalFunding,keys=['planRevision','goalCount','requiredKrw','allocatedKrw','shortfallKrw','unallocatedCashKrw','earliestUnfundedDueAtMs'];
+   if(!g||keys.some(k=>k==='earliestUnfundedDueAtMs'?g[k]!==null&&!timestamp(g[k]):!Number.isSafeInteger(g[k])||g[k]<0)||
+    g.planRevision<1||g.goalCount>64||g.allocatedKrw>g.requiredKrw||g.shortfallKrw!==g.requiredKrw-g.allocatedKrw||
+    (g.shortfallKrw>0)!==(g.earliestUnfundedDueAtMs!==null))reject();
+   metrics.goalFunding=Object.fromEntries(keys.map(k=>[k,g[k]]));
+  }else metrics.goalFunding=null;
+ }
  if(caps.concentration==='AVAILABLE'){
   const c=metricsAsOf.concentration;
   if(!['DECLARED_SECURITIES_VALUE','DECLARED_GROSS_ASSETS'].includes(c?.denominator)||!Number.isSafeInteger(c.denominatorKrw)||c.denominatorKrw<=0||
@@ -46,7 +57,7 @@ export function privateSavedAnalysisView(value,nowMs){
  }else metrics.concentration=null;
  const analysisAgeMs=nowMs-generatedAtMs,inputAgeMs=nowMs-inputCutoffMs;
  const stale=value?.freshness?.status==='STALE_INPUT'||analysisAgeMs>ageLimits.maxAnalysisAgeMs||inputAgeMs>ageLimits.maxInputAgeMs;
- if(stale){for(const k of capKeys)caps[k]='UNAVAILABLE';for(const k of Object.keys(metrics))metrics[k]=null;}
+ if(stale){for(const k of Object.keys(caps))caps[k]='UNAVAILABLE';for(const k of Object.keys(metrics))metrics[k]=null;}
  return {contractVersion:1,scope:'PRIVATE_SAVED_RISK_AGGREGATES_ONLY',status:stale?'UNAVAILABLE':'PARTIAL',revision,generatedAtMs,inputCutoffMs,
   temporalScope:'STORED_AS_OF_NOT_REEVALUATED',provenance,freshness:{analysisAgeMs,inputAgeMs,status:stale?'STALE_INPUT':'WITHIN_CONFIGURED_AGE_LIMITS'},
   ageLimits:{maxAnalysisAgeMs:ageLimits.maxAnalysisAgeMs,maxInputAgeMs:ageLimits.maxInputAgeMs},capabilitiesAsOf:caps,metricsAsOf:metrics,
@@ -67,6 +78,12 @@ export function savedWorkflowView(workflow,head,ageLimits,nowMs,provenance){
  metrics.cashDeadlines=c.cashDeadlines?.totals?{...c.cashDeadlines.totals,horizonAtMs:c.cashDeadlines.horizonAtMs}:null;
  metrics.concentration=c.concentration?{denominator:c.concentration.denominator,denominatorKrw:c.concentration.denominatorKrw,
   samsungHynixValueKrw:c.concentration.samsungHynixCombined?.valueKrw,samsungHynixWeightBps:c.concentration.samsungHynixCombined?.weightBps}:null;
+ if(Object.hasOwn(workflow.capabilities??{},'goalFunding')){
+  if(workflow.capabilities.goalFunding==='AVAILABLE'&&(c.goalFunding?.contractVersion!==1||c.goalFunding.scope!=='PRIVATE_LOCAL_GOAL_FUNDING_ONLY'||
+   c.goalFunding.currency!=='KRW'||c.goalFunding.status!=='CALCULATED'||c.goalFunding.generatedAtMs!==head.generatedAtMs||
+   c.goalFunding.inputCutoffMs!==head.inputCutoffMs))reject();
+  metrics.goalFunding=c.goalFunding?.totals??null;
+ }
  return privateSavedAnalysisView({revision:head.revision,generatedAtMs:head.generatedAtMs,inputCutoffMs:head.inputCutoffMs,
   ageLimits,provenance,capabilitiesAsOf:workflow.capabilities,metricsAsOf:metrics},nowMs);
 }

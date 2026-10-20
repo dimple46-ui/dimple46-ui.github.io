@@ -261,3 +261,31 @@ test('offline saved analysis HTTP to SQLite: fixed snapshot reads preserve rows,
  f.db.prepare('UPDATE private_versions SET generated_at_ms=generated_at_ms+1 WHERE revision=1').run();
  assert.throws(()=>f.store.readAnalysisSnapshot(scope),/PRIVATE_READ_UNAVAILABLE/);assert.ok(row.sealed_analysis);
 }));
+test('offline goal input to saved HTTP: exact replay, reconstructed reader and stale suppression preserve the sealed revision',async()=>withFixture(async f=>{
+ const {createPrivateReadAdapter}=await import('../private/read-adapter.mjs');
+ const {createPrivateHttpBoundary}=await import('../private/http-boundary.mjs');
+ const i=inputs(now,3000);i.goalPlan={schemaVersion:1,revision:1,currency:'KRW',ledgerAsOfMs:now,sourceRef:'synthetic',verifiedAtMs:now,coverageComplete:true,
+  accounts:[{accountRef:'fictional-A',protectedCashKrw:100}],goals:[{goalRef:'fictional-private-goal',revision:1,purpose:'EDUCATION',amountKrw:1000,
+   amountAsOfMs:now,dueAtMs:horizon,essential:true,priority:1,deferrable:false}],
+  allocations:[{allocationRef:'fictional-private-allocation',goalRef:'fictional-private-goal',accountRef:'fictional-A',amountKrw:700,obligationRef:null}]};
+ const r=request({inputs:i});assert.equal((await submit(f,r)).status,'COMMITTED');const saved=f.snapshot();
+ assert.equal((await submit(f,r)).status,'REPLAYED');assert.deepEqual(f.snapshot(),saved);
+ const changed=structuredClone(r);changed.inputs.goalPlan.allocations[0].amountKrw++;
+ assert.equal((await submit(f,changed)).code,'IDEMPOTENCY_CONFLICT');assert.deepEqual(f.snapshot(),saved);
+ const authorize=async token=>token==='Bearer fictional-read'?{...scope,verified:true,roles:['OWNER_READ'],expiresAtMs:now+60000}:null;
+ const read=()=>{
+  const reader=createPrivateReadAdapter({authorize,getStore:f.deps.getStore,crypto:f.crypto,clock:f.deps.clock,maxAnalysisAgeMs:1000,maxInputAgeMs:1000});
+  const handle=createPrivateHttpBoundary({origin:'https://fictional-private.invalid',authorize,inputAdapter:f.adapter,clock:f.deps.clock,
+   checkRateLimit:async()=>({allowed:true}),statusReader:reader.readStatus,analysisReader:reader.readAnalysis});
+  return handle(new Request('https://fictional-private.invalid/private/analysis/latest',{headers:{authorization:'Bearer fictional-read'}}));
+ };
+ const changes=f.db.prepare('SELECT total_changes() AS n').get().n,response=await read(),view=await response.json();
+ assert.equal(response.status,200);assert.equal(view.capabilitiesAsOf.goalFunding,'AVAILABLE');
+ assert.deepEqual(view.metricsAsOf.goalFunding,{planRevision:1,goalCount:1,requiredKrw:1000,allocatedKrw:700,shortfallKrw:300,
+  unallocatedCashKrw:700,earliestUnfundedDueAtMs:horizon});
+ assert.equal(view.metricsAsOf.valuation.investableCashKrw,null);
+ assert.ok(!['fictional-A','fictional-private-goal','fictional-private-allocation'].some(x=>JSON.stringify(view).includes(x)));
+ assert.deepEqual(await (await read()).json(),view);
+ f.setTime(now+1001);const stale=await (await read()).json();assert.equal(stale.capabilitiesAsOf.goalFunding,'UNAVAILABLE');assert.equal(stale.metricsAsOf.goalFunding,null);
+ assert.deepEqual(f.snapshot(),saved);assert.equal(f.db.prepare('SELECT total_changes() AS n').get().n,changes);
+}));
