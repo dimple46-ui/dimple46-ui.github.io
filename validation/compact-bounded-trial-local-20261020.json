@@ -9,5 +9,5 @@
   "verified": ["Exact slot accepted and immutable retry returns EXISTS with one row", "Other slot skipped", "Expiry boundary skipped", "Partial/noncanonical/unsafe configuration rejected", "Expiry crossed during compact history read prevents subsequent INSERT", "Default-off and prior continuous opt-in preserved", "Raw/v1 persistence preserved"],
   "limits": ["In-flight requests can finish after expiry", "Repeated eligible calls may consume reads and conflict writes", "No total account quota enforcement", "No automatic flag reset or protection against subsequent configuration changes", "No deployment or runtime verification"],
   "runtime_changed": false,
-  "github_ci_for_modified_source": "PENDING_EXISTING_TESTS_AFTER_EXPLICIT_DEVELOPMENT_PUBLICATION_APPROVAL"
+  "github_ci_for_modified_source": {"head_sha":"d3d33e56aed2d0688009cbff62645fc669baf37f","run_id":39418576038,"status":"completed","conclusion":"success","duplicate_dispatch":false}
 }
