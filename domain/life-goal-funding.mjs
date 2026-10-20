@@ -32,7 +32,7 @@ export function evaluateLifeGoalFunding(ledger,schedule,goalPlan,{nowMs,maxLedge
   const c=cash.accounts.find(x=>x.accountRef===a.accountRef);
   if(!c||a.protectedCashKrw>c.withdrawableKrw)return blocked('INVALID_GOAL_ACCOUNT_SCOPE');
   const free=BigInt(c.withdrawableKrw)-BigInt(c.dueThroughHorizonKrw)-BigInt(a.protectedCashKrw);
-  accounts.set(a.accountRef,{accountRef:a.accountRef,protectedCashKrw:a.protectedCashKrw,budget:free>0n?free:0n,protectionShortfall:free<0n,newEarmark:0n});
+  accounts.set(a.accountRef,{accountRef:a.accountRef,protectedCashKrw:a.protectedCashKrw,budget:free>0n?free:0n,protectionShortfall:free<0n?-free:0n,newEarmark:0n});
   protectedTotal+=BigInt(a.protectedCashKrw);
  }
  if(accounts.size!==cash.accounts.length||!safe(protectedTotal)||reserveKrw!==undefined&&protectedTotal!==BigInt(reserveKrw))return blocked('EXPLICIT_ACCOUNT_RESERVE_RECONCILIATION_REQUIRED');
@@ -58,7 +58,7 @@ export function evaluateLifeGoalFunding(ledger,schedule,goalPlan,{nowMs,maxLedge
     g.amountKrw!==o.amountKrw||g.dueAtMs!==o.dueAtMs)return blocked('GOAL_OBLIGATION_LINK_MISMATCH');
    linked.add(a.obligationRef);
    // An underfunded obligation cannot acquire funded status merely by being linked to a goal.
-   if(account.protectionShortfall)return blocked('LINKED_OBLIGATION_CASH_SHORTFALL');
+   if(account.protectionShortfall>0n)return blocked('LINKED_OBLIGATION_CASH_SHORTFALL');
   }else{
    account.newEarmark+=BigInt(a.amountKrw);
    if(account.newEarmark>account.budget)return blocked('GOAL_ACCOUNT_CASH_OVERALLOCATED');
@@ -80,7 +80,8 @@ export function evaluateLifeGoalFunding(ledger,schedule,goalPlan,{nowMs,maxLedge
    essential:g.essential,priority:g.priority,deferrable:g.deferrable});
  }
  const accountRows=[...accounts.values()].map(a=>{const free=a.budget-a.newEarmark;remaining+=free;
-  return {accountRef:a.accountRef,protectedCashKrw:a.protectedCashKrw,newEarmarkKrw:Number(a.newEarmark),unallocatedCashKrw:Number(free)};});
+  return {accountRef:a.accountRef,protectedCashKrw:a.protectedCashKrw,cashProtectionShortfallKrw:Number(a.protectionShortfall),
+   newEarmarkKrw:Number(a.newEarmark),unallocatedCashKrw:Number(free)};});
  if(![required,allocated,shortfall,remaining].every(safe))return blocked('GOAL_ARITHMETIC_OVERFLOW');
  return {contractVersion:1,status:unknown?'PARTIAL':'CALCULATED',scope:'PRIVATE_LOCAL_GOAL_FUNDING_ONLY',currency:'KRW',
   generatedAtMs:nowMs,inputCutoffMs:ledger.asOfMs,totals:{planRevision:p.revision,goalCount:goals.size,requiredKrw:unknown?null:Number(required),
