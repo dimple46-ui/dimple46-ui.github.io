@@ -1,8 +1,8 @@
 # Project Status — Real-time Investment Intelligence System v4
 
-## Current recovery pointer — 2026-10-19
+## Current recovery pointer — 2026-10-20
 
-Use RESUME.md for the active feature/research-handoff source/checkpoint, PR6 and exact-source CI. Dated entries below are historical evidence, not the current task queue. In particular, old login/scope/build blockers and old “research not supplied” statements must not override newer evidence in the existing private checkpoint.
+Optional life-goal current-cash funding is implemented in the existing private local summary, sealed transaction and saved aggregate read path; see ASSET_LEDGER_CONTRACT.md and validation/life-goal-funding-local-20261020.json. This is fictional local validation, with no approved personal financial policy or operating connection. Use RESUME.md for the active feature/research-handoff source/checkpoint, PR6 and exact-source CI. Dated entries below are historical evidence, not the current task queue. In particular, old login/scope/build blockers and old “research not supplied” statements must not override newer evidence in the existing private checkpoint.
 
 Current validated source and CI are recorded in RESUME.md. The earlier48b3b04/local466/Tests39221997243 evidence belongs to its dated review, not the current source. Health intentionally reports latest stored diagnostics, including FUTURE_TIME; features/summary separately restrict eligibility by both input cutoff and generation time. Later recovered-defect findings and fixes must be assessed against the latest source, rather than treating that earlier bounded review as a permanent all-clear.
 
