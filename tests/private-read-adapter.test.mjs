@@ -119,6 +119,16 @@ test('saved reader missing head/analysis/ciphertext error has no auto initializa
  const corrupt=fixture();corrupt.deps.crypto.open=async()=>{throw Error('PRIVATE_SENTINEL');};
  await assert.rejects(()=>call(corrupt),e=>e.code==='PRIVATE_READ_UNAVAILABLE'&&!e.message.includes('PRIVATE_SENTINEL'));
 });
+for(const method of ['readStatus','readAnalysis'])for(const failure of ['expiry','abort'])
+test(`${method} rejects ${failure} after its final head inspection`,async()=>{
+ let t=now;const aborted=new AbortController(),f=fixture({clock:()=>t});
+ f.store.readHead=()=>{
+  if(failure==='expiry')t=f.proof.expiresAtMs;else aborted.abort();
+  return structuredClone(f.head);
+ };
+ await assert.rejects(()=>f.reader[method]({credential:'Bearer fictional-valid',execution:{signal:aborted.signal}}),
+  denied(failure==='expiry'?'UNAUTHORIZED':'PRIVATE_READ_UNAVAILABLE'));
+});
 test('saved reader status uses explicit null initial timestamps and frozen status never exposes analysis',async()=>{
  const f=fixture();Object.assign(f.head,{revision:0,generatedAtMs:0,inputCutoffMs:0});
  assert.deepEqual(await f.reader.readStatus({credential:'Bearer fictional-valid'}),{schemaVersion:1,mode:'ACTIVE',revision:0,generatedAtMs:null,inputCutoffMs:null});

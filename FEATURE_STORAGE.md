@@ -52,6 +52,19 @@ records:
 never overwritten by a later deployment or retry. Disabling writes leaves every v1 observation
 and every previously written feature run intact.
 
+The POST receipt and write log describe the row read back from storage, including its original
+engine/source identifiers, generation/cutoff times, quality/status and stored payload byte count.
+The current recomputation is separate under `computed`; an `EXISTS` retry never upgrades the
+stored row to the current engine, quality or generation time. Top-level metadata and `stored`
+refer to `metadataScope: STORED_FEATURE_RUN`. Existing response keys remain; their values now
+correctly describe persistence. `candidateSha256` still identifies the executing relay Feature core,
+not the stored row or a complete Worker deployment attestation. Missing stored size diagnostics
+remain null rather than borrowing the new computation's values.
+
+`INSERTED`/`EXISTS` require explicit positive/zero D1 changes (or rows-written fallback).
+If neither count is known, successful readback yields `STORED_WRITE_OUTCOME_UNKNOWN`, not a
+fabricated insertion result. No row is overwritten or extra write performed by this correction.
+
 ## Compact encoding contract
 
 `encodingVersion: 1` is independent from `featureVersion: 2`. The payload carries ordered field
@@ -68,12 +81,19 @@ their source observations and deterministic engine version remain authoritative.
 
 ## Candidate write path and rollback
 
+Authenticated `GET /write-control` is an additive read-only runtime binding contract (schemaVersion1):
+`writeEnabled`, `engineGitSha`, `candidateSha256`, and scope `RUNTIME_BINDINGS_ONLY`. It returns
+no token or market timestamp and performs no D1 access. The local controlled-trial tool must observe
+runtime enable before its only POST, and runtime disable after restoring the setting. This is not
+a global propagation guarantee; previous read/replay and immutable write contracts are unchanged.
+See FEATURE_STORAGE_TRIAL.md for bounded observations and emergency-recovery evidence limits.
+
 - `GET /` stays authenticated and read-only. It returns the full replay, compact preview, byte
   counts, quality summary and D1 query metadata.
 - `POST /feature-runs` is authenticated and writes only when
   `FEATURE_V2_WRITE_ENABLED=true` and `FEATURE_ENGINE_GIT_SHA` is a valid 7–64 character hex SHA.
-- The opt-in and SHA checks run before any D1 query. Setting
-  `FEATURE_V2_WRITE_ENABLED=false` therefore stops candidate reads and writes immediately.
+- The opt-in and SHA checks for POST run before any D1 query. Setting
+  `FEATURE_V2_WRITE_ENABLED=false` blocks POST reads/writes; authenticated GET replay remains read-only and available.
 - The candidate never updates `market_observations`, never publishes to GitHub, and cannot race
   with the production v1 writer.
 - Migration rollback is logical: disable the flag and retain the additive table. Do not drop the
@@ -125,3 +145,76 @@ to 53/53 after the additive read API and pure Signal Layer candidates.
 The relay's production persistence remains Feature v1 by default. The separate validator is the
 only validated compact Feature v2 writer; do not enable the relay's experimental full-tree v2 flag
 as a substitute for compact integration.
+
+## Default-disabled relay integration source
+
+The existing relay history path can optionally append compact Feature v2 after raw observation
+and legacy Feature persistence succeed. This is source preparation only; it creates no Worker,
+Cron, binding or migration and changes no collection/publication cadence.
+
+- `FEATURE_COMPACT_WRITE_ENABLED` must be the exact string `true`; absent/false leaves the prior
+  query/write/return path unchanged and does not require `feature_runs` to exist.
+- The opt-in requires non-secret `FEATURE_COMPACT_ENGINE_GIT_SHA` (40 hex) and
+  `FEATURE_COMPACT_ENGINE_SOURCE_SHA256` (64 hex), supplied and verified as release metadata at a
+  separately approved rollout. These identifiers are provenance, not authentication or independent
+  code attestation. This source change registers no runtime variable or Secret.
+- `FEATURE_ENGINE_V2_ENABLED=true` is the older experimental full-tree legacy-column path. It
+  conflicts with compact opt-in and is never silently used as a compact migration. Production
+  compact rollout must preserve legacy v1; no existing raw/legacy data is overwritten for migration.
+- The compact path reuses `historyFeatures`, `buildCompactFeatureRun`, bounded20-prior-day/
+  same-time queries, size-limited serialization, and the existing immutable INSERT/readback contract.
+  Every cutoff uses the immutable stored observation, including on a later same-slot retry.
+- Returned compact metadata comes from the stored row, not a retry's new engine, clock or quality.
+  An existing row is retained; no history update/delete or retention change occurs. Original quality
+  remains attached, including unusable/stale data; this storage path does not manufacture Signals.
+- Compact failure is caught after successful raw/legacy persistence and reported as derived failure.
+  It cannot reject that raw result or independently scheduled GitHub publication. An ambiguous
+  compact insert failure may have stored a row; idempotent future handling must never overwrite it.
+
+### Optional bounded compact trial (source only)
+
+`FEATURE_COMPACT_TRIAL_SLOT_MS` and `FEATURE_COMPACT_TRIAL_EXPIRES_AT_MS` may be supplied
+together with the separately authorized compact opt-in and release metadata. Both must be
+canonical positive decimal safe-integer millisecond strings, and expiry must follow the slot.
+Partial or invalid configuration fails closed for compact while raw/v1 persistence remains intact.
+Only the exact stored observation slot is eligible. Expiry is checked before compact history reads
+and again immediately before starting the immutable INSERT. Other slots or expired trials are
+reported as SKIPPED with their reason; no clock relabels the stored observation.
+
+This limits this compact path to one `(slot_ms, feature_version=2)` key under the existing
+immutable primary key, including retries/concurrent invocations with the same fixed configuration.
+It is not a one-request lock, scan/read quota, global database write budget, or automatic flag reset.
+An INSERT already in flight can complete after expiry. Raw/v1 writes and other database writers
+remain independent. Neither limit supplied preserves the existing continuous opt-in behavior.
+Actual use requires a separately approved future source deployment, fixed slot/expiry and release
+identity, verified effective bindings, and explicit disable/readback recovery. The retained deployed
+version23 does not contain these new checks. No bindings, schedules or deployment are changed here.
+
+Changing the relay source changes its full-file SHA even when Feature calculations are unchanged.
+The generated validator is rebuilt for source consistency, but this is not permission to redeploy it.
+Existing candidate runtime receipts and pinned local trial commands refer to their earlier exact
+release; keep their identities separate from this un-deployed relay integration source.
+
+Production deployment, actual opt-in, release variables, sustained database growth and authorized
+consumer rollout remain separate operational gates. No real financial ledger, research admission,
+Watch/BMW schedule or retention policy is changed by this implementation.
+
+## Legacy production-base source preparation
+
+`cloudflare/legacy-compact-preparation.mjs` prepares an optional compact hook against a separately
+verified legacy raw/v1 source instead of replacing that Worker with an entire newer relay branch.
+It performs no I/O, authentication, upload or deployment. The caller must independently pin and
+verify the exact base module hash and obtain authorization to handle that source privately.
+
+The preparer requires the known legacy Feature call and return contract, preserves every byte
+outside the history function, and adds the validated compact core/helper in a separate lexical
+scope. Legacy helper names, publication, scheduled handlers and the existing v1 call remain in
+place. Default-off behavior has no derived table dependency; explicit compact behavior follows
+the existing release-metadata and immutable readback contract. Unknown bases and repeat patching
+fail rather than broad source replacement.
+
+Local tests prove source-boundary preservation, lexical isolation, unchanged legacy v1 and real
+SQLite compact insertion on fictional input. They do not establish that a complete live module
+has been exported, prepared or deployed. Do not transmit complete production source or a large
+patch through external tooling without specific source-handling authorization. Existing source,
+compatibility, bindings, schedules and rollback version require independent predeployment review.

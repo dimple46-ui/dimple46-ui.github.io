@@ -1,0 +1,60 @@
+{
+  "kind": "LOCAL_PRIVATE_PROVIDER_CANDIDATE_VALIDATION",
+  "scope": "Synthetic implementation evidence only",
+  "base_commit": "2d53eb6db273e14501cf6efe2f964632bf51d90e",
+  "base_tree": "1ec17a11af3f5d8b943099a9b6c7443abc03a323",
+  "unchanged_base_code_blobs_verified": 126,
+  "base_mismatches": 0,
+  "node_version": "v24.19.0",
+  "targeted": {
+    "command": "node --test tests/private-durable-candidate.test.mjs tests/private-storage-adapter.test.mjs tests/research-approval-storage-protocol.test.mjs",
+    "pass": 35,
+    "fail": 0,
+    "skipped": 0
+  },
+  "full": {
+    "command": "node --test --test-reporter=tap tests/*.test.mjs",
+    "pass": 434,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "test_files": 57
+  },
+  "new_boundary_tests": 4,
+  "entry_syntax": "PASS",
+  "toml_parse_and_isolation": "PASS",
+  "source_files": [
+    {
+      "path": "private/durable-transaction-store.mjs",
+      "sha256": "dd8f36240c954af6923fe78956c8e577868252e7876cc6af8555a7fc9af95eb0"
+    },
+    {
+      "path": "private/cloudflare-candidate.mjs",
+      "sha256": "52b644d23e3a1482dc55538caf1f1af58b3dff2a1b40894342080c06582afc73"
+    },
+    {
+      "path": "tests/private-durable-candidate.test.mjs",
+      "sha256": "db0ac65f1cd1b3b01c79cb37dbb7a5afd06fdfbcfe4a5586da79cd42b4f34a15"
+    },
+    {
+      "path": "wrangler.private-risk-candidate.example.toml",
+      "sha256": "ee324ddaf2eb78bceda5bf4e56c9a86b85f0a4f6c2ddeae6258aed5935beee03"
+    },
+    {
+      "path": "PRIVATE_PROVIDER_CANDIDATE.md",
+      "sha256": "7580ca4c5b75cfbadb13b3acd6aeeeb047a6264a477a9218361a9af20ea3de54"
+    }
+  ],
+  "independent_source_review": "No blocking source issue; actual provider/RPC/deployment verification remains pending",
+  "limitations": [
+    "Cloudflare DurableObject base is a Node test-process double; hook removed after import",
+    "Transactions tested against a synchronous provider-shaped Node SQLite double, not Cloudflare storage",
+    "No provider module/RPC/crash/restore/durability evidence",
+    "No automatic schema/head/owner/key/nonce initialization",
+    "No authenticated intake, research approval, private data, sender or Watch connection"
+  ],
+  "deployment": "NOT_PERFORMED",
+  "remote_resources_changed": false,
+  "code_reference": "Containing source commit: unchanged base plus the listed exact file digests; receipt is not a live runtime claim"
+}

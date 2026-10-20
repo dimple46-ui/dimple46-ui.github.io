@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "base_saved_checkpoint_sha": "34cf47a1377e16367baebbd88817dc0379e3869c",
+  "status": "LOCAL_TESTED_BRANCH_NOT_UPDATED",
+  "scope": "REJECT_UNREPRESENTABLE_ALTERNATIVE_RISK_EXPIRY",
+  "reproduction": {
+    "before_fix": "INPUT_COMPLETE_NOT_RECOMMENDED",
+    "expected": "BLOCKED",
+    "inputs": "SYNTHETIC_EXISTING_FIXTURE_WITH_EXPIRY_8640000000000001_OR_MAX_SAFE_INTEGER",
+    "regression_test_failed_before_fix": true
+  },
+  "targeted": {
+    "passed": 41,
+    "failed": 0,
+    "skipped": 0
+  },
+  "full": {
+    "passed": 435,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "new_tests": 1,
+  "valid_timestamp_boundary_preserved": 8640000000000000,
+  "financial_assumptions_or_limits_changed": false,
+  "approval_storage_signal_watch_changed": false,
+  "remote_ci_runtime_or_deployment_validation": false,
+  "branch_ref_updated": false,
+  "files": [
+    {
+      "path": "domain/alternative-comparison.mjs",
+      "sha256": "961aad608ac3ddf3bd68c336d07c27d78aff6cfa40dfb8815b57d5d44e6f6c88"
+    },
+    {
+      "path": "tests/alternative-comparison.test.mjs",
+      "sha256": "27103a1dea216dc4d538742e18f0a0c57f39a01e74f85e1a29bbab24432d8023"
+    }
+  ]
+}

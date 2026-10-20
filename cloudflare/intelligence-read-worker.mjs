@@ -44,8 +44,8 @@ function tickerScope(url, {required = false, allowAll = true} = {}) {
     return {ticker: "ALL", metricPrefix: null};
   }
   if (allowAll && raw === "ALL") return {ticker: "ALL", metricPrefix: null};
+  if (!Object.hasOwn(ALLOWED_TICKERS, raw)) throw new ApiError(400, "INVALID_TICKER");
   const metricPrefix = ALLOWED_TICKERS[raw];
-  if (!metricPrefix) throw new ApiError(400, "INVALID_TICKER");
   return {ticker: raw, metricPrefix};
 }
 

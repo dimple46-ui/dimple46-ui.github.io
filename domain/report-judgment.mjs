@@ -1,13 +1,18 @@
 import {createHash} from 'node:crypto';
 const requireValue=(ok,code)=>{if(!ok)throw new Error(code);};
 const text=s=>typeof s==='string'&&s.trim().length>0;
-const time=n=>Number.isSafeInteger(n)&&n>0;
+const time=n=>Number.isSafeInteger(n)&&n>0&&Number.isFinite(new Date(n).getTime());
+function publicationTime(value){
+ if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))return null;
+ const date=Date.parse(`${value}T00:00:00Z`);
+ return Number.isFinite(date)&&new Date(date).toISOString().slice(0,10)===value?date:null;
+}
 function freeze(value){if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;}
 function document(d,cutoff){
- requireValue(text(d?.documentId)&&text(d?.issuerId)&&/^\d{6}$/.test(d?.ticker??''),'INVALID_REPORT_IDENTITY');
+ requireValue(text(d?.documentId)&&text(d?.issuerId)&&typeof d?.ticker==='string'&&/^\d{6}$/.test(d.ticker),'INVALID_REPORT_IDENTITY');
  requireValue(d.originalRead===true&&text(d.location)&&text(d.author)&&/^\d{4}-\d{2}-\d{2}$/.test(d.publishedDate??''),'ORIGINAL_SOURCE_REQUIRED');
- const date=Date.parse(`${d.publishedDate}T00:00:00Z`);
- requireValue(Number.isFinite(date)&&new Date(date).toISOString().slice(0,10)===d.publishedDate,'INVALID_PUBLICATION_DATE');
+ const date=publicationTime(d.publishedDate);
+ requireValue(date!==null,'INVALID_PUBLICATION_DATE');
  requireValue(time(d.firstSeenAtMs)&&d.firstSeenAtMs<=cutoff&&date<=d.firstSeenAtMs,'FUTURE_OR_BACKDATED_SOURCE');
  let url;try{url=new URL(d.url);}catch{throw new Error('INVALID_SOURCE_URL');}
  requireValue(url.protocol==='https:'&&!url.username&&!url.password,'INVALID_SOURCE_URL');
@@ -48,11 +53,24 @@ export function createReportJudgment(input){
  const contentSha256=createHash('sha256').update(JSON.stringify(body)).digest('hex');
  return freeze({...body,contentSha256});
 }
+function validateRecord(record){
+ const {contentSha256,...body}=record??{};
+ requireValue(typeof contentSha256==='string'&&createHash('sha256').update(JSON.stringify(body)).digest('hex')===contentSha256,'JUDGMENT_HASH_MISMATCH');
+ requireValue(createReportJudgment(record).contentSha256===contentSha256,'JUDGMENT_HASH_MISMATCH');
+}
 export function appendReportJudgment(records,record){
  requireValue(Array.isArray(records),'INVALID_JUDGMENT_LOG');
+ records.forEach(validateRecord);
  requireValue(!records.some(r=>r.judgmentId===record?.judgmentId),'JUDGMENT_ALREADY_EXISTS');
  const {contentSha256,...body}=record??{};
  requireValue(typeof contentSha256==='string'&&createHash('sha256').update(JSON.stringify(body)).digest('hex')===contentSha256,'JUDGMENT_HASH_MISMATCH');
+ requireValue(time(record.generatedAtMs)&&time(record.inputCutoffMs)&&record.inputCutoffMs<=record.generatedAtMs&&
+  [record.baseline,record.current].every(d=>{
+   const publishedAtMs=publicationTime(d?.publishedDate);
+   return time(d?.firstSeenAtMs)&&d.firstSeenAtMs<=record.inputCutoffMs&&publishedAtMs!==null&&publishedAtMs<=d.firstSeenAtMs;
+  }),
+  'INVALID_JUDGMENT_APPEND_TIME');
+ validateRecord(record);
  requireValue(records.every(r=>time(r.generatedAtMs)&&r.generatedAtMs<=record.generatedAtMs),'BACKDATED_JUDGMENT_APPEND');
  return freeze([...structuredClone(records),structuredClone(record)]);
 }

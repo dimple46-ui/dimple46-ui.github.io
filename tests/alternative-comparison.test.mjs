@@ -20,6 +20,50 @@ function fixture(){
  risk:{downside:'Fictional downside',catalyst:'Fictional review event',invalidation:'Fictional premise fails',
  expiresAtMs:now+1000,evidenceRefs:ref}}))};
 }
+function withGoals(){const f=fixture();f.schedule={schemaVersion:1,ledgerAsOfMs:now,accounts:[{accountRef:'fake-account',coverageComplete:true,
+ obligations:[{obligationRef:'fictional-payment',amountKrw:100,dueAtMs:now+1000,status:'OPEN',cashTreatment:'NOT_DEDUCTED_FROM_WITHDRAWABLE',sourceRef:'synthetic',verifiedAtMs:now}]}]};
+ f.goalPlan={schemaVersion:1,revision:1,currency:'KRW',ledgerAsOfMs:now,sourceRef:'synthetic',verifiedAtMs:now,coverageComplete:true,
+  accounts:[{accountRef:'fake-account',protectedCashKrw:100}],
+  goals:[{goalRef:'fictional-goal',revision:1,purpose:'EDUCATION',amountKrw:1600,amountAsOfMs:now,dueAtMs:now+1000,essential:true,priority:1,deferrable:false}],
+  allocations:[{allocationRef:'fictional-earmark',goalRef:'fictional-goal',accountRef:'fake-account',amountKrw:1600,obligationRef:null}]};return f;}
+test('goal-aware comparison cannot reuse earmarked cash and never treats aggregate capacity as cleared funds',()=>{
+ const f=withGoals(),before=structuredClone(f),r=compareAlternatives(f,policy);
+ assert.deepEqual(f,before);assert.ok(r.rows.every(x=>x.status==='KNOWN_FUNDING_GAP'&&x.fundingGapKrw===300));
+ assert.equal(r.goalFunding.unallocatedCashKrw,200);assert.equal(r.goalFunding.shortfallKrw,0);
+ assert.equal(r.goalFunding.goalRevisionEvidence,'CALLER_DECLARED_NOT_CONTENT_BOUND_OR_MONOTONICALLY_VERIFIED');
+ assert.equal(r.fundingBasis,'GOAL_UNALLOCATED_AGGREGATE_CASH_UPPER_BOUND');assert.equal(r.fundingGapInterpretation,'MINIMUM_GAP_NOT_ACCOUNT_ROUTED_CLEARANCE');
+ assert.ok(!['fake-account','fictional-goal','fictional-earmark','fictional-payment'].some(x=>JSON.stringify(r).includes(x)));
+ f.capitalKrw=100;const enough=compareAlternatives(f,policy);
+ assert.ok(enough.rows.every(x=>x.status==='WITHIN_DECLARED_CASH_UPPER_BOUND_NOT_CLEARED'&&x.fundingGapKrw===0));
+ assert.equal(enough.recommendation,null);assert.equal(enough.ranking,null);assert.equal(enough.tradeQuantities,null);
+});
+test('unknown or invalid goal input blocks goal-aware funding without falling back to the old remainder',()=>{
+ for(const mutate of [f=>f.goalPlan.goals[0].amountKrw=null,f=>f.goalPlan.goals[0].dueAtMs=null,
+  f=>f.goalPlan.allocations[0].amountKrw=1900,f=>delete f.schedule,f=>f.goalPlan.currency='USD']){
+  const f=withGoals();mutate(f);const r=compareAlternatives(f,policy);
+  assert.ok(r.rows.every(x=>x.status==='BLOCKED'&&x.fundingGapKrw===null&&x.missing.includes('COMPLETE_GOAL_FUNDING_CONTEXT_REQUIRED')));
+  assert.equal(r.goalFunding.unallocatedCashKrw,null);assert.equal(r.ranking,null);
+ }
+});
+test('goal-aware comparison applies costs once and links already reserved obligations without subtracting again',()=>{
+ const f=withGoals();f.goalPlan.allocations[0].amountKrw=100;f.goalPlan.allocations[0].obligationRef='fictional-payment';f.goalPlan.goals[0].amountKrw=100;
+ f.alternatives[1].costs.feesKrw=1400;const r=compareAlternatives(f,policy);
+ assert.equal(r.goalFunding.unallocatedCashKrw,1800);assert.equal(r.rows[1].requiredCashKrw,1900);assert.equal(r.rows[1].fundingGapKrw,100);
+ assert.equal(r.rows[2].requiredCashKrw,500);assert.equal(r.rows[2].fundingGapKrw,0);
+ const legacy=fixture(),old=compareAlternatives(legacy,policy);assert.ok(!Object.hasOwn(old,'goalFunding')&&!Object.hasOwn(old,'fundingBasis'));
+ assert.ok(old.rows.every(x=>x.status==='INPUT_COMPLETE_NOT_RECOMMENDED'));
+});
+test('another account surplus cannot conceal existing payment or protected-cash shortfalls',()=>{
+ for(const due of [100,200]){
+  const f=withGoals();f.ledger.accounts[0].cash.withdrawableKrw=100;f.ledger.accounts[0].additionalOutflowsKrw=due;
+  f.schedule.accounts[0].obligations[0].amountKrw=due;f.goalPlan.allocations=[];
+  const b=structuredClone(f.ledger.accounts[0]);b.accountRef='fictional-B';b.cash.withdrawableKrw=500;b.additionalOutflowsKrw=0;b.holdings=[];b.debts=[];
+  f.ledger.accounts.push(b);f.schedule.accounts.push({accountRef:b.accountRef,coverageComplete:true,obligations:[]});
+  f.goalPlan.accounts.push({accountRef:b.accountRef,protectedCashKrw:0});
+  const r=compareAlternatives(f,policy);assert.equal(r.goalFunding.unallocatedCashKrw,500);assert.equal(r.goalFunding.cashProtectionStatus,'SHORTFALL');
+  assert.ok(r.rows.every(x=>x.status==='BLOCKED'&&x.fundingGapKrw===null&&x.missing.includes('EXISTING_PAYMENT_OR_PROTECTED_CASH_SHORTFALL')));
+ }
+});
 test('four common-budget alternatives preserve merit/fit disagreement and never rank or size trades',()=>{
  const f=fixture(),before=structuredClone(f),r=compareAlternatives(f,policy);
  assert.deepEqual(f,before);assert.deepEqual(r,compareAlternatives(f,policy));assert.equal(r.rows.length,4);
@@ -62,4 +106,22 @@ test('evidence newer than the declared input cutoff and malformed account scopes
  assert.ok(compareAlternatives(f,policy).rows.every(r=>r.status==='BLOCKED'));
  const malformed=fixture();malformed.ledger.accounts={};
  assert.ok(compareAlternatives(malformed,policy).rows.every(r=>r.status==='BLOCKED'));
+});
+test('numeric candidate ticker cannot pass a six-digit regex through implicit string coercion',()=>{
+ const f=fixture();f.alternatives[1].ticker=123456;
+ const r=compareAlternatives(f,policy);
+ assert.equal(r.rows[1].status,'BLOCKED');assert.ok(r.rows[1].missing.includes('TICKER_REQUIRED'));
+ assert.equal(r.rows[1].requiredCashKrw,null);assert.equal(r.rows[2].status,'INPUT_COMPLETE_NOT_RECOMMENDED');
+});
+test('unrepresentable risk expiry timestamps cannot make an alternative input-complete',()=>{
+ for(const expiresAtMs of [8640000000000001,Number.MAX_SAFE_INTEGER]){
+  const f=fixture();f.alternatives[0].risk.expiresAtMs=expiresAtMs;
+  const r=compareAlternatives(f,policy);
+  assert.equal(r.rows[0].status,'BLOCKED');
+  assert.ok(r.rows[0].missing.includes('RISK_EXPIRY_EVIDENCE_REQUIRED'));
+  assert.equal(r.rows[0].requiredCashKrw,null);
+  assert.equal(r.rows[2].status,'INPUT_COMPLETE_NOT_RECOMMENDED');
+ }
+ const f=fixture();f.alternatives[0].risk.expiresAtMs=8640000000000000;
+ assert.equal(compareAlternatives(f,policy).rows[0].status,'INPUT_COMPLETE_NOT_RECOMMENDED');
 });

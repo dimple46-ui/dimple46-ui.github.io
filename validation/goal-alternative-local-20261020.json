@@ -1,0 +1,53 @@
+{
+  "scope": "PUBLIC_CODE_AND_FICTIONAL_LOCAL_INPUTS_ONLY",
+  "recordedAtUtc": "2026-10-20T02:51:03.190883+00:00",
+  "baseHead": "84dbc60e6ebbcc8233e5d36a4c697366a4fd765e",
+  "requirement": "Existing alternative comparison must not reuse cash already earmarked for life goals",
+  "before": {
+    "targetedNewCases": 3,
+    "failed": 3,
+    "cause": "Direct legacy ledger remainder ignored optional goalPlan/schedule"
+  },
+  "changes": [
+    "reuse_existing_goal_cash_evaluator_when_explicitly_requested",
+    "unknown_invalid_goal_context_blocks_without_legacy_fallback",
+    "zero_gap_explicitly_not_account_routed_or_policy_cleared",
+    "positive_gap_is_minimum_aggregate_gap",
+    "account_payment_and_protected_cash_shortfalls_block_even_with_other_account_surplus",
+    "whole_linked_obligation_and_costs_each_counted_once",
+    "no_goal_response_shape_and_recommendation_ranking_quantities_null_preserved"
+  ],
+  "sourceSha256": {
+    "domain/alternative-comparison.mjs": "72a5235445eb2467a939298df2f80b0783efcf4610bbadf0c4a58e51ab6cec1a",
+    "domain/life-goal-funding.mjs": "e7c2e04080a886ce187f1dfde68b45c1d01c76b2999461d7e63aa2dfe1fbcaf4",
+    "tests/alternative-comparison.test.mjs": "2f641b5c378f6c0a149ccf00441b8ca01362688bb6cc2d5a1ecd84c84c5074c7"
+  },
+  "validation": {
+    "newTests": 4,
+    "related": {
+      "passed": 74,
+      "failed": 0
+    },
+    "full": {
+      "command": "node --test --test-concurrency=4 tests/*.test.mjs",
+      "passed": 524,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "independentReadOnlyReview": "No additional correctness defect found"
+  },
+  "runtime": {
+    "deployed": false,
+    "actualFinancialInput": false,
+    "remoteDatabaseWrite": false,
+    "financialPolicyApproved": false,
+    "watchChanged": false
+  },
+  "limitations": [
+    "current_declared_KRW_cash_only",
+    "aggregate_cash_upper_bound_not_routing_settlement_or_suitability",
+    "no_future_goal_projection_expected_return_rank_or_optimized_allocation",
+    "decision_execution_and_operational_approval_not_created"
+  ]
+}

@@ -1,4 +1,4 @@
-import {readFile} from 'node:fs/promises';
+import {readLocalReplayJson} from './read-local-replay-json.mjs';
 import {pathToFileURL} from 'node:url';
 import {validateStockFlowSnapshot} from './validate-stock-flow-snapshot.mjs';
 import {generateStockFlowSignalsV3} from '../cloudflare/signal-v3-stock-flow.mjs';
@@ -43,7 +43,7 @@ export function validateStockFlowV3Replay(snapshot,{engineGitSha}={}) {
 }
 if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {
   try {
-    const result=validateStockFlowV3Replay(JSON.parse(await readFile(process.argv[2],'utf8')),{engineGitSha:process.argv[3]});
+    const result=validateStockFlowV3Replay(readLocalReplayJson(process.argv[2]),{engineGitSha:process.argv[3]});
     console.log(JSON.stringify(result,null,2));
     if(result.status!=='PASS') process.exitCode=1;
   } catch(error) {

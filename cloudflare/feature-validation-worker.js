@@ -1,5 +1,5 @@
 // Generated from PR candidate; do not edit.
-const CANDIDATE_SHA256 = "f21b700675c8ca0cb312b79db65af559dafdef09e896cbbeb953677bdfdb5d2a";
+const CANDIDATE_SHA256 = "795d2f19141222aa1b1d2116c0e40c884a8fd80239c3f6ccd2b17409b38c6b8e";
 const FEATURE_VERSION = 2;
 const SAME_TIME_TOLERANCE_MS = 150000;
 const KST_OFFSET_MS = 32400000;
@@ -673,10 +673,16 @@ export default {
     if(!env.VALIDATION_TOKEN||request.headers.get('Authorization')!==`Bearer ${env.VALIDATION_TOKEN}`)
       return Response.json({error:'UNAUTHORIZED'},{status:401});
     const url=new URL(request.url),started=Date.now();
-    if(request.method==='GET'&&url.pathname!=='/'&&!/^\/replay\/\d+$/.test(url.pathname))
+    if(request.method==='GET'&&url.pathname!=='/'&&url.pathname!=='/write-control'&&!/^\/replay\/\d+$/.test(url.pathname))
       return Response.json({error:'NOT_FOUND'},{status:404});
     if(request.method==='POST'&&url.pathname!=='/feature-runs') return Response.json({error:'NOT_FOUND'},{status:404});
     if(!['GET','POST'].includes(request.method)) return Response.json({error:'METHOD_NOT_ALLOWED'},{status:405});
+    // Runtime bindings, not a D1 write or market-data freshness assertion. Auth checked above.
+    if(request.method==='GET'&&url.pathname==='/write-control')
+      return Response.json({mode:'WRITE_CONTROL',schemaVersion:1,writeEnabled:featureWriteEnabled(env),
+        engineGitSha:validEngineGitSha(env.FEATURE_ENGINE_GIT_SHA)?String(env.FEATURE_ENGINE_GIT_SHA):null,
+        candidateSha256:CANDIDATE_SHA256,scope:'RUNTIME_BINDINGS_ONLY'},
+        {headers:{'Cache-Control':'no-store'}});
     try {
       if(request.method==='POST'&&!featureWriteEnabled(env))
         return Response.json({error:'FEATURE_WRITE_DISABLED'},{status:403});
@@ -702,17 +708,27 @@ export default {
       ).bind(run.slotMs,run.featureVersion).all();
       if(!storedResult.success||!storedResult.results?.[0]) throw new Error('FEATURE_RUN_NOT_VISIBLE');
       const writeMeta=normalizedD1Meta(write),stored=storedResult.results[0];
-      console.log(JSON.stringify({event:'FEATURE_RUN_WRITE',status:(writeMeta.changes??writeMeta.rowsWritten)===0?'EXISTS':'INSERTED',
-        slotMs:run.slotMs,featureVersion:run.featureVersion,generationStatus:run.generationStatus,
-        compactFeaturesBytes:run.validation.compactFeatureBytes,qualityCeiling:run.qualityCeiling,
+      const changed=writeMeta.changes??writeMeta.rowsWritten;
+      const status=changed===0?'EXISTS':Number.isSafeInteger(changed)&&changed>0?'INSERTED':'STORED_WRITE_OUTCOME_UNKNOWN';
+      const storedValidation=JSON.parse(stored.validation_json);
+      // A retry may find an older immutable run. Never describe the recomputation as that stored row.
+      const persisted={slotMs:stored.slot_ms,featureVersion:stored.feature_version,
+        engineGitSha:stored.engine_git_sha,engineSourceSha256:stored.engine_source_sha256,
+        observedAtMs:stored.observed_at_ms,generatedAtMs:stored.generated_at_ms,inputCutoffMs:stored.input_cutoff_ms,
+        qualityCeiling:stored.quality_ceiling,generationStatus:stored.generation_status,
+        compactFeaturesBytes:new TextEncoder().encode(stored.compact_features_json).length,
+        fullFeatureBytes:storedValidation.fullFeatureBytes??null,reductionPct:storedValidation.reductionPct??null};
+      const computed={slotMs:run.slotMs,featureVersion:run.featureVersion,engineGitSha:run.engineGitSha,
+        engineSourceSha256:run.engineSourceSha256,observedAtMs:run.observedAtMs,generatedAtMs:run.generatedAtMs,
+        inputCutoffMs:run.inputCutoffMs,qualityCeiling:run.qualityCeiling,generationStatus:run.generationStatus,
+        compactFeaturesBytes:run.validation.compactFeatureBytes,fullFeatureBytes:run.validation.fullFeatureBytes,
+        reductionPct:run.validation.reductionPct};
+      console.log(JSON.stringify({event:'FEATURE_RUN_WRITE',status,metadataScope:'STORED_FEATURE_RUN',...persisted,
         elapsedWallMs:Date.now()-started,queryMeta:replay.queryMeta,writeMeta}));
       return Response.json({mode:'CANDIDATE_COMPACT_WRITE',candidateSha256:CANDIDATE_SHA256,
-        status:(writeMeta.changes??writeMeta.rowsWritten)===0?'EXISTS':'INSERTED',slotMs:run.slotMs,
-        featureVersion:run.featureVersion,engineGitSha:run.engineGitSha,qualityCeiling:run.qualityCeiling,
-        generationStatus:run.generationStatus,compactFeaturesBytes:run.validation.compactFeatureBytes,
-        fullFeatureBytes:run.validation.fullFeatureBytes,reductionPct:run.validation.reductionPct,
+        status,metadataScope:'STORED_FEATURE_RUN',...persisted,
+        computed,stored:persisted,
         queryMeta:replay.queryMeta,writeMeta,verifyMeta:normalizedD1Meta(storedResult),
-        stored:{slotMs:stored.slot_ms,featureVersion:stored.feature_version,generationStatus:stored.generation_status},
         elapsedWallMs:Date.now()-started,measurementNote:'Wall time is not Worker CPU. No market_observations row was updated.'},
         {headers:{'Cache-Control':'no-store'}});
     } catch(error) {

@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "created_at_kst": "2026-10-18T15:36:10+09:00",
+  "verified_code_sha": "cea109f93b507e5477f2b139548985cd3648c57d",
+  "parent_checkpoint": "92d4f0c4d9c7e97e0a1ac35e7ee3709e8759ec7f",
+  "scope": "Explicit local schema2 CLI review and bounded reads for all modes; no receiver or approval",
+  "new_tests": 3,
+  "targeted": {
+    "passed": 47,
+    "failed": 0,
+    "skipped": 0
+  },
+  "full_local": {
+    "command": "node --test tests/*.test.mjs",
+    "passed": 421,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "inputs": "SYNTHETIC_ONLY; existing successful actual review evidence reused separately, not revalidated",
+  "existing_v1_schema_hash_consumers": "UNCHANGED",
+  "general_draft_engine": "UNCHANGED",
+  "approval_recorded": false,
+  "receipt_intake": false,
+  "historical_replay_enabled": false,
+  "deployed": false,
+  "production_changed": false,
+  "parent_provider_check": {
+    "id": 117607233158,
+    "conclusion": "SKIPPED"
+  },
+  "current_ci": "NOT_YET_OBSERVED",
+  "files": [
+    {
+      "path": "scripts/validate-research-package.mjs",
+      "sha256": "923e800d43c30f3181e0952287488117be4a9d56148974ead46152a615abcb75"
+    },
+    {
+      "path": "tests/research-general-cli.test.mjs",
+      "sha256": "b9ff141b1148bb39643270631e3219966e29a3c8200778b4f821fd6077b5207c"
+    }
+  ]
+}

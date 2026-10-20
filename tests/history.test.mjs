@@ -227,3 +227,58 @@ test('unbound/disabled/holiday history does not write',async()=>{
  assert.equal(s.db.prepare('SELECT COUNT(*) AS n FROM market_observations').get().n,0);
  }finally{s.db.close();}
 });
+
+test('compact opt-in is additive, preserves legacy v1 and immutable retry provenance',async()=>{
+ const s=setup();try {
+  s.db.exec(readFileSync(new URL('../migrations/0002_feature_runs.sql',import.meta.url),'utf8'));
+  Object.assign(s.ctx.env,{FEATURE_ENGINE_V2_ENABLED:'false',FEATURE_COMPACT_WRITE_ENABLED:'true',
+   FEATURE_COMPACT_ENGINE_GIT_SHA:'a'.repeat(40),FEATURE_COMPACT_ENGINE_SOURCE_SHA256:'b'.repeat(64)});
+  const first=await put(s,10);
+  assert.equal(first.status,'STORED');assert.equal(first.compact.status,'INSERTED');
+  const raw={...s.db.prepare('SELECT * FROM market_observations').get()};
+  const compact={...s.db.prepare('SELECT * FROM feature_runs').get()};
+  assert.equal(JSON.parse(raw.features_json).version,1);assert.equal(compact.feature_version,2);
+  assert.equal(compact.input_cutoff_ms,raw.observed_at_ms);assert.equal(first.compact.engineGitSha,'a'.repeat(40));
+  s.ctx.env.FEATURE_COMPACT_ENGINE_GIT_SHA='c'.repeat(40);
+  const changed=sample(10);changed.stocks.samsung.price=9999;
+  const retry=await put(s,10,changed);
+  assert.equal(retry.compact.status,'EXISTS');assert.equal(retry.compact.engineGitSha,'a'.repeat(40));
+  assert.equal(retry.compact.generatedAtMs,compact.generated_at_ms);
+  assert.deepEqual({...s.db.prepare('SELECT * FROM market_observations').get()},raw);
+  assert.deepEqual({...s.db.prepare('SELECT * FROM feature_runs').get()},compact);
+ } finally {s.db.close();}
+});
+test('compact off/default requires no derived table and leaves the legacy return contract unchanged',async()=>{
+ const s=setup();try {
+  s.ctx.env.FEATURE_ENGINE_V2_ENABLED='false';
+  const result=await put(s,10);assert.equal(result.status,'STORED');
+  assert.equal(Object.hasOwn(result,'compact'),false);
+  assert.equal(JSON.parse(s.db.prepare('SELECT features_json FROM market_observations').get().features_json).version,1);
+ } finally {s.db.close();}
+});
+test('compact metadata and conflicting legacy v2 modes fail closed after raw storage',async()=>{
+ for(const conflict of [false,true]) {
+  const s=setup();try {
+   Object.assign(s.ctx.env,{FEATURE_ENGINE_V2_ENABLED:String(conflict),FEATURE_COMPACT_WRITE_ENABLED:'true'});
+   const result=await put(s,10);assert.equal(result.status,'STORED');assert.equal(result.compact.status,'FAILED');
+   assert.equal(result.compact.reason,conflict?'LEGACY_V2_MODE_CONFLICT':'COMPACT_RELEASE_METADATA_REQUIRED');
+   assert.equal(s.db.prepare('SELECT COUNT(*) n FROM market_observations').get().n,1);
+   assert.equal(JSON.parse(s.db.prepare('SELECT features_json FROM market_observations').get().features_json).version,conflict?2:1);
+  } finally {s.db.close();}
+ }
+});
+test('derived storage failure cannot reject raw persistence or GitHub publication',async()=>{
+ const s=setup();try {
+  Object.assign(s.ctx.env,{FEATURE_ENGINE_V2_ENABLED:'false',FEATURE_COMPACT_WRITE_ENABLED:'true',
+   FEATURE_COMPACT_ENGINE_GIT_SHA:'a'.repeat(40),FEATURE_COMPACT_ENGINE_SOURCE_SHA256:'b'.repeat(64)});
+  const result=await put(s,10);assert.equal(result.status,'STORED');
+  assert.equal(result.compact.status,'FAILED');assert.equal(result.compact.reason,'COMPACT_STORAGE_FAILED');
+  assert.equal(JSON.parse(s.db.prepare('SELECT features_json FROM market_observations').get().features_json).version,1);
+  s.ctx.payload=sample(12);s.ctx.jobs=[];s.ctx.context={waitUntil:p=>s.ctx.jobs.push(p)};
+  s.run(`let compactFailureGithubWrites=0;fetchLiveMarket=async()=>({data:{},ageMs:0});
+   enrichWithKis=async()=>({});buildPayload=()=>payload;updateGithubFile=async()=>{compactFailureGithubWrites++;};`);
+  await s.run('runRelay(env,context)');await Promise.all(s.ctx.jobs);
+  assert.equal(s.run('compactFailureGithubWrites'),1);
+  assert.equal(s.db.prepare('SELECT COUNT(*) n FROM market_observations').get().n,2);
+ } finally {s.db.close();}
+});

@@ -3,6 +3,7 @@
 import {runPrivateRiskWorkflow} from '../domain/private-risk-workflow.mjs';
 import {parsePrivateInputRequest} from './input-request.mjs';
 import {privateReleaseIdentity,privatePolicySnapshot,privatePolicyTag} from './analysis-provenance.mjs';
+import {checkPrivateGoalVersionHistory,applyPrivateGoalHistory} from './goal-version-history.mjs';
 import {PrivateStorageError,fail,opaqueId,intentId,timestamp,scopeValid,sameScope,context,canonicalJson,envelopeValid} from './storage-contract.mjs';
 const allowedErrors=new Set(['UNAUTHORIZED','INVALID_REQUEST','INVALID_OR_OVERSIZED_JSON','STORE_FROZEN_OR_SCOPE_MISMATCH',
  'REVISION_CONFLICT','REVISION_EXHAUSTED','TIME_REGRESSION','IDEMPOTENCY_CONFLICT','WORKFLOW_NOT_COMMITTABLE',
@@ -31,11 +32,14 @@ export function createPrivateInputAdapter({authorize,getStore,getPolicy,crypto,c
    if(previousEventState===null||typeof previousEventState!=='object')fail('STORE_FROZEN_OR_SCOPE_MISMATCH');
    const nowMs=clock(),policy=privatePolicySnapshot(await getPolicy(scope,nowMs),nowMs);
    const policyTag=await privatePolicyTag(crypto,scope,policy);
-   const result=workflow(request.inputs,{...policy,previousEventState});
+   let result=workflow(request.inputs,{...policy,previousEventState});
    if(result?.contractVersion!==1||result.scope!=='PRIVATE_LOCAL_WORKFLOW_ONLY'||result.events?.status!=='REDUCED'||
      result.events.stateHandling==='RETAIN_CALLER_STATE_UNCHANGED'||result.events.state===null||typeof result.events.state!=='object'||result.generatedAtMs!==nowMs||
      !timestamp(result.inputCutoffMs)||result.inputCutoffMs>nowMs||!Array.isArray(result.events.intents)||result.events.intents.length>64)
     fail('WORKFLOW_NOT_COMMITTABLE');
+   const history=await checkPrivateGoalVersionHistory({store,scope,head,crypto,inputs:request.inputs,workflow:result,
+    checkAccess(){if(principal.expiresAtMs!==undefined&&(!timestamp(principal.expiresAtMs)||clock()>=principal.expiresAtMs))fail('UNAUTHORIZED');}});
+   result=applyPrivateGoalHistory(result,history);
    const revision=head.revision+1;if(!Number.isSafeInteger(revision))fail('REVISION_EXHAUSTED');
    // Async crypto completes before transaction. Store rechecks scope/revision under its synchronous transaction.
    async function seal(value,kind,id){const payload=canonicalJson(value,524288),sealed=await crypto.seal(payload,context(scope,kind,id));

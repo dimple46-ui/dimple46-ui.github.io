@@ -6,9 +6,20 @@ D1 History MVP stores immutable two-minute observations and computes past-only 5
 
 ## Feature Engine 2.0 candidate
 
-Derived window/source-aligned metrics retain the weakest quality of historical inputs actually used. Scheduled estimate buckets remain UNVERIFIED_TIME; a LIVE current sample cannot upgrade an unverified baseline. Existing combinedFeatureQuality and downstream Signal2 confidence ceilings are reused. Numeric formulas, Feature2/Signal2 versions and compact encoding are unchanged.
+Calculated historical comparisons retain the weakest quality of the actual samples used, using
+the existing quality-combination helper. Window deltas, source-aligned program comparisons,
+volume/momentum/flow acceleration, realized volatility, stock-bucket derived fields and intraday
+baseline returns must not become VERIFIED solely because the newest sample is LIVE. Existing
+relative-strength/divergence/futures classifications inherit that corrected metric quality.
+Numeric formulas, time bases, Feature2/Signal2 versions and compact encoding remain unchanged;
+only quality labels and the existing downstream confidence ceilings may become more conservative.
+The generated validation Worker must be rebuilt with the existing builder. This is source/local
+validation only until a separately approved runtime rollout is verified.
 
-Realized volatility includes the explicit current observation exactly once, with identical results whether that row is already in query history. RSS log-return formula, percent units and quality filtering remain unchanged. The existing generated validator is rebuilt from the relay source. These source corrections do not establish a deployed/runtime result.
+Realized volatility includes the explicit current observation exactly once. Its result must be
+identical whether the history query already contains that current row or returns only earlier
+rows. The existing root-sum-square log-return formula, percent unit and sample-quality filtering
+are unchanged; omission of the final return when current was not stored is corrected.
 
 The candidate keeps latest-snapshot `schemaVersion: 3` and raw history schema version 1. Production
 `market_observations.features_json` remains v1. Candidate v2 output uses the additive `feature_runs` table after explicit write opt-in; no backfill
@@ -27,7 +38,7 @@ target.
 - Futures position classification: price/OI heuristic with supporting evidence, contrary evidence, low/medium unvalidated confidence and an explicit limitation. It is not confirmed positioning.
 - Same-time history: latest usable observation at or before the same KST time, within 150 seconds, for the latest 5/10/20 observed trading days. Complete samples are required before mean, median, population standard deviation, percentile, z-score and ratio-to-mean become valid.
 
-Every window records `generatedAt`, `inputCutoff`, `actualElapsedSeconds` and sample count. Derived values carry status and quality where applicable. `RECENT_FETCH` remains `UNVERIFIED_TIME`; missing/stale data, counter resets and futures contract changes stay null. The cutoff rejects observations or inputs that were unavailable at generation time, never interpolates from a future sample and never crosses a KST trading date.
+Every window records `generatedAt`, `inputCutoff`, `actualElapsedSeconds` and sample count. Derived values carry status and quality where applicable. `RECENT_FETCH` remains `UNVERIFIED_TIME`; `CURRENT_BUCKET` estimates with `SOURCE_SCHEDULED_BUCKET` also retain `UNVERIFIED_TIME`, capping downstream Signal confidence at `MEDIUM`. A scheduled publication bucket does not verify exchange trade time. Missing/stale data, counter resets and futures contract changes stay null. The cutoff rejects observations or inputs that were unavailable at generation time, never interpolates from a future sample and never crosses a KST trading date.
 
 Realized volatility is the root-sum-square of observed log-return percentages within the actual window. It is sampling-dependent and not annualized. Price return over each actual window is the short-term momentum measurement.
 

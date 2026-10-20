@@ -29,7 +29,7 @@ export function evaluateAssetLedger(ledger,prices,{nowMs,maxLedgerAgeMs,maxPrice
     const tickers=new Set();
     for(const [j,h] of (Array.isArray(a?.holdings)?a.holdings:[]).entries()){
       const p=`${path}.holdings[${j}]`;
-      if(!/^\d{6}$/.test(h?.ticker??'')||tickers.has(h.ticker))issue(p,'INVALID_OR_DUPLICATE_TICKER');
+      if(typeof h?.ticker!=='string'||!/^\d{6}$/.test(h.ticker)||tickers.has(h.ticker))issue(p,'INVALID_OR_DUPLICATE_TICKER');
       tickers.add(h?.ticker);
       if(!money(h?.quantity)) {issue(p,'QUANTITY_REQUIRED');continue;}
       if(h.quantity===0)continue;

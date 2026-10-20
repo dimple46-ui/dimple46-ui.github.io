@@ -13,6 +13,7 @@ export function assertReadMeta(meta) {
     if ('rowsWritten' in value) {
       requireCheck(value.rowsWritten === 0, 'D1_WRITE_DETECTED');
       requireCheck(Number.isFinite(value.rowsRead) && value.rowsRead >= 0, 'ROWS_READ_MISSING');
+      requireCheck(Object.values(value).every(child => child === null || typeof child !== 'object'), 'QUERY_META_MISSING');
       count++;
     } else for (const child of Object.values(value)) visit(child);
   }
@@ -60,7 +61,8 @@ export function assertSummary(summary, {expectedSha, referenceMs, maxObservation
       .includes(storedFeature.qualityCeiling) ? storedFeature.qualityCeiling : 'UNKNOWN';
     requireCheck(feature.quality === expectedQuality, 'SUMMARY_FEATURE_QUALITY_NOT_PRESERVED');
   }
-  if (feature?.status === 'AVAILABLE') requireCheck(feature.featureVersion === 2 && feature.ageMs >= 0 &&
+  if (feature?.status === 'AVAILABLE') requireCheck(feature.featureVersion === 2 &&
+    Number.isSafeInteger(feature.inputCutoffMs) && feature.inputCutoffMs > 0 && Number.isSafeInteger(feature.ageMs) && feature.ageMs >= 0 &&
     feature.ageMs <= maxFeatureAgeMs && ['VERIFIED','RECENT_FETCH','UNVERIFIED_TIME'].includes(feature.quality),
     'SUMMARY_FEATURE_QUALITY_PROMOTED');
   requireCheck(['OK','NOT_FOUND','FAILED'].includes(summary.featureRead?.status), 'SUMMARY_FEATURE_READ_STATUS_MISSING');

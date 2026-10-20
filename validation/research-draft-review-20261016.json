@@ -1,0 +1,30 @@
+{
+  "recorded_at_utc": "2026-10-16T12:07:21Z",
+  "scope": "SYNTHETIC_LOCAL_DRAFT_PREPARATION",
+  "parent_commit": "f6f614f099a63d034d3573c57f9ec68103a3c2f8",
+  "targeted_tests": {
+    "pass": 23,
+    "fail": 0,
+    "skipped": 0
+  },
+  "full_regression": {
+    "pass": 338,
+    "fail": 0,
+    "skipped": 0
+  },
+  "source_sha256": {
+    "domain/research-draft-review.mjs": "63a899f71621a6e62840f045f5b931d9d9d9c5e87b92d19ae14910ecd69ff911",
+    "scripts/validate-research-package.mjs": "c19dcd336a9c3ad4eaa873f884edd0403d454776f41cc15ed6d1152b9e100a3a",
+    "tests/research-draft-review.test.mjs": "77f885e77fadb0a3fe886c39e49496df8186b33f2fc176e23bc55bf6aafce6d6",
+    "RESEARCH_HANDOFF_CONTRACT.md": "db4080afe73efd366f108ae42d16d0d2d4b1f57dac72ff1ae639ec8e98640233"
+  },
+  "deployment": "NOT_DEPLOYED",
+  "actual_project_transfer": "NOT_VALIDATED",
+  "approval": "NOT_RECORDED",
+  "production_impact": "NONE",
+  "limitations": [
+    "Declared source/rights/reading flags are not independently verified",
+    "No real approval verifier or persistence",
+    "No Watch connection or private data intake"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "scope": "FEATURE2_HISTORICAL_INPUT_QUALITY_LOCAL_ONLY",
+  "baseline_code_sha": "7979d18069407b2320a563648322ee8df7526412",
+  "before_fix": {"tests": 4, "fail": 4, "finding": "Current LIVE metrics promoted comparisons using RECENT_FETCH historical samples to VERIFIED"},
+  "change": "Reuse combinedFeatureQuality across consumed historical samples and source-aligned program points; regenerate existing validation Worker",
+  "related": {"tests": 26, "pass": 26, "fail": 0},
+  "full": {"tests": 460, "pass": 460, "fail": 0, "skip": 0, "cancelled": 0},
+  "numeric_invariance": "Mixed-quality fictional fixtures compared recursively with all-VERIFIED results after removing quality fields; all other values/statuses unchanged. Existing Signal2 confidence ceiling becomes MEDIUM for the unverified program comparison.",
+  "relay_source_sha256": "14140e013893d713c2d7a2a09252d2c526ab0b5e737d840a262dcf0134d91e12",
+  "compatibility": "Feature2/Signal2 versions, formulas, sampling, compact encoding and approval boundaries unchanged; calculated quality may downgrade conservatively",
+  "runtime": "Node24.19.0; both relay and generated validation core tested",
+  "limitations": ["No deployment or actual D1/runtime claim", "No actual research or personal inputs", "No authentication/Access/Secret/Watch/Production changes"]
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import {readFile} from 'node:fs/promises';
+import {readLocalReplayJson} from './read-local-replay-json.mjs';
 import {validateSignalReplay} from '../cloudflare/signal-replay-validator.mjs';
 
 function option(name) {
@@ -15,11 +15,12 @@ if (!inputPath || !engineGitSha) {
   process.exitCode = 2;
 } else {
   try {
-    const replay = JSON.parse(await readFile(inputPath, 'utf8'));
+    const replay = readLocalReplayJson(inputPath);
     const result = validateSignalReplay(replay, {engineGitSha, generatedAt});
     console.log(JSON.stringify(result, null, 2));
   } catch (error) {
-    console.error(JSON.stringify({status: 'FAIL', error: error?.message || 'VALIDATION_FAILED'}));
+    console.error(JSON.stringify({status: 'FAIL', error:
+      /^[A-Z_]{1,96}$/.test(error?.message ?? '') ? error.message : 'INVALID_REPLAY_INPUT'}));
     process.exitCode = 1;
   }
 }

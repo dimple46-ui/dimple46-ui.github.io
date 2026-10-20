@@ -1,6 +1,7 @@
 import {selectConsumerData} from './consumer-fallback.mjs';
 const finiteAge=n=>Number.isSafeInteger(n)&&n>=0?n:null;
-const safeTime=n=>Number.isSafeInteger(n)&&n>0?n:null;
+const safeTime=(n,reference)=>Number.isSafeInteger(n)&&n>0&&
+ Number.isFinite(new Date(n).getTime())&&n<=reference?n:null;
 const quality=q=>['VERIFIED','RECENT_FETCH','UNVERIFIED_TIME','STALE_INPUT','MISSING_INPUT'].includes(q)?q:'UNKNOWN';
 
 const SOURCES={program:'PROGRAM','indexes.kospi':'KOSPI','indexes.kospi200':'KOSPI200',
@@ -42,11 +43,11 @@ export function buildPublicConsumerSummary(marketInputs,policy){
   sourceQuality:sourceQualitySummary(observation),
   observation:{status:observation?.status==='AVAILABLE'?'AVAILABLE':'UNAVAILABLE',
    source:['CANDIDATE','GITHUB_FALLBACK'].includes(observation?.source)?observation.source:null,
-   observedAtMs:safeTime(observation?.observedAtMs),inputCutoffMs:safeTime(observation?.inputCutoffMs),
+   observedAtMs:safeTime(observation?.observedAtMs,policy.nowMs),inputCutoffMs:safeTime(observation?.inputCutoffMs,policy.nowMs),
    ageMs:finiteAge(observation?.ageMs),
    pipelineStatus:['OK','DEGRADED','CLOSED'].includes(observation?.pipelineStatus)?observation.pipelineStatus:'UNKNOWN'},
   features:{status:features.status==='AVAILABLE'?'AVAILABLE':'UNAVAILABLE',
-   featureVersion:features.status==='AVAILABLE'?2:null,inputCutoffMs:safeTime(features.inputCutoffMs),
+   featureVersion:features.status==='AVAILABLE'?2:null,inputCutoffMs:safeTime(features.inputCutoffMs,policy.nowMs),
    ageMs:finiteAge(features.ageMs),quality:quality(features.quality)},
   capabilities:{observation:selected.capabilities.observation,features:selected.capabilities.features,
    signals:'UNAVAILABLE',portfolio:'UNAVAILABLE',thesis:'UNAVAILABLE',decision:'UNAVAILABLE'},

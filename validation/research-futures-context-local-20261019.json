@@ -1,0 +1,72 @@
+{
+  "kind": "FICTIONAL_LOCAL_RESEARCH_FUTURES_CONTEXT_REGRESSION",
+  "recorded_at_utc": "2026-10-19T07:40:31.919782+00:00",
+  "parent_checkpoint_sha": "4effa268d4df3917f494291c8bf222d9afaa8d71",
+  "change": "Retain existing KOSPI200_FUTURES signals through the research-summary scope filter, preserving originating ticker and existing Signal2/quality/confidence rules.",
+  "before_fix": {
+    "new_regressions": 2,
+    "failed": 2,
+    "symptoms": [
+      "Futures-only input produced no retained signals.",
+      "Opposed stock/futures context failed to become MIXED."
+    ]
+  },
+  "after_fix": {
+    "targeted": 60,
+    "targeted_pass": 60,
+    "full": 464,
+    "full_pass": 464,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0
+  },
+  "node": "24.19.0",
+  "source_sha256": {
+    "domain/research-monitoring-summary.mjs": "a6e9394fa9bc92ef9a12ab57d504f968d28a1d9bbfae3528d546224c4d230be1",
+    "tests/research-pair-summary.test.mjs": "be13b728f867066418e97a641f4c1e12e13305ad75074d006d39e91ae76bdf66",
+    "cloudflare/signal-engine.mjs": "444401cd7c16c736cb815cfd55e6371377368d9578a028b45204e9e70be5dc12"
+  },
+  "full_log_sha256": "4704d911e1fd3194e55b4c02f4a6bd2a1699d00676da42a47a0296d1ff445f61",
+  "compatibility": "No JSON shape, Signal2 algorithm/version, schema1/2 research payload or admission contract change. Summary state/decision hash can change for an eligible futures input; saved historical records are not rewritten.",
+  "scope_limits": [
+    "Synthetic packages and test approval verifier only; no real research admission.",
+    "No Cloudflare/Access/Secret/DB/Watch or personal-input operation.",
+    "No candidate or Production rollout. G3 deferral preserved.",
+    "Outcome hypothesis input is one optional blocked unit, not a global development gate."
+  ],
+  "following_display_correction": {
+    "change": "NO_ACTIVE_DESCRIPTIVE_SIGNALS text label now says no directional classification instead of no active signals. Enum, view JSON and decision hashes unchanged.",
+    "before": "Fictional pair-relative evidence retained1signal per stock but label claimed none.",
+    "manual_check": "Same fixture before/after: same decisionID and projected-viewSHA256, exactly the Korean label changed.",
+    "related_tests": 23,
+    "related_pass": 23,
+    "new_tests_added": 0,
+    "full_suite_scope": "464PASS applies to futures code before this text-only correction;23related tests rerun for renderer/journal/followup/CLI.",
+    "source_sha256": "c77405356acff4d999e329fd389ee649a5e582692481e6329fb15f62b4573764",
+    "log_sha256": "af6184caec55e2937cdbd9038628f9e246b00f3bf4f993f25a0a7b60f87cf0e4"
+  },
+  "branch_reconciliation": {
+    "primary_parent": "e94e7e7acbfeae6292a617d71c5f3be174fb4661",
+    "existing_m2_parent": "9dd605e83dd9e8fabd84dd95cb04af6a99e7bcde",
+    "before": "PR6OpenDraft, mergeablefalse/dirty; no exact-source CI returned.",
+    "three_way_tree_comparison": {
+      "base_files": 136,
+      "integration_files": 215,
+      "m2_files": 139,
+      "execution_code_conflicts": 0,
+      "documentation_conflicts": [
+        "CONSUMER_CONTRACT.md",
+        "FEATURES.md",
+        "RESUME.md"
+      ]
+    },
+    "resolution": "Retain integration docs: their detailed cutoff/quality/current-sample definitions include the concise M2 definitions and existing UTF8/scheduled-bucket text. Keep integration RESUME. Adopt the sole M2-only generic local receipt by its exact Git blob; no actual operational audit or private payload.",
+    "m2_receipt_git_blob": "e201b3c87914a5137c197789680fe9b77b082f8a",
+    "only_new_executable_change_after_futures_fix": "Korean renderer label only; projectedJSON/decisionhash unchanged; related23PASS.",
+    "no_target_branch_change": [
+      "main",
+      "feature/m2-operational-storage"
+    ],
+    "no_cloudflare_or_watch_change": true
+  }
+}

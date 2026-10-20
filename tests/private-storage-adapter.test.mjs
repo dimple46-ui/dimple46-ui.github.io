@@ -6,6 +6,7 @@ import {createHmac} from 'node:crypto';
 import {createPrivateInputAdapter} from '../private/input-adapter.mjs';
 import {PRIVATE_STORAGE_SCHEMA_V1,createPrivateTransactionStore} from '../private/transaction-store.mjs';
 import {createCashRiskEventState} from '../domain/cash-risk-events.mjs';
+import {canonicalJson,context} from '../private/storage-contract.mjs';
 const now=1792132200000,day=86400000,horizon=now+2*day;
 const scope={schemaVersion:1,ownerRef:'fictional-owner',authorizationEpoch:'auth-a',policyEpoch:'policy-a',restoreEpoch:'restore-a'};
 function inputs(at=now,withdrawable=1000){return {ledger:{schemaVersion:1,currency:'KRW',asOfMs:at,accounts:[{
@@ -43,6 +44,145 @@ function fixture(overrides={}){
 }
 async function withFixture(fn,overrides){const f=fixture(overrides);try{await fn(f);}finally{f.close();}}
 const submit=(f,r=request())=>f.adapter.submit({credential:'fictional-valid',request:r});
+function goalInputs(){const i=inputs(now,3000);i.goalPlan={schemaVersion:1,revision:1,currency:'KRW',ledgerAsOfMs:now,sourceRef:'synthetic',verifiedAtMs:now,coverageComplete:true,
+ accounts:[{accountRef:'fictional-A',protectedCashKrw:100}],goals:[{goalRef:'fictional-goal',revision:1,purpose:'EDUCATION',amountKrw:1000,
+ amountAsOfMs:now,dueAtMs:horizon,essential:true,priority:1,deferrable:false}],
+ allocations:[{allocationRef:'fictional-allocation',goalRef:'fictional-goal',accountRef:'fictional-A',amountKrw:700,obligationRef:null}]};return i;}
+const latestWorkflow=f=>JSON.parse(JSON.parse(f.sealed.get(f.snapshot().private_versions.at(-1).sealed_analysis)).text).workflow;
+const submitNext=(f,i,id)=>submit(f,request({requestId:id,expectedRevision:f.store.readHead().revision,inputs:i}));
+test('goal history: same goal revision with changed definition is blocked without poisoning the next valid revision',async()=>withFixture(async f=>{
+ const first=goalInputs();assert.equal((await submitNext(f,first,'goal-first')).status,'COMMITTED');const original=f.snapshot().private_versions[0];
+ const changed=structuredClone(first);changed.goalPlan.revision=2;changed.goalPlan.goals[0].amountKrw=1100;
+ assert.equal((await submitNext(f,changed,'goal-conflict')).status,'COMMITTED');let w=latestWorkflow(f);
+ assert.equal(w.summary.components.goalFunding.status,'BLOCKED');assert.equal(w.goalVersionHistory.status,'CONFLICT');
+ assert.equal(w.summary.components.cashDeadlines.status,'CALCULATED');assert.equal(w.capabilities.investableCash,'UNAVAILABLE');
+ changed.goalPlan.goals[0].revision=2;assert.equal((await submitNext(f,changed,'goal-corrected')).status,'COMMITTED');w=latestWorkflow(f);
+ assert.equal(w.goalVersionHistory.planDecision,'ACCEPTED');assert.equal(w.summary.components.goalFunding.status,'CALCULATED');
+ assert.equal(w.summary.components.goalFunding.goalRevisionEvidence,'CONTENT_CHECKED_IN_COMPLETE_STORED_LINEAGE');
+ assert.deepEqual(f.snapshot().private_versions[0],original);
+}));
+test('goal history: same plan revision cannot change allocations and old revisions cannot be restored',async()=>withFixture(async f=>{
+ const i=goalInputs();await submitNext(f,i,'plan-first');i.goalPlan.allocations[0].amountKrw=600;
+ await submitNext(f,i,'plan-conflict');assert.equal(latestWorkflow(f).goalVersionHistory.code,'GOAL_PLAN_REVISION_CONTENT_CONFLICT');
+ i.goalPlan.revision=2;await submitNext(f,i,'plan-second');assert.equal(latestWorkflow(f).goalVersionHistory.planDecision,'ACCEPTED');
+ await submitNext(f,goalInputs(),'plan-old');assert.equal(latestWorkflow(f).goalVersionHistory.code,'GOAL_PLAN_REVISION_REGRESSION');
+}));
+test('goal history: explicit deletion retains identity and reappearance requires a newer goal revision',async()=>withFixture(async f=>{
+ const i=goalInputs();await submitNext(f,i,'appears');const deleted=structuredClone(i);deleted.goalPlan.revision=2;deleted.goalPlan.goals=[];deleted.goalPlan.allocations=[];
+ await submitNext(f,deleted,'deleted');assert.equal(latestWorkflow(f).goalVersionHistory.planDecision,'ACCEPTED');
+ i.goalPlan.revision=3;await submitNext(f,i,'old-reappears');assert.equal(latestWorkflow(f).goalVersionHistory.code,'GOAL_REAPPEARANCE_REQUIRES_NEW_REVISION');
+ i.goalPlan.goals[0].revision=2;await submitNext(f,i,'new-reappears');assert.equal(latestWorkflow(f).goalVersionHistory.planDecision,'ACCEPTED');
+}));
+test('goal history: omitted plans do not silently release existing earmarks or clear independent cash risks',async()=>withFixture(async f=>{
+ await submitNext(f,goalInputs(),'goal-before-omission');await submitNext(f,inputs(),'omitted');const w=latestWorkflow(f);
+ assert.equal(w.goalVersionHistory.code,'EXPLICIT_GOAL_PLAN_REQUIRED');assert.equal(w.capabilities.investableCash,'UNAVAILABLE');
+ assert.equal(w.summary.components.valuation.totals.investableCashKrw,null);assert.equal(w.summary.components.cashDeadlines.totals.accountShortfallSumKrw,500);
+ assert.equal(w.events.intents[0].transition,'OPENED');
+ await submitNext(f,goalInputs(),'goal-after-omission');assert.equal(latestWorkflow(f).goalVersionHistory.planDecision,'ACCEPTED');
+}));
+test('goal history: array ordering and observation refresh preserve the same material goal version',async()=>withFixture(async f=>{
+ const i=goalInputs();i.goalPlan.goals.push({...i.goalPlan.goals[0],goalRef:'fictional-second-goal',amountKrw:0});
+ i.goalPlan.allocations[0].amountKrw=600;i.goalPlan.allocations.push({...i.goalPlan.allocations[0],allocationRef:'fictional-second-allocation',amountKrw:100});
+ await submitNext(f,i,'ordered');i.goalPlan.goals.reverse();i.goalPlan.allocations.reverse();f.setTime(now+100);
+ const fresh=inputs(now+100,3000);Object.assign(i,{ledger:fresh.ledger,prices:fresh.prices,schedule:fresh.schedule});
+ i.goalPlan.ledgerAsOfMs=now+100;i.goalPlan.verifiedAtMs=now+100;await submitNext(f,i,'reordered-fresh');
+ assert.equal(latestWorkflow(f).goalVersionHistory.planDecision,'ACCEPTED');
+}));
+test('goal history: missing, mixed-epoch or corrupted input history blocks goals while preserving valid cash',async()=>{
+ for(const corrupt of [f=>f.db.exec('DELETE FROM private_versions WHERE revision=1'),f=>f.db.exec("UPDATE private_versions SET policy_epoch='other' WHERE revision=1"),
+  f=>f.db.exec("UPDATE private_versions SET sealed_input='PRIVATE_CORRUPT_INPUT' WHERE revision=1")])await withFixture(async f=>{
+  await submitNext(f,goalInputs(),'history-first');corrupt(f);await submitNext(f,goalInputs(),'history-after-failure');const w=latestWorkflow(f);
+  assert.equal(w.goalVersionHistory.status,'UNAVAILABLE');assert.equal(w.summary.components.goalFunding.status,'BLOCKED');
+  assert.equal(w.summary.components.cashDeadlines.status,'CALCULATED');assert.equal(w.capabilities.investableCash,'UNAVAILABLE');
+ });
+});
+test('goal history: missing material input linkage or mismatched saved cutoff cannot produce checked content',async()=>{
+ for(const mutate of [e=>e.workflow.generatedAtMs++,e=>e.workflow.summary.inputCutoffMs++,
+  e=>e.workflow.summary.components.goalFunding.inputCutoffMs++,e=>e.workflow.goalVersionHistory.historyThroughRevision++,
+  e=>e.workflow.goalVersionHistory.planDecision='NOT_REQUESTED'])await withFixture(async f=>{
+  await submitNext(f,goalInputs(),'temporal-first');const marker=f.snapshot().private_versions[0].sealed_analysis;
+  const sealed=JSON.parse(f.sealed.get(marker)),envelope=JSON.parse(sealed.text);mutate(envelope);sealed.text=JSON.stringify(envelope);f.sealed.set(marker,JSON.stringify(sealed));
+  await submitNext(f,goalInputs(),'temporal-second');assert.equal(latestWorkflow(f).goalVersionHistory.status,'UNAVAILABLE');
+ });
+ await withFixture(async f=>{
+  await submitNext(f,goalInputs(),'linked-first');const marker=f.snapshot().private_versions[0].sealed_input;
+  const sealed=JSON.parse(f.sealed.get(marker)),input=JSON.parse(sealed.text);input.goalPlan.goals[0].amountKrw++;sealed.text=JSON.stringify(input);f.sealed.set(marker,JSON.stringify(sealed));
+  await submitNext(f,goalInputs(),'linked-second');assert.equal(latestWorkflow(f).goalVersionHistory.status,'UNAVAILABLE');
+ });
+});
+test('goal history: legacy declarations are checked without rewriting old rows and ambiguous old collisions remain unavailable',async()=>{
+ for(const legacyConflict of [false,true])await withFixture(async f=>{
+  await submitNext(f,goalInputs(),'legacy-first');const markers=[f.snapshot().private_versions[0].sealed_analysis];
+  if(legacyConflict){const changed=goalInputs();changed.goalPlan.revision=2;changed.goalPlan.goals[0].revision=2;changed.goalPlan.goals[0].amountKrw++;
+   await submitNext(f,changed,'legacy-second');markers.push(f.snapshot().private_versions[1].sealed_analysis);
+   const inputMarker=f.snapshot().private_versions[1].sealed_input,stored=JSON.parse(f.sealed.get(inputMarker)),input=JSON.parse(stored.text);
+   input.goalPlan.goals[0].revision=1;stored.text=JSON.stringify(input);f.sealed.set(inputMarker,JSON.stringify(stored));
+   const saved=JSON.parse(f.sealed.get(markers[1])),envelope=JSON.parse(saved.text);envelope.workflow.summary.components.goalFunding.goals[0].revision=1;
+   envelope.provenance.inputTag=await f.crypto.tag(canonicalJson({schemaVersion:1,requestId:'legacy-second',expectedRevision:1,inputs:input}),context(scope,'REQUEST_TAG','legacy-second'));
+   saved.text=JSON.stringify(envelope);f.sealed.set(markers[1],JSON.stringify(saved));
+  }
+  for(const marker of markers){const stored=JSON.parse(f.sealed.get(marker)),envelope=JSON.parse(stored.text);delete envelope.workflow.goalVersionHistory;
+   envelope.workflow.summary.components.goalFunding.goalRevisionEvidence='CALLER_DECLARED_NOT_CONTENT_BOUND_OR_MONOTONICALLY_VERIFIED';stored.text=JSON.stringify(envelope);f.sealed.set(marker,JSON.stringify(stored));}
+  const before=f.snapshot().private_versions;const current=goalInputs();current.goalPlan.revision=3;current.goalPlan.goals[0].revision=3;
+  await submitNext(f,current,'legacy-review');assert.equal(latestWorkflow(f).goalVersionHistory.status,legacyConflict?'UNAVAILABLE':'CHECKED');
+  assert.deepEqual(f.snapshot().private_versions.slice(0,before.length),before);
+ });
+});
+test('goal history: rejected markers cannot invent a reason or hide a previously accepted plan',async()=>{
+ for(const change of [m=>{m.status='CHECKED';m.code='ANYTHING';},m=>{m.status='CHECKED';m.code='GOAL_INPUT_BLOCKED';},
+  m=>{m.status='CONFLICT';m.code='GOAL_PLAN_REVISION_REGRESSION';}])await withFixture(async f=>{
+  await submitNext(f,goalInputs(),'reject-first');await submitNext(f,inputs(now,3000),'reject-omission');
+  const marker=f.snapshot().private_versions[1].sealed_analysis,stored=JSON.parse(f.sealed.get(marker)),envelope=JSON.parse(stored.text);
+  change(envelope.workflow.goalVersionHistory);stored.text=JSON.stringify(envelope);f.sealed.set(marker,JSON.stringify(stored));
+  await submitNext(f,goalInputs(),'reject-review');assert.equal(latestWorkflow(f).goalVersionHistory.status,'UNAVAILABLE');
+ });
+});
+test('goal history: resource limits are unavailable, never an empty or latest-only history',async()=>withFixture(async f=>{
+ const {checkPrivateGoalVersionHistory}=await import('../private/goal-version-history.mjs');
+ await submitNext(f,goalInputs(),'bounded-first');const head=f.store.readHead(),args={store:f.store,scope,head,crypto:f.crypto,inputs:goalInputs(),workflow:latestWorkflow(f)};
+ assert.equal((await checkPrivateGoalVersionHistory({...args,head:{...head,revision:129}})).code,'GOAL_HISTORY_VERSION_LIMIT');
+ const real=f.store.readInputHistoryPage;
+ const huge={...f.store,readInputHistoryPage(...a){return {...real(...a),bytes:8388609};}};
+ assert.equal((await checkPrivateGoalVersionHistory({...args,store:huge})).code,'GOAL_HISTORY_BYTE_LIMIT');
+ await submitNext(f,goalInputs(),'bounded-second');f.db.prepare('UPDATE private_versions SET sealed_input=?,sealed_analysis=?').run('x'.repeat(786000),'y'.repeat(786000));
+ const changes=f.db.prepare('SELECT total_changes() AS n').get().n;
+ assert.throws(()=>f.store.readInputHistoryPage(scope,f.store.readHead(),0),e=>e.code==='PRIVATE_INPUT_HISTORY_UNAVAILABLE');
+ assert.equal(f.db.prepare('SELECT total_changes() AS n').get().n,changes);
+}));
+test('goal history: changed head between pages cannot commit an old preparation or bypass the final revision fence',async()=>withFixture(async f=>{
+ for(let i=0;i<5;i++)await submitNext(f,goalInputs(),'page-'+i);
+ const before=f.snapshot(),real=f.store.readInputHistoryPage;let pages=0;
+ f.store.readInputHistoryPage=(...args)=>{const p=real(...args);pages++;if(pages===1)f.db.exec('UPDATE private_head SET revision=revision+1');return p;};
+ const r=await submitNext(f,goalInputs(),'page-race');assert.equal(r.code,'REVISION_CONFLICT');
+ assert.deepEqual(f.snapshot().private_versions,before.private_versions);assert.deepEqual(f.snapshot().private_outbox,before.private_outbox);
+}));
+test('goal history: old authorization context is not guessed, and a reset head cannot hide retained version rows',async()=>withFixture(async f=>{
+ await submitNext(f,goalInputs(),'epoch-first');
+ for(const kind of ['sealed_input','sealed_analysis']){const marker=f.snapshot().private_versions[0][kind],stored=JSON.parse(f.sealed.get(marker));stored.ctx.authorizationEpoch='old-auth';f.sealed.set(marker,JSON.stringify(stored));}
+ await submitNext(f,goalInputs(),'epoch-second');assert.equal(latestWorkflow(f).goalVersionHistory.status,'UNAVAILABLE');
+ const head=f.store.readHead();assert.throws(()=>f.store.readInputHistoryPage({...scope,ownerRef:'other-owner'},head,0));
+ f.db.exec('UPDATE private_head SET revision=0,generated_at_ms=0,input_cutoff_ms=0');
+ assert.throws(()=>f.store.readInputHistoryPage(scope,f.store.readHead(),0),e=>e.code==='PRIVATE_INPUT_HISTORY_UNAVAILABLE');
+}));
+test('goal history: input cannot supply the trusted history decision',async()=>withFixture(async f=>{
+ const i=goalInputs();i.goalVersionHistory={contractVersion:1,status:'CHECKED',planDecision:'ACCEPTED',historyThroughRevision:0,code:null};
+ assert.equal((await submitNext(f,i,'forged-history')).status,'REJECTED');assert.equal(f.storeCalls(),0);
+}));
+test('goal history: authorization expiring during historical decrypt cannot commit prepared cash or goal state',async()=>withFixture(async f=>{
+ await submitNext(f,goalInputs(),'expiry-first');const before=f.snapshot(),open=f.crypto.open;
+ f.adapter=createPrivateInputAdapter({...f.deps,authorize:async()=>({...scope,verified:true,roles:['OWNER_WRITE'],expiresAtMs:now+100})});
+ f.crypto.open=async(...args)=>{const value=await open(...args);if(args[1].kind==='INPUT')f.setTime(now+101);return value;};
+ assert.equal((await submitNext(f,goalInputs(),'expiry-next')).code,'UNAUTHORIZED');assert.deepEqual(f.snapshot(),before);
+}));
+test('goal history: checked saved records cannot drop goal capability and restore legacy investment clearance',async()=>withFixture(async f=>{
+ const {savedWorkflowView}=await import('../private/saved-analysis-view.mjs');await submitNext(f,goalInputs(),'checked-view');
+ const stored=JSON.parse(f.sealed.get(f.snapshot().private_versions[0].sealed_analysis)),envelope=JSON.parse(stored.text),head=f.store.readHead();
+ for(const change of [w=>{delete w.capabilities.goalFunding;w.capabilities.investableCash='AVAILABLE';w.summary.components.valuation.totals.investableCashKrw=1000;},
+  w=>w.capabilities.goalFunding='UNAVAILABLE',w=>delete w.summary.capabilities.goalFunding]){
+  const w=structuredClone(envelope.workflow);change(w);
+  assert.throws(()=>savedWorkflowView(w,head,{maxAnalysisAgeMs:1000,maxInputAgeMs:1000},now,envelope.provenance),e=>e.code==='PRIVATE_READ_UNAVAILABLE');
+ }
+}));
 test('offline adapter: missing/unverified/read-only identities rejected before store resolution',async()=>{
  for(const proof of [null,{...scope,verified:false,roles:['OWNER_WRITE']},{...scope,verified:true,roles:['MACHINE_READ']},{...scope,verified:true,ownerRef:'',roles:['OWNER_WRITE']}])
   await withFixture(async f=>{assert.equal((await submit(f)).code,'UNAUTHORIZED');assert.equal(f.storeCalls(),0);},{authorize:async()=>proof});
@@ -208,8 +348,18 @@ test('offline end-to-end: real signature, AEAD and memory SQLite preserve sealed
  assert.equal((await adapter.submit({credential:token,request:second})).status,'REJECTED');assert.deepEqual(f.snapshot(),committed);
  assert.ok(nonceCounter()>beforeNonce);const failedCounter=nonceCounter();
  assert.equal((await adapter.submit({credential:token,request:second})).status,'COMMITTED');assert.ok(nonceCounter()>failedCounter);
+ const goalRequest=request({requestId:'fictional-real-crypto-goal',expectedRevision:2,inputs:goalInputs()});
+ assert.equal((await adapter.submit({credential:token,request:goalRequest})).status,'COMMITTED');
+ const goalEnvelope=await crypto.open(f.snapshot().private_versions[2].sealed_analysis,context(scope,'ANALYSIS','3'));
+ assert.equal(goalEnvelope.workflow.goalVersionHistory.planDecision,'ACCEPTED');
+ assert.equal(goalEnvelope.workflow.summary.components.goalFunding.goalRevisionEvidence,'CONTENT_CHECKED_IN_COMPLETE_STORED_LINEAGE');
+ const conflict=structuredClone(goalRequest);conflict.requestId='fictional-real-crypto-conflict';conflict.expectedRevision=3;
+ conflict.inputs.goalPlan.revision=2;conflict.inputs.goalPlan.goals[0].amountKrw++;
+ assert.equal((await adapter.submit({credential:token,request:conflict})).status,'COMMITTED');
+ const conflictEnvelope=await crypto.open(f.snapshot().private_versions[3].sealed_analysis,context(scope,'ANALYSIS','4'));
+ assert.equal(conflictEnvelope.workflow.goalVersionHistory.status,'CONFLICT');assert.equal(conflictEnvelope.workflow.capabilities.cashDeadlines,'AVAILABLE');
  f.db.exec("UPDATE private_head SET sealed_state='tampered'");const corrupted=f.snapshot();
- assert.equal((await adapter.submit({credential:token,request:request({requestId:'fictional-new',expectedRevision:2})})).status,'REJECTED');assert.deepEqual(f.snapshot(),corrupted);
+ assert.equal((await adapter.submit({credential:token,request:request({requestId:'fictional-new',expectedRevision:4})})).status,'REJECTED');assert.deepEqual(f.snapshot(),corrupted);
 }));
 test('offline adapter: corrupted receipt cannot become a replay success or clear accepted state',async()=>withFixture(async f=>{
  await submit(f);f.db.exec('UPDATE private_requests SET revision=100');const before=f.snapshot();
@@ -260,4 +410,33 @@ test('offline saved analysis HTTP to SQLite: fixed snapshot reads preserve rows,
  const row=f.db.prepare('SELECT sealed_analysis FROM private_versions WHERE revision=1').get();
  f.db.prepare('UPDATE private_versions SET generated_at_ms=generated_at_ms+1 WHERE revision=1').run();
  assert.throws(()=>f.store.readAnalysisSnapshot(scope),/PRIVATE_READ_UNAVAILABLE/);assert.ok(row.sealed_analysis);
+}));
+test('offline goal input to saved HTTP: exact replay, reconstructed reader and stale suppression preserve the sealed revision',async()=>withFixture(async f=>{
+ const {createPrivateReadAdapter}=await import('../private/read-adapter.mjs');
+ const {createPrivateHttpBoundary}=await import('../private/http-boundary.mjs');
+ const i=inputs(now,3000);i.goalPlan={schemaVersion:1,revision:1,currency:'KRW',ledgerAsOfMs:now,sourceRef:'synthetic',verifiedAtMs:now,coverageComplete:true,
+  accounts:[{accountRef:'fictional-A',protectedCashKrw:100}],goals:[{goalRef:'fictional-private-goal',revision:1,purpose:'EDUCATION',amountKrw:1000,
+   amountAsOfMs:now,dueAtMs:horizon,essential:true,priority:1,deferrable:false}],
+  allocations:[{allocationRef:'fictional-private-allocation',goalRef:'fictional-private-goal',accountRef:'fictional-A',amountKrw:700,obligationRef:null}]};
+ const r=request({inputs:i});assert.equal((await submit(f,r)).status,'COMMITTED');const saved=f.snapshot();
+ assert.equal((await submit(f,r)).status,'REPLAYED');assert.deepEqual(f.snapshot(),saved);
+ const changed=structuredClone(r);changed.inputs.goalPlan.allocations[0].amountKrw++;
+ assert.equal((await submit(f,changed)).code,'IDEMPOTENCY_CONFLICT');assert.deepEqual(f.snapshot(),saved);
+ const authorize=async token=>token==='Bearer fictional-read'?{...scope,verified:true,roles:['OWNER_READ'],expiresAtMs:now+60000}:null;
+ const read=()=>{
+  const reader=createPrivateReadAdapter({authorize,getStore:f.deps.getStore,crypto:f.crypto,clock:f.deps.clock,maxAnalysisAgeMs:1000,maxInputAgeMs:1000});
+  const handle=createPrivateHttpBoundary({origin:'https://fictional-private.invalid',authorize,inputAdapter:f.adapter,clock:f.deps.clock,
+   checkRateLimit:async()=>({allowed:true}),statusReader:reader.readStatus,analysisReader:reader.readAnalysis});
+  return handle(new Request('https://fictional-private.invalid/private/analysis/latest',{headers:{authorization:'Bearer fictional-read'}}));
+ };
+ const changes=f.db.prepare('SELECT total_changes() AS n').get().n,response=await read(),view=await response.json();
+ assert.equal(response.status,200);assert.equal(view.capabilitiesAsOf.goalFunding,'AVAILABLE');
+ assert.equal(view.goalRevisionEvidence,'CONTENT_CHECKED_IN_COMPLETE_STORED_LINEAGE');assert.equal(view.goalHistoryThroughRevision,0);
+ assert.deepEqual(view.metricsAsOf.goalFunding,{planRevision:1,goalCount:1,requiredKrw:1000,allocatedKrw:700,shortfallKrw:300,
+  unallocatedCashKrw:700,earliestUnfundedDueAtMs:horizon});
+ assert.equal(view.metricsAsOf.valuation.investableCashKrw,null);
+ assert.ok(!['fictional-A','fictional-private-goal','fictional-private-allocation'].some(x=>JSON.stringify(view).includes(x)));
+ assert.deepEqual(await (await read()).json(),view);
+ f.setTime(now+1001);const stale=await (await read()).json();assert.equal(stale.capabilitiesAsOf.goalFunding,'UNAVAILABLE');assert.equal(stale.metricsAsOf.goalFunding,null);
+ assert.deepEqual(f.snapshot(),saved);assert.equal(f.db.prepare('SELECT total_changes() AS n').get().n,changes);
 }));

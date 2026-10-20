@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "source_original_head": "ac3c419042971ba05d32ecca38eaaefa06661767",
+  "local_reconciliation_merge": "0a0214a6e2e96b11787d32fa317630d08dfd5ce6",
+  "checked_at_utc": "2026-10-19T02:07:09.448176+00:00",
+  "status": "LOCAL_TESTED_NOT_DEPLOYED",
+  "before_fix": {
+    "reproduced_regressions": 2,
+    "display_accepted_malformed_utf8": true,
+    "evidence_snapshot_created_from_malformed_utf8": true
+  },
+  "fix": "Fatal UTF8 read boundary in existing display and evidence CLIs; preserve BOM rejection, valid Unicode, hashes and new-file-only storage",
+  "after_fix": {
+    "targeted_pass": 22,
+    "full_pass": 444,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0,
+    "new_tests": 2,
+    "malformed_snapshot_leaves_no_output": true,
+    "valid_unicode_hashes_and_original_files_preserved": true
+  },
+  "files": [
+    {
+      "path": "scripts/show-research-pair.mjs",
+      "sha256": "56613f2f3edf718d2ca2bba7f477c87e1d052a0a6901972595ae1574e2776a8e"
+    },
+    {
+      "path": "scripts/record-research-evidence.mjs",
+      "sha256": "aff08602ae4f1ebf100c99ea565391d6f2cff0341f2a1932fd8067c089e38556"
+    },
+    {
+      "path": "tests/research-pair-view.test.mjs",
+      "sha256": "7e7c078e620af1baa5a101276dfee40ae9b220aa9e35a583f8d13e9160a0af7e"
+    },
+    {
+      "path": "tests/research-evidence-cli.test.mjs",
+      "sha256": "07c25b5811ad9adcaf9cc6c9201a182ec6f36d8e0bd3751a81ceda1f76160165"
+    },
+    {
+      "path": "RESEARCH_HANDOFF_CONTRACT.md",
+      "sha256": "1ddf3dc83c0011a446fd8d809f3943f638ef73aab8e482a53d7c2f7421e4b5ab"
+    }
+  ],
+  "input_scope": "Fictional synthetic summaries only. No actual research data, user approval or private ledger used.",
+  "external_changes": false,
+  "operational_admission": false,
+  "access_activation": false,
+  "financial_or_signal_algorithms_changed": false
+}

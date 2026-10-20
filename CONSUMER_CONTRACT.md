@@ -17,8 +17,8 @@ There is no approved production route, connected scheduled consumer, private por
 - An age-rejected Feature retains only its allowlisted original quality ceiling (VERIFIED, RECENT_FETCH, UNVERIFIED_TIME, STALE_INPUT, MISSING_INPUT); unknown values become UNKNOWN. Retaining a ceiling does not make that Feature available. Data remains null.
 - GitHub fallback provides no Feature, Signal, portfolio, thesis or decision. Overall PARTIAL means an observation is selected, not whole-system success. Separate cutoffs do not imply a synchronized decision.
 - Source-quality reason codes describe captured reported issues; they do not revalidate source freshness at read time.
-- Candidate metric times and Feature generation must not exceed the saved response cutoff, even at a later display time. GitHub relayUpdatedAt is an observation timestamp rather than proven availability.
-- Both Feature SELECTs filter input and generation times before ORDER BY/LIMIT. An eligible older row remains selectable; an ineligible pinned slot is not found. This does not establish original persistence/first-arrival proof.
+- Candidate per-metric market/fetch timestamps are bounded by the saved response cutoff, even when displayed later. A Feature must be generated no later than its own response cutoff. GitHub relayUpdatedAt remains an observation timestamp, not a proven collection-completion/availability time: its per-metric future check still uses the explicit display reference. These checks do not establish historical first-arrival proof.
+- Candidate /features and /summary SELECTs require both input_cutoff_ms and generated_at_ms to be no later than the requested cutoff, before ordering/LIMIT. An ineligible newer row cannot hide an eligible older row; a pinned ineligible slot returns FEATURES_NOT_FOUND. These necessary chronology checks do not prove original persistence/first-arrival times or authorize historical backtesting.
 - Public projections exclude accounts, holdings, balances, debt, private analysis and personal actions.
 
 ## Existing access paths
@@ -44,6 +44,12 @@ Public fallback: https://raw.githubusercontent.com/dimple46-ui/dimple46-ui.githu
 Existing CI and Cloudflare Builds remain the sole candidate deployment path. candidate-check.yml uses its existing Secret and emits a sanitized authenticated receipt. It verifies exact reported SHA, independent ages/cutoffs, quality for a matching stored Feature, explicit zero-write query metadata and unavailable private capabilities. An identity report plus successful provider build is not independent provider code attestation.
 
 Historical receipts are immutable evidence for their source SHA and capture time. Local replay/synthetic tests are correctness evidence, never new live-market validation. Continuous Feature2 persistence remains inactive/unverified; old20261007 rows do not become current.
+
+The local public-summary and three replay CLIs reject malformed UTF-8 before JSON parsing instead
+of repairing source bytes. Valid Unicode and literal replacement characters remain accepted; leading
+BOM rejection, bounded regular-file reads, nonblocking FIFO handling and existing path policies remain
+unchanged. Input errors retain their existing sanitized response shapes. This does not alter validator
+mathematics, data-quality gates, timestamp policies or any provider/database access.
 
 Scheduled tasks do not automatically inherit Work, Cloudflare runtime or GitHub Actions Secrets. Candidate API authentication in CI does not establish scheduler access. No scheduled connection or notification delivery is configured here. A separately approved consumer must obtain its own authenticated access, or report only the public fallback's available scope. Do not expose token values or put personal data in public artifacts.
 

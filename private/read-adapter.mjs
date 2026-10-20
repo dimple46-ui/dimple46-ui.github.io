@@ -19,6 +19,7 @@ export function createPrivateReadAdapter({authorize,getStore,crypto,clock,maxAna
    timestamp(h.generatedAtMs)&&timestamp(h.inputCutoffMs)&&h.inputCutoffMs<=h.generatedAtMs&&h.generatedAtMs<=clock());}
  async function readStatus({credential,execution}={}){
   const {principal,store}=await access(credential,execution),h=store.readHead();if(!validHead(h,principal))unavailable();
+  if(!authValid(principal))fail('UNAUTHORIZED');if(execution?.signal?.aborted)unavailable();
   return {schemaVersion:1,mode:h.mode,revision:h.revision,generatedAtMs:h.revision===0?null:h.generatedAtMs,inputCutoffMs:h.revision===0?null:h.inputCutoffMs};
  }
  async function readAnalysis({credential,execution}={}){
@@ -30,6 +31,7 @@ export function createPrivateReadAdapter({authorize,getStore,crypto,clock,maxAna
   if(!authValid(principal))fail('UNAUTHORIZED');if(execution?.signal?.aborted)unavailable();
   const current=store.readHead();if(!validHead(current,principal)||current.mode!=='ACTIVE')unavailable();
   if(current.revision!==h.revision||current.generatedAtMs!==h.generatedAtMs||current.inputCutoffMs!==h.inputCutoffMs)fail('SNAPSHOT_CHANGED');
+  if(!authValid(principal))fail('UNAUTHORIZED');if(execution?.signal?.aborted)unavailable();
   return savedWorkflowView(workflow,h,{maxAnalysisAgeMs,maxInputAgeMs},clock(),provenance);
  }
  // Dependency exceptions intentionally become a fixed code, never financial/key/actor details.

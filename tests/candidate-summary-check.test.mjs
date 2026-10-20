@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assertSummary} from '../scripts/check-candidate.mjs';
+import {assertSummary,assertReadMeta} from '../scripts/check-candidate.mjs';
 const at=Date.now()-1000,sha='a'.repeat(40);
 const options={expectedSha:sha,referenceMs:at,maxObservationAgeMs:180000,maxFeatureAgeMs:300000};
 function fixture(){return {readOnly:true,apiSchemaVersion:1,schemaVersion:1,status:'PARTIAL',generatedAtMs:at+100,
@@ -26,11 +26,24 @@ test('nonzero/unknown write telemetry and Feature read failure never become zero
  s=>s.queryMeta.feature=null,s=>delete s.queryMeta.observation.rowsRead,s=>s.featureRead.status='FAILED',
  s=>s.featureRead.status='NOT_FOUND']){const s=fixture();mutate(s);assert.throws(()=>assertSummary(s,options));}
 });
+test('telemetry leaves cannot hide nested objects containing unverified or nonzero writes',()=>{
+ const leaf={rowsRead:1,rowsWritten:0,durationMs:0.5,changes:0,servedBy:'synthetic',extra:null};
+ assert.doesNotThrow(()=>assertReadMeta(leaf));assert.doesNotThrow(()=>assertReadMeta({observation:leaf}));
+ for(const child of [{rowsRead:1,rowsWritten:1},{rowsRead:1,rowsWritten:0},[]])
+  assert.throws(()=>assertReadMeta({...leaf,feature:child}),/QUERY_META_MISSING|D1_WRITE_DETECTED/);
+});
 test('available Feature cannot bypass quality ceiling or age policy',()=>{
  const s=fixture();s.features={status:'AVAILABLE',featureVersion:2,inputCutoffMs:at-100000,ageMs:100000,quality:'UNVERIFIED_TIME'};
  s.capabilities.features='AVAILABLE';assert.equal(assertSummary(s,options).featureQuality,'UNVERIFIED_TIME');
  for(const patch of [{quality:'STALE_INPUT'},{ageMs:600000,inputCutoffMs:at-600000},{featureVersion:3}])
   assert.throws(()=>assertSummary({...s,features:{...s.features,...patch}},options));
+});
+
+test('available Feature requires an explicit numeric cutoff and age instead of null coercion',()=>{
+ for(const patch of [{inputCutoffMs:null,ageMs:null},{inputCutoffMs:null,ageMs:0},{inputCutoffMs:undefined,ageMs:0}]){
+  const s=fixture();s.features={status:'AVAILABLE',featureVersion:2,quality:'VERIFIED',...patch};s.capabilities.features='AVAILABLE';
+  assert.throws(()=>assertSummary(s,options),/SUMMARY_FEATURE_/);
+ }
 });
 
 test('matching stored cutoff detects erased quality; different rows are not falsely compared',()=>{

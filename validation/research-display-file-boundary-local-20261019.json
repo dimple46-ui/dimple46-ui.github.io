@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "base_local_source_sha": "c6595e4677fc82af9c2d559862c539e884f10806",
+  "checked_at_utc": "2026-10-19T02:13:12.944796+00:00",
+  "status": "LOCAL_TESTED_NOT_DEPLOYED",
+  "before_fix": {
+    "new_regressions_failed": 2,
+    "final_component_symlink_accepted": true,
+    "fifo_open_blocked_until_test_timeout": true,
+    "timeout_ms": 2000
+  },
+  "after_fix": {
+    "targeted_pass": 15,
+    "full_pass": 446,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "new_tests": 2,
+    "symlink_rejected_target_unchanged": true,
+    "fifo_rejected_without_timeout": true
+  },
+  "fix": "Use existing read-only/no-follow/nonblocking regular-file boundary pattern in the offline display CLI. Hash and projection semantics unchanged.",
+  "scope_limit": "Final-component symlink rejection is not a parent-directory sandbox or universal filesystem deadline guarantee.",
+  "files": [
+    {
+      "path": "scripts/show-research-pair.mjs",
+      "sha256": "62dfe64c64d7fad775fab9a84240f92f6c3e6680ff466b7dd12f9549053f2941"
+    },
+    {
+      "path": "tests/research-pair-view.test.mjs",
+      "sha256": "a2dbc32bbc32c564cc8f60f02928612d1d82bfe284c67984302846771cbbc722"
+    },
+    {
+      "path": "RESEARCH_HANDOFF_CONTRACT.md",
+      "sha256": "546a86418c24cb431d5c0945d2adb423e8d0888a0eed017867f8f3854b340280"
+    }
+  ],
+  "actual_private_input_used": false,
+  "operational_identity_storage_watch_validation": false,
+  "runtime_or_financial_policy_changes": false
+}

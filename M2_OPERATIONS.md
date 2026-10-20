@@ -124,3 +124,76 @@ Cloudflare Secret and never committed.
 9. **간결한 보고**: 새로 완료한 결과, 검증, 투자 의사결정에 주는 효과, 남은 위험, 다음 정확한 작업, 추천 모델·추론 수준만 보고한다. 과거 완료 작업을 장황하게 반복하지 않는다.
 
 현재 원격 관리 blocker와 실제 시장 검증 대기는 이 운영 원칙만으로 해소되거나 승인되지 않는다.
+
+
+## ‘다음’ 기반 자율 재개 — 단일 운영 규칙
+
+기존 Pro 원칙에 다음 실행 규칙을 더한다. 별도 프롬프트 생성기·채팅 호출·재개 자동화는 만들지 않는다.
+
+- **명령 의미:** ‘다음/계속/이어가/진행’은 기존 승인 범위의 복구·실행이다. 별도 질문을 우선하며 권한·연구 운용·Production·main·개인자료·비용·Secret·파괴적 변경 승인을 새로 추론하지 않는다.
+- **최소 복구:** 최신 RESUME → 실제 source branch/HEAD → 접근 가능한 중단 변경 → PR head/base → 관련 CI만 대조한다. 다른 브랜치 안내는 포인터이며 코드가 아니다. 포인터 불일치만 해결하고 사용자 변경을 초기화하지 않는다. Git 상태를 확인할 수 없으면 확인 불가로 남긴다.
+- **한 작업 실행:** 목적·수정 범위·재사용·완료 조건·승인 경계를 짧게 정해 직접 실행한다. 오류 → 유효한 next_exact_step → 실제 사용 연결 → 독립 핵심 기능 순으로 선택한다. 한 PR에 무관한 기능을 누적하거나 막힌 작업을 대신할 가상 추상화를 계속 만들지 않는다.
+- **재실행 조건:** 작업/코드·설정/입력·기준시각/환경/이전 결과/이유를 비교한다. blocker에는 원인·마지막 시도·필요 변화·retry_condition을 기록하고 조건 변경 없이는 재시도하지 않는다. 진행 중 job ID를 보존하며 중복 실행·무한 조회를 피한다.
+- **복구 필드:** updated_at_kst, active_branch, active_pr, current_task, verified_code_sha, last_completed, tests_and_evidence, ci_build_runtime_status, unfinished_changes, approved_scope, blocked_and_retry_condition, next_exact_step, next_ready_task, recommended_model_and_reasoning. 상세 이력은 PROJECT_STATUS/기존 receipt에 연결한다. 비공개 판단·승인 기록은 기존 비공개 체크포인트를 재사용하며 공개 파일에 복제하지 않는다.
+- **멈춤 판단:** APPROVAL_REQUIRED / MODEL_CHANGE_REQUIRED / ACCESS_BLOCKED / WAITING_FOR_JOB / SCOPE_COMPLETE / SESSION_ENDED / EXECUTION_LIMIT을 구별한다. 명확한 독립 작업만 계속하고 없으면 next_ready_task=NONE으로 남긴다. 자료·권한 부족을 High로 해결하려 하지 않는다. 현재 모델 설정·남은 사용량·백그라운드 연속 실행을 추정하지 않는다.
+- **저장·상태:** 검증 코드 SHA와 문서 commit을 구분하고 실제 저장 성공만 보고한다. IMPLEMENTED → LOCAL_TESTED → CI_VALIDATED → CANDIDATE_DEPLOYED → RUNTIME_VALIDATED → PRODUCTION_VALIDATED를 별도 증거로 기록한다. 문서 변경에도 provider skip 결과를 확인한다. 이 규칙은 파일 지침이며 앱 설정·영구 메모리 변경이나 자동 읽기 보장이 아니다.
+
+
+## Continuous execution override — user instruction2026-10-18
+
+A completed subtask, passing test or saved checkpoint is a recovery boundary, not an instruction to
+end execution. After each unit, continue the next concrete safe task from the existing asset/cash,
+research, market integration, consumer delivery or evaluation/stability roadmap. Before declaring
+NONE, assess the overall prepared queue once. Keep prior successful validation, private/public
+separation and all operational approval gates. No repeated Access/Validator/admin attempts or new
+scheduler/Watch modifications. Stop only for an actually needed user decision/model change or an
+honestly identified execution limit, unresolved safety issue, all prepared tasks blocked or entire
+approved scope completed. Save exact source, pending changes and NEXT_EXACT_STEP first; never
+claim background continuation after execution ends. Earlier per-unit stop wording is superseded.
+
+## Implementation and research ownership
+
+The implementation Work is the single writer for the integration branch, common contracts,
+receivers, private approval/storage integration and PR management. The research Work owns source
+review, numerical/unit/period/acquisition-time meaning, package lineage and research revisions.
+Reuse unchanged inputs and valid receipts; do not reapply incorporated handoff patches or rewrite
+research originals. Return specific claims/fields/reasons when research changes are necessary.
+For a shared contract change, record its reason, compatibility/version impact and relevant checks
+before asking the research Work to adopt it. Recheck the actual remote HEAD before any branch
+write and preserve unrelated working changes.
+
+For actual integration, classify identity/decision, exact binding, private storage authority,
+atomic recording/recovery, withdrawal/expiry/restart and authorized readback independently as
+VERIFIED, IMPLEMENTED_NOT_RUNTIME_VERIFIED, MISSING_TRUSTED_CONTEXT or APPROVAL_REQUIRED.
+Local implementation evidence must not promote actual operation. Keep exact research/approval
+identifiers, operational audit and the short research return in the existing private checkpoint.
+If a prerequisite is absent, identify the earliest concrete unresolved decision and reuse any
+existing pending/deferred request. Do not repeatedly request the same consent or add substitute
+factories, fixture authorizers or test engines. A saved response is not proof of delivery to a
+different chat; Watch/schedules and deployment permissions remain separate.
+
+## Continuous compact source preparation
+
+The relay has an additive, default-disabled compact write path after raw/legacy persistence.
+See FEATURE_STORAGE.md for the three opt-in/release variables, legacy-v2 conflict, immutable
+readback and derived-failure isolation. Local SQLite/CI validation is distinct from runtime or
+continuous-production validation. Do not enable the older full-tree v2 flag as a substitute.
+No deployment, variable registration, new schedule, migration or retention change is authorized
+by this source preparation. Existing private checkpoints own current operational evidence.
+
+## Morning verification after the 2026-10-20 offline review
+
+These are pending observations, not completed live checks. Use existing authorized read paths;
+do not enable writes, deploy, create schedules or widen credentials to obtain them.
+
+| When / input | Success criterion | Missing or failed evidence |
+| --- | --- | --- |
+| Before the open: existing snapshot and source timestamps | Preserve its original session/day and market times; a quiet overnight quote alone is not a collection failure | Show closed/unknown/stale status; never replace market time with read time |
+| After the calendar confirms an open regular session: new observation | Requested trading day, source market time, observation and availability agree with the as-of cutoff | Retain unavailable/degraded state; isolate the affected source |
+| New Feature if an authorized writer is actually active | Stored version, engine identity, input cutoff and generation time remain distinct; old Feature cannot inherit a new observation's age | Keep Feature unavailable; an inactive writer is not fixed by claiming local tests are deployed |
+| First / second / third scheduled flow buckets | Insufficient history stays explicit; duplicate buckets do not create a new interval; unequal intervals retain their actual durations | Wait for the next real source bucket; do not synthesize flow or average long/short judgments |
+| Existing authorized consumer read | Read-only evidence, independent ages/quality and disabled private capabilities remain visible | Preserve fallback limitations; no Watch changes or private readiness claim |
+
+Recovered source fixes are development-branch changes only. Source handling, nondeployed
+version upload, deployment, continuous writing and Watch adoption are distinct approval gates.
+Overnight operational prohibitions defer the affected gate without blocking independent local work.

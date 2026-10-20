@@ -1,0 +1,83 @@
+{
+  "scope": "PUBLIC_CODE_AND_FICTIONAL_PRIVATE_LOCAL_INPUTS_ONLY",
+  "recordedAtUtc": "2026-10-20T02:41:57.756858+00:00",
+  "baseHead": "11d320f178de777f1451781bb5be6359fd095778",
+  "contract": {
+    "goalPlanSchemaVersion": 1,
+    "privateInputSchemaVersion": 1,
+    "savedAggregateContractVersion": 1,
+    "mode": "ADDITIVE_OPTIONAL_CURRENT_WITHDRAWABLE_KRW_CASH_ONLY"
+  },
+  "sourceSha256": {
+    "domain/life-goal-funding.mjs": "a3ab9977ff890a8019b9d0683085a213ddef9e9b71464abd0cb5312057dbf2ef",
+    "domain/private-risk-summary.mjs": "f9c7327009b351a924ea4df5a786e9dc7a3d63c9c8c7faf9de4b3ce096cf0a05",
+    "private/input-request.mjs": "49c91fac2390056ed0dc1801775c0e516b7f3c84d1bf9f2091a6d866c3527b41",
+    "private/saved-analysis-view.mjs": "89da715549bace81513fac3cc4590533ff96cb14725ec7513e0017076ea4803a",
+    "tests/life-goal-funding.test.mjs": "e161bd4bfff0d63c883eea10ffa736e1eac12321078ad9b4a788346ac8b2fb27",
+    "tests/private-storage-adapter.test.mjs": "441c4fe110af1c55cb9889fb24b3331be9f331942b4565d148194336287b480b"
+  },
+  "newRequirementBeforeImplementation": {
+    "oldSummaryHadGoalFunding": false,
+    "targetedCasesFailedBeforeImplementation": 8
+  },
+  "developmentFindings": [
+    {
+      "case": "cash1000_obligation950_protected100",
+      "before": "linked950incorrectlyCALCULATED",
+      "after": "BLOCKED_preserving_independent_cash_result"
+    },
+    {
+      "case": "goal_saved_read_boundaries",
+      "before": "unsupported_version_currency_and_failed_goal_investment_clearance_accepted",
+      "after": "PRIVATE_READ_UNAVAILABLE"
+    },
+    {
+      "case": "stale_goal_aggregate",
+      "before": "metric_null_but_capability_AVAILABLE",
+      "after": "metric_null_and_capability_UNAVAILABLE"
+    }
+  ],
+  "validation": {
+    "related": {
+      "passed": 102,
+      "failed": 0
+    },
+    "full": {
+      "command": "node --test --test-concurrency=4 tests/*.test.mjs",
+      "passed": 520,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "coverage": [
+      "per_account_cash_conservation_and_no_cross_account_netting",
+      "exact_obligation_link_no_double_deduction",
+      "protected_cash_reconciliation",
+      "unknown_target_deadline_null",
+      "overflow_and_stale_metadata",
+      "goal_failure_does_not_hide_cash_shortage_event",
+      "fixed_saved_projection_no_raw_IDs",
+      "memory_SQLite_atomic_revision_idempotency_conflict",
+      "authenticated_HTTP_projection_and_reconstructed_reader_without_row_changes",
+      "stale_capability_suppression",
+      "unchanged_public_module_boundaries"
+    ]
+  },
+  "reusedEvidence": [
+    "unchanged_prior508cases_retained_as_regression_baseline",
+    "no_duplicate_remote_dispatch_or_research_input_validation"
+  ],
+  "runtime": {
+    "deployed": false,
+    "remoteDatabaseWrite": false,
+    "actualFinancialInput": false,
+    "watchOrNotificationConnected": false,
+    "financialPolicyApproved": false
+  },
+  "limitations": [
+    "declared_scope_not_verified_real_account_or_goal_coverage",
+    "no_future_income_sale_transfer_borrowing_return_inflation_tax_or_rebalancing",
+    "no_automatic_goal_priority_or_goal_specific_event_delivery",
+    "unallocated_cash_not_personalized_investable_clearance"
+  ]
+}

@@ -19,3 +19,15 @@ Safety tests:4/4 targeted PASS, including incompatible basis, unread sources, fu
 ## Forecast/outcome work still planned
 
 A future predictive record needs target, horizon, expiry, explicitly stated probability where justified, frozen rationale/input versions and separate post-expiry outcomes. The implemented historical example deliberately has null target/horizon/expiry/probability and NOT_APPLICABLE_NOT_A_FORECAST outcome; never score it as a successful forecast. No D1 forecast/outcome tables, prediction accuracy, backtest/calibration or actual user-action history exists from this change. Future amendments append new IDs; outcome evaluation must not rewrite the original reasoning. Parallel strategic/evidence work need not wait for every tactical feature, but must preserve its own evidence and operational status.
+
+
+## Local decision snapshots and descriptive follow-up — 2026-10-18
+
+Implemented `domain/research-decision-journal.mjs`, `domain/research-price-followup.mjs` and
+`scripts/record-research-evidence.mjs`; see RESEARCH_DECISION_EVIDENCE.md for the closed contracts.
+These preserve original pair/child hashes and receipt-time history in explicitly created local files.
+Separate post-record raw price comparisons remain post-hoc observations, not forecast outcomes or
+portfolio/total returns. Actual user actions and predictive accuracy remain unrecorded/null.
+The forecast/outcome prediction and calibration work above remains planned. No authenticated durable
+store, actual source/approval/private intake, Watch or provider deployment was activated.
+Final full418/418 local PASS; source commit and hashes are in the new validation receipt.

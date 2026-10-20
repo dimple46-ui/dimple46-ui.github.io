@@ -1,5 +1,50 @@
 # Private asset-ledger contract — local prototype
 
+## Optional life-goal cash funding — schema1
+
+`domain/life-goal-funding.mjs` connects a declared `goalPlan` to the existing ledger and dated-cash schedule. `buildPrivateRiskSummary` / `runPrivateRiskWorkflow` accept it as an optional input. The first supported funding source is **current declared withdrawable KRW cash only**. No future salary, asset sale, account transfer, borrowing, return, inflation or tax assumption is introduced. A life goal is not an operating approval or an approved asset-allocation policy.
+
+The strict schema is:
+
+| Object | Required fields |
+| --- | --- |
+| goalPlan | schemaVersion=1, positive revision, currency=KRW, ledgerAsOfMs, sourceRef, verifiedAtMs, coverageComplete=true, accounts, goals, allocations |
+| accounts[] | accountRef, protectedCashKrw |
+| goals[] | goalRef, positive revision, purpose, amountKrw, amountAsOfMs, dueAtMs, essential, priority, deferrable |
+| allocations[] | allocationRef, goalRef, accountRef, amountKrw, obligationRef |
+
+IDs are nonempty strings of at most128 UTF-16 code units. Amounts are nonnegative safe integer nominal KRW. Purpose is HOUSING, EDUCATION, RETIREMENT, FAMILY or OTHER. Unknown amount/deadline/essential/priority/deferrable must be explicit null; priority otherwise is a nonnegative safe integer. Priority/flexibility are retained as declared metadata, never used to choose allocations. Goal amount basis dates are not automatically restated for inflation. A declared timestamp must be a valid positive millisecond instant; amountAsOfMs must not exceed the ledger cutoff. A past deadline is explicitly overdue, not proof of timely funding.
+
+The plan must name exactly the cash schedule's accounts and share the ledger cutoff. Plan verification is no later than that cutoff and obeys the caller's existing maxLedgerAgeMs. The existing cash validator independently verifies ledger/schedule scope, coverage, obligation identity/timing and reconciliation to additionalOutflowsKrw. Complete declared scope is not proof that the user supplied every real account or life goal. Bounds are32accounts,64goals,256allocations and262144bytes for the standalone combined input; the existing private transport request defaults to131072bytes (a trusted HTTP configuration may lower it). The16384 limit is per string, not the default whole request body.
+
+Every declared OPEN obligation is protected, including after a goal's deadline. Per-account additional earmarks cannot exceed `withdrawable - all declared obligations - protectedCash`, floored at0. Accounts are not netted or automatically transferred. Protected cash is explicit for every account; if legacy reserveKrw is also supplied, its total must exactly reconcile to those amounts. A reserve is not deducted twice. The result's unallocatedCashKrw is a current-cash remainder, **not** trading or broker clearance.
+
+Account rows also retain cashProtectionShortfallKrw: any gap between current withdrawable cash and all declared payments plus protected cash. A positive amount does not become zero because another account has surplus. A calculated goal snapshot is not an all-clear for those payments; independent cash timing stays visible, and the optional goal-aware alternative comparison blocks funding while any such protection shortfall remains.
+
+An existing obligation may instead be linked once by obligationRef. Account, whole amount and deadline must exactly match the goal/allocation. It remains deducted by the cash schedule once; linking does not deduct it again. It cannot be called funded if all declared payments plus protected cash exceed that account's withdrawable cash. Partial/split obligation links and future funding sources are unsupported. Different allocation IDs do not create additional funding capacity; both per-goal and per-account bounds apply with exact BigInt sums.
+
+Known goals return required/earmarked/shortfall amounts and the current ledger cutoff as availableAtMs for existing earmarked cash. This is not a settlement-calendar or actual withdrawal verification. Unknown target/deadline returns PARTIAL with null shortfall and unavailable complete goal aggregates. Invalid scope, stale metadata, unsupported currency, over-allocation or unsafe sums block only the goal component; valid independent cash-shortage calculations/events remain visible.
+
+When goalPlan is present, legacy investableCash is always unavailable/null: that older formula does not subtract goal earmarks. Other valuation totals retain their original declared-asset meaning. No goal input preserves the former summary shape and behavior.
+
+The existing schema1 private input request accepts the additive optional goalPlan field; old requests/envelopes remain readable. Older receivers reject that new field, so this is a coordinated receiver capability change, not silent cross-version compatibility. No research-package schema, authentication, encryption, database schema, event lifecycle or public market response changes. The existing encrypted input/provenance tag covers the goal plan, and atomic revision/idempotency storage is reused.
+
+Direct local calculators still treat goal IDs/revisions as caller declarations and report CALLER_DECLARED_NOT_CONTENT_BOUND_OR_MONOTONICALLY_VERIFIED. The existing private input adapter additionally uses `private/goal-version-history.mjs` to bind material goal/plan content against the complete existing sealed revision lineage before admitting a goal calculation. No new journal, DB table, migration, key, identity, authorization grant or operating connection is introduced.
+
+`readInputHistoryPage` reads revisions1..the captured head with fixed SQL, four rows per synchronous transaction. Every page rechecks owner/authorization/policy/restore scope, revision and head times. Missing/interleaved/out-of-range rows, inconsistent record times, mixed stored policy/restore epochs, oversized pages or unreadable ciphertext are not an empty or complete history. The validator opens both INPUT and ANALYSIS with the existing exact context, validates existing provenance/policy HMAC, and recomputes the original request tag to bind the decoded input. It validates stored contract/clock linkage without recalculating historical finances using the current clock. No old epoch/key context is guessed; private_versions lacks historical authorizationEpoch metadata, so old-auth ciphertext may be unverifiable and must block goal admission.
+
+First support is bounded to128 prior revisions,2097152 encrypted bytes per page and8388608 total encrypted bytes. Exceeding a bound yields UNAVAILABLE, never a latest-only fallback or incomplete successful result. These are technical resource limits, not financial limits or a full-scale operating retention policy. Historical external rollback/fork detection, cross-epoch migration and unbounded incremental indexing remain unsupported; do not claim those guarantees from a local complete-lineage check.
+
+Within that verified lineage, the same goalRef/revision must retain identical declared definition, including amount basis date, deadline and flexibility/priority fields. A plan revision binds sourceRef, currency, coverage, account protections, goals and allocations. Array order is normalized; ledgerAsOfMs/verifiedAtMs refresh alone is not a material goal-plan change. Increasing revisions may retain unchanged content, but prior plan/goal revisions cannot be restored. Explicit deletion via a newer plan and empty/removed goals retains the old goal identity: reappearance requires a newer goal revision. A goal input cannot supply the trusted history decision.
+
+The resulting version-history decision is sealed inside the existing analysis envelope with the checked prior revision. ACCEPTED content is rechecked when later replaying history; authenticated REJECTED attempts never become version baselines. Legacy declared goal rows are checked as a complete sequence without rewriting them; inconsistent old declarations make the new guarantee unavailable. Omitting goalPlan after a previously accepted plan is not withdrawal or deletion and cannot silently release earmarks. It blocks the goal component and legacy investable cash, while valid independent cash calculations/events can still commit.
+
+Successful internal admission reports CONTENT_CHECKED_IN_COMPLETE_STORED_LINEAGE; authorized saved aggregates retain that evidence and goalHistoryThroughRevision only from a consistent sealed internal decision. Old records/direct calculators remain declared-only. Stale reads suppress financial metrics while retaining historical evidence labels. Content checking is not actual user authentication, personal policy approval, external storage attestation, current account verification or runtime readiness. Goal-specific automatic alerts and actual user execution history remain unsupported. Evidence: `validation/goal-history-local-20261020.json`.
+
+The authorized saved-analysis path exposes only fixed goal totals (planRevision, goalCount, requiredKrw, allocatedKrw, shortfallKrw, unallocatedCashKrw, earliestUnfundedDueAtMs), never raw goal/account/allocation IDs. It retains the stored cutoff and release provenance without recalculation; stale reads suppress goal metrics/capability. Inconsistent investment clearance or unsupported goal versions/scope/currency fail the read. Goal-specific automatic alerts, actual financial connections, external persistence/runtime authentication and Watch adoption are not established by local tests.
+
+Evidence: `validation/life-goal-funding-local-20261020.json`. Fictional local request → workflow → sealed memory SQLite → authorized HTTP aggregate read/reconstructed reader/replay only; no operating deployment or actual personal finances.
+
 Status: implemented/local validated with fictional fixtures only. No private storage, public API, scheduled consumer, account connection or deployment.
 
 ## Scope
@@ -389,3 +434,14 @@ Reader requires crypto.open AND crypto.tag, validates supported payload/source/w
 Minimal authorized response provenance contains only envelope/workflow/input versions, configured historical engine SHA, revision chain and policy version/tag. Raw policy parameters, request ID/inputTag, restore/owner/auth epochs and ledger/events are not exposed. Existing independent freshness suppresses stale aggregates while retaining historical provenance; response time never replaces calculation/input cutoff. releaseEvidence is always CONFIGURED_REFERENCE_NOT_ATTESTATION. This improves traceability, not external account verification or full forecast/backtest reproducibility. Keys/archived code/prior-state retention/provider restore and actual operational verification remain separate gates.
 
 All provider and approval boundaries in earlier sections remain. Public graph/production/shared D1/market history untouched, no migration or remote rows changed, no actual HTTP routes published.
+
+
+### Holding identity type guard — 2026-10-18
+
+Ledger holdings and alternative candidate tickers must be six-digit STRINGS. A numeric123456
+previously passed RegExp coercion and could produce calculated valuations and concentration/stress
+results. Both entry points now reject it; zero quantity does not waive identity validation and valid
+leading-zero strings remain unchanged. Independent cash-deadline calculation does not depend on
+holdings and remains available. Three regressions failed before the two-line fix; targeted40/40 and
+full430/430 local PASS. Source/hash receipt: validation/holding-identity-local-20261018.json. No
+quantity/cash/debt formula, security rule, broker clearance or runtime connection changed.

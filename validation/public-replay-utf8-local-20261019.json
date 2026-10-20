@@ -1,0 +1,61 @@
+{
+  "validationType": "LOCAL_PUBLIC_REPLAY_CLI_STRICT_UTF8",
+  "base_code_sha": "ec7bd3bc32cf71b6407f8c8f333faa356b613ee7",
+  "base_checkpoint_sha": "97b0637b2a5ba24f22fdba18a40a4622db2b335d",
+  "recorded_at_utc": "2026-10-19T03:04:40.752692+00:00",
+  "before": {
+    "newTests": 2,
+    "pass": 1,
+    "fail": 1,
+    "malformedUtf8ExitCodesForFourClis": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "expectedExitCodes": [
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "after": {
+    "related": {
+      "tests": 30,
+      "pass": 30
+    },
+    "full": {
+      "tests": 453,
+      "pass": 453,
+      "fail": 0,
+      "skip": 0,
+      "cancelled": 0
+    }
+  },
+  "runtime": "Node24.19.0",
+  "change": "Fatal UTF-8 decode in2existing file readers serving public-summary and3replay CLIs. Malformed bytes reject before JSON parse; BOM rejection preserved. Valid Unicode/literal replacement characters and input bytes unchanged.",
+  "unchanged": [
+    "validator mathematics",
+    "quality/freshness policy",
+    "read budgets",
+    "FIFO behavior",
+    "existing symlink/path policy",
+    "sanitized error keys and codes",
+    "D1/provider/network/writer behavior"
+  ],
+  "files_sha256": {
+    "scripts/read-local-replay-json.mjs": "45ac1d4391f7b4a7c8ddd2c606574f779e925ebb36ae52c24b880cfa88ed13af",
+    "scripts/summarize-public-input.mjs": "85e76a53095487338e152ef87a16af0fdab3c417af2a28972ca1beecabce32ce",
+    "tests/public-replay-utf8.test.mjs": "8b9f5d1ca96ad8e04be6f0c3ded46c2778db410308d457e25ae856dfffce7b07",
+    "CONSUMER_CONTRACT.md": "75377b9f9390e857ffc10dba9e6a8a15597ae2f1bc9d014bab0c8c280218746e"
+  },
+  "notPerformed": [
+    "ACTUAL_DATA_REPLAY_RERUN",
+    "PROVIDER_DEPLOYMENT",
+    "D1_READ_WRITE",
+    "OPERATIONAL_RESEARCH_APPROVAL",
+    "PRODUCTION_MAIN_CHANGE",
+    "WATCH_CHANGE"
+  ]
+}

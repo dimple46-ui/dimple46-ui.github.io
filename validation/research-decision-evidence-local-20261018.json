@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "created_at_kst": "2026-10-18T15:31:14+09:00",
+  "branch": "feature/research-handoff",
+  "base_head_sha": "a802feae179ffc557e0dfd5f6d596f43ed905f0d",
+  "verified_code_sha": "024f5b5beba6ec8d630a4af9a02e867ee26cc16f",
+  "status": "LOCAL_TESTED_NOT_DEPLOYED_NOT_WATCH_READY",
+  "validation": {
+    "restored_files_hash_verified": 124,
+    "original_source_differences": [],
+    "new_tests": 11,
+    "targeted_with_public_boundary": {
+      "passed": 13,
+      "failed": 0
+    },
+    "full_regression": {
+      "command": "node --test tests/*.test.mjs",
+      "passed": 418,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "inputs": "FICTIONAL_TEST_PACKAGES_APPROVAL_VERIFIER_AND_PRICES_ONLY"
+  },
+  "files": [
+    {
+      "path": "domain/research-decision-journal.mjs",
+      "sha256": "e64e45e2b7ce64f812203692ceceefef05bb683b5e1fff7dc7efea367979c67e"
+    },
+    {
+      "path": "domain/research-price-followup.mjs",
+      "sha256": "6a2b415b995a23da0c4c7d60594b380e89c0c8da9ba5e0c9327a8bef1b5bf7c2"
+    },
+    {
+      "path": "scripts/record-research-evidence.mjs",
+      "sha256": "648e6dd2f7c199ba166ce7c9c1545a5dea58f429062a6ce0298b15de77e0a5e7"
+    },
+    {
+      "path": "tests/research-decision-journal.test.mjs",
+      "sha256": "5b537d7d6ee5d561cd3a26e9ff149f6ad1aee7928fb34a11a750568a44afa197"
+    },
+    {
+      "path": "tests/research-price-followup.test.mjs",
+      "sha256": "2ff7ce1c4297f3ed8609ed5685d69a0898c26d6dae017a1b31e3ffba72d31918"
+    },
+    {
+      "path": "tests/research-evidence-cli.test.mjs",
+      "sha256": "756765601732bcd809ea030362beff73c2b9adca758a26eed8698fa4c359f84f"
+    }
+  ],
+  "boundaries": {
+    "original_pair_and_child_hashes_checked": true,
+    "receipt_time_distinct_from_generation": true,
+    "as_of_uses_receipt_time": true,
+    "unapproved_and_stale_not_promoted": true,
+    "post_hoc_interval_not_forecast": true,
+    "price_basis": "UNADJUSTED_KRW_KRX_REGULAR",
+    "caller_provenance_not_independent_verification": true,
+    "forecast_accuracy": null,
+    "total_return": null,
+    "portfolio_return": null,
+    "actual_user_action": "NOT_RECORDED",
+    "file_storage": "EXCLUSIVE_NEW_FILE_MODE_0600_NOT_AUTHENTICATED_DURABLE_STORE",
+    "public_runtime_graph": "UNCHANGED"
+  },
+  "remote_evidence_at_recovery": {
+    "pr6": "DRAFT_OPEN_UNMERGED_MERGEABLE_FALSE",
+    "head": "a802feae179ffc557e0dfd5f6d596f43ed905f0d",
+    "main": "54340c662d56974f586ae2804d6e9e2a0c3ae433",
+    "head_check": {
+      "id": 117585356153,
+      "conclusion": "FAILURE",
+      "name": "Workers Builds: market-feature-validation"
+    },
+    "head_workflow_runs": [],
+    "status_contexts": [],
+    "current_runtime_deployed_sha": "NOT_NEWLY_VERIFIED"
+  },
+  "production_changes": false,
+  "limitations": [
+    "A rehashed/replaced/truncated file is not prevented by the local hash chain; external authentication/anchoring/restore not provided.",
+    "No actual inputs, durable approvals, real-price collection, trade scoring, provider access, new Build trigger request, main merge, Secret, D1, Watch or orders."
+  ]
+}

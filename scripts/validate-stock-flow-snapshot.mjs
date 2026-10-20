@@ -1,4 +1,4 @@
-import {readFile} from 'node:fs/promises';
+import {readLocalReplayJson} from './read-local-replay-json.mjs';
 import {pathToFileURL} from 'node:url';
 
 const BUCKETS = {'1':'09:30','2':'10:00','3':'11:20','4':'13:20','5':'14:30'};
@@ -76,7 +76,7 @@ export function validateStockFlowSnapshot(snapshot, {asOfMs=Date.now()}={}) {
 
 if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {
   try {
-    const snapshot=JSON.parse(await readFile(process.argv[2],'utf8'));
+    const snapshot=readLocalReplayJson(process.argv[2]);
     console.log(JSON.stringify(validateStockFlowSnapshot(snapshot),null,2));
   } catch(error) {
     console.error(JSON.stringify({status:'FAIL',code:/^[A-Z_]+$/.test(error.message)?error.message:'INVALID_SNAPSHOT_INPUT'}));

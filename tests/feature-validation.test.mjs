@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import vm from 'node:vm';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
 
 const source=readFileSync(new URL('../cloudflare/feature-validation-worker.js',import.meta.url),'utf8');
 test('generated validator identifies the current relay source and embeds its feature core',()=>{
@@ -24,6 +25,65 @@ function readOnlyDb(row,queries=[],binds=[]){
   all:async()=>({success:true,results:sql.includes('recent_days')?[]:[row],meta:{duration:0.2,rows_read:1,rows_written:0}})
  };}};}};
 }
+function sqliteWriteFixture({existing=false,writeMetadata=true}={}){
+ const sqlite=new DatabaseSync(':memory:');
+ for(const name of ['0001_market_history.sql','0002_feature_runs.sql'])
+  sqlite.exec(readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8'));
+ const at=Date.now()-1000,slot=Math.floor(at/120000)*120000;
+ sqlite.prepare('INSERT INTO market_observations VALUES (?,?,?,?,?,?,?,?,?,?)').run(
+  slot,at,at,'20261019',3,'fictional','DEGRADED','{}','{}','{"version":1}');
+ const compact='{"featureVersion":2,"fixture":"가상"}';
+ if(existing)sqlite.prepare('INSERT INTO feature_runs VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(
+  slot,2,at,'20261019','1111111','1'.repeat(64),at+10,at,'STALE_INPUT','PARTIAL',compact,
+  JSON.stringify({fullFeatureBytes:1000,compactFeatureBytes:Buffer.byteLength(compact),reductionPct:50}));
+ const db={prepare(sql){return {bind(...args){return {
+  all:async()=>({success:true,results:sqlite.prepare(sql).all(...args),meta:{rows_read:1,rows_written:0}}),
+  run:async()=>{const result=sqlite.prepare(sql).run(...args);return {success:true,
+   meta:writeMetadata?{changes:result.changes,rows_written:result.changes}:{}};}
+ };}};}};
+ return {sqlite,db,compact,stored:()=>({...sqlite.prepare('SELECT * FROM feature_runs').get()})};
+}
+
+test('duplicate Feature write reports immutable stored provenance and keeps recomputation separate',async()=>{
+ const f=sqliteWriteFixture({existing:true}),before=f.stored();
+ try {
+  const response=await worker().fetch(new Request('https://test/feature-runs',{method:'POST',
+   headers:{Authorization:'Bearer test'}}),{MARKET_HISTORY:f.db,VALIDATION_TOKEN:'test',
+   FEATURE_V2_WRITE_ENABLED:'true',FEATURE_ENGINE_GIT_SHA:'2222222'});
+  assert.equal(response.status,200);const result=await response.json();
+  assert.equal(result.status,'EXISTS');assert.deepEqual(f.stored(),before);
+  assert.equal(result.engineGitSha,before.engine_git_sha);
+  assert.equal(result.engineSourceSha256,before.engine_source_sha256);
+  assert.equal(result.qualityCeiling,before.quality_ceiling);
+  assert.equal(result.generatedAtMs,before.generated_at_ms);
+  assert.equal(result.inputCutoffMs,before.input_cutoff_ms);
+  assert.equal(result.compactFeaturesBytes,Buffer.byteLength(f.compact));
+  assert.equal(result.fullFeatureBytes,1000);assert.equal(result.reductionPct,50);
+  assert.equal(result.stored.engineGitSha,before.engine_git_sha);
+  assert.equal(result.computed.engineGitSha,'2222222');
+  assert.notEqual(result.computed.qualityCeiling,result.qualityCeiling);
+  assert.equal(result.metadataScope,'STORED_FEATURE_RUN');
+  assert.equal(result.candidateSha256,result.computed.engineSourceSha256);
+  assert.equal(response.headers.get('Cache-Control'),'no-store');
+ } finally {f.sqlite.close();}
+});
+test('write outcomes require explicit D1 counts while returned Feature metadata always comes from readback',async()=>{
+ for(const writeMetadata of [true,false]){
+  const f=sqliteWriteFixture({writeMetadata});
+  try {
+   const post=()=>worker().fetch(new Request('https://test/feature-runs',{method:'POST',
+    headers:{Authorization:'Bearer test'}}),{MARKET_HISTORY:f.db,VALIDATION_TOKEN:'test',
+    FEATURE_V2_WRITE_ENABLED:'true',FEATURE_ENGINE_GIT_SHA:'2222222'});
+   const first=await (await post()).json(),stored=f.stored(),second=await (await post()).json();
+   assert.equal(first.status,writeMetadata?'INSERTED':'STORED_WRITE_OUTCOME_UNKNOWN');
+   assert.equal(second.status,writeMetadata?'EXISTS':'STORED_WRITE_OUTCOME_UNKNOWN');
+   assert.equal(first.engineGitSha,stored.engine_git_sha);
+   assert.equal(second.generatedAtMs,stored.generated_at_ms);
+   assert.deepEqual(f.stored(),stored);
+   assert.equal(first.stored.compactFeaturesBytes,Buffer.byteLength(stored.compact_features_json));
+  } finally {f.sqlite.close();}
+ }
+});
 
 test('validation refuses unauthenticated requests before touching D1',async()=>{
  const w=worker(),db={prepare(){throw new Error('must not access D1');}};
@@ -118,4 +178,21 @@ test('D1 write failure is isolated and reported without storing or exposing the 
  const response=await worker().fetch(new Request('https://test/feature-runs',{method:'POST',headers:{Authorization:'Bearer test'}}),
   {MARKET_HISTORY:db,VALIDATION_TOKEN:'test',FEATURE_V2_WRITE_ENABLED:'true',FEATURE_ENGINE_GIT_SHA:'abcdef0'});
  assert.equal(response.status,503);assert.deepEqual(await response.json(),{error:'FEATURE_VALIDATION_FAILED'});
+});
+
+test('authenticated write-control observes runtime bindings without D1 or token disclosure',async()=>{
+ const db={prepare(){throw new Error('write-control must not access D1');}};
+ for(const enabled of ['false','true']) {
+  const w=worker(),env={MARKET_HISTORY:db,VALIDATION_TOKEN:'fictional-sensitive-token',
+   FEATURE_ENGINE_GIT_SHA:'2222222',FEATURE_V2_WRITE_ENABLED:enabled};
+  assert.equal((await w.fetch(new Request('https://test/write-control'),env)).status,401);
+  const response=await w.fetch(new Request('https://test/write-control',{
+   headers:{Authorization:'Bearer fictional-sensitive-token'}}),env);
+  assert.equal(response.status,200);const body=await response.json();
+  assert.equal(body.mode,'WRITE_CONTROL');assert.equal(body.schemaVersion,1);
+  assert.equal(body.writeEnabled,enabled==='true');assert.equal(body.engineGitSha,'2222222');
+  assert.equal(body.scope,'RUNTIME_BINDINGS_ONLY');assert.equal(response.headers.get('Cache-Control'),'no-store');
+  assert.equal(JSON.stringify(body).includes('fictional-sensitive-token'),false);
+  assert.equal(Object.hasOwn(body,'observedAt'),false);
+ }
 });

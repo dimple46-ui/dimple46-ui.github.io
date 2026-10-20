@@ -10,6 +10,25 @@ const fixture=fileURLToPath(new URL('./fixtures/closed-snapshot.json',import.met
 const asOf=Date.parse('2026-09-30T11:00:07.732Z');
 const policy=['--as-of-ms',String(asOf),'--max-observation-age-ms','120000','--max-feature-age-ms','300000'];
 const run=args=>spawnSync(process.execPath,[cli,...args],{encoding:'utf8'});
+test('file-only summary and pair display reject unwritten FIFOs without waiting or leaking paths',
+ {skip: process.platform === 'win32'},()=>{
+ const dir=mkdtempSync(join(tmpdir(),'public-cli-fifo-'));
+ try{
+  const path=join(dir,'PRIVATE_FIFO_SENTINEL');
+  const created=spawnSync('mkfifo',[path],{encoding:'utf8'});assert.equal(created.status,0);
+  const commands=[{script:cli,args:['--snapshot',path,...policy],code:'PUBLIC_INPUT_OR_POLICY_INVALID'},
+   {script:fileURLToPath(new URL('../scripts/show-research-pair.mjs',import.meta.url)),
+    args:[path,String(asOf),'120000'],code:'RESEARCH_PAIR_DISPLAY_FAILED'}];
+  const results=commands.map(({script,args,code})=>({code,
+   result:spawnSync(process.execPath,[script,...args],{encoding:'utf8',timeout:5000})}));
+  assert.deepEqual(results.map(x=>x.result.error?.code??null),[null,null]);
+  for(const {result,code} of results){
+   assert.equal(result.status,1);assert.equal(result.stdout,'');
+   assert.equal(JSON.parse(result.stderr).code,code);
+   assert.ok(!result.stderr.includes('PRIVATE_FIFO_SENTINEL')&&!result.stderr.includes(dir));
+  }
+ }finally{rmSync(dir,{recursive:true,force:true});}
+});
 test('existing saved public fixture emits only safe summary; partial observation is not full analysis success',()=>{
  const r=run(['--snapshot',fixture,...policy]);assert.equal(r.status,0);assert.equal(r.stderr,'');
  const result=JSON.parse(r.stdout);assert.equal(result.status,'PARTIAL');

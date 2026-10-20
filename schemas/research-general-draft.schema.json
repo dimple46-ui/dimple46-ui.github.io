@@ -1,0 +1,497 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "package_type": {
+      "const": "GENERAL_RESEARCH_DRAFT"
+    },
+    "package_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000000
+    },
+    "disclosure": {
+      "enum": [
+        "SYNTHETIC_PUBLIC_EXAMPLE",
+        "RESEARCH_NO_PERSONAL_DATA"
+      ]
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "ticker": {
+          "enum": [
+            "005930",
+            "000660"
+          ]
+        },
+        "market": {
+          "const": "KRX"
+        },
+        "currency": {
+          "const": "KRW"
+        }
+      },
+      "required": [
+        "ticker",
+        "market",
+        "currency"
+      ],
+      "additionalProperties": false
+    },
+    "horizon": {
+      "enum": [
+        "1M",
+        "3M",
+        "6M",
+        "12M",
+        "UNSPECIFIED"
+      ]
+    },
+    "analysis_cutoff_ms": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8640000000000000
+    },
+    "generated_at_ms": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8640000000000000
+    },
+    "review_at_ms": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1,
+      "maximum": 8640000000000000
+    },
+    "expires_at_ms": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1,
+      "maximum": 8640000000000000
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/source"
+      },
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/claim"
+      },
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true
+    },
+    "thesis": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "enum": [
+            "SUPPORTIVE",
+            "MIXED",
+            "ADVERSE",
+            "UNCLASSIFIED"
+          ]
+        },
+        "supporting_claim_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+          },
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true
+        },
+        "contrary_claim_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+          },
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true
+        },
+        "invalidation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "state",
+        "supporting_claim_refs",
+        "contrary_claim_refs",
+        "invalidation"
+      ],
+      "additionalProperties": false
+    },
+    "report_comparison": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "baseline_quantity_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        },
+        "current_quantity_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        }
+      },
+      "required": [
+        "baseline_quantity_id",
+        "current_quantity_id"
+      ],
+      "additionalProperties": false
+    },
+    "review_condition": {
+      "$ref": "#/$defs/lifecycle_condition"
+    },
+    "expiry_condition": {
+      "$ref": "#/$defs/lifecycle_condition"
+    },
+    "original_research": {
+      "type": "object",
+      "properties": {
+        "package_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        },
+        "revision_text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "original_bytes_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "declared_horizon": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "declared_thesis_state": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "declared_analysis_date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "declared_created_date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        }
+      },
+      "required": [
+        "package_id",
+        "revision_text",
+        "original_bytes_sha256",
+        "declared_horizon",
+        "declared_thesis_state",
+        "declared_analysis_date",
+        "declared_created_date"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "package_type",
+    "package_id",
+    "revision",
+    "disclosure",
+    "target",
+    "horizon",
+    "analysis_cutoff_ms",
+    "generated_at_ms",
+    "review_at_ms",
+    "expires_at_ms",
+    "sources",
+    "claims",
+    "thesis",
+    "report_comparison"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:investment-system:general-research-draft:2",
+  "$defs": {
+    "quantity": {
+      "type": "object",
+      "properties": {
+        "quantity_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        },
+        "metric": {
+          "enum": [
+            "revenue",
+            "operatingProfit",
+            "netIncome",
+            "netCash"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 29,
+          "pattern": "^-?(?:0|[1-9][0-9]{0,17})(?:\\.[0-9]{1,9})?$"
+        },
+        "unit": {
+          "enum": [
+            "KRW_BILLION",
+            "KRW_TRILLION"
+          ]
+        },
+        "currency": {
+          "const": "KRW"
+        },
+        "fiscal_period": {
+          "type": "string",
+          "pattern": "^[0-9]{4}Q[1-4]$"
+        },
+        "scope": {
+          "const": "CONSOLIDATED"
+        },
+        "figure_status": {
+          "enum": [
+            "PRELIMINARY_ESTIMATE",
+            "COMPANY_REPORTED"
+          ]
+        }
+      },
+      "required": [
+        "quantity_id",
+        "metric",
+        "value",
+        "unit",
+        "currency",
+        "fiscal_period",
+        "scope",
+        "figure_status"
+      ],
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        },
+        "issuer_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        },
+        "author": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "\\S"
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "pattern": "\\S"
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "\\S"
+        },
+        "published_date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "acquired": {
+          "type": "object",
+          "properties": {
+            "precision": {
+              "enum": [
+                "INSTANT",
+                "DATE_ONLY",
+                "UNKNOWN"
+              ]
+            },
+            "at_ms": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 8640000000000000
+            },
+            "date": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            },
+            "timezone": {
+              "enum": [
+                "Asia/Seoul",
+                null
+              ]
+            }
+          },
+          "required": [
+            "precision",
+            "at_ms",
+            "date",
+            "timezone"
+          ],
+          "additionalProperties": false
+        },
+        "access": {
+          "enum": [
+            "DECLARED_ORIGINAL_READ",
+            "NOT_CONFIRMED"
+          ]
+        },
+        "quantities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/quantity"
+          },
+          "minItems": 0,
+          "maxItems": 16,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "source_id",
+        "issuer_id",
+        "author",
+        "url",
+        "location",
+        "published_date",
+        "acquired",
+        "access",
+        "quantities"
+      ],
+      "additionalProperties": false
+    },
+    "claim": {
+      "type": "object",
+      "properties": {
+        "claim_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        },
+        "kind": {
+          "enum": [
+            "FACT",
+            "ESTIMATE",
+            "HYPOTHESIS"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "\\S"
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+          },
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "quantity_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        }
+      },
+      "required": [
+        "claim_id",
+        "kind",
+        "text",
+        "source_refs",
+        "quantity_ref"
+      ],
+      "additionalProperties": false
+    },
+    "lifecycle_condition": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "DATE_ONLY",
+            "EVENT",
+            "UNKNOWN"
+          ]
+        },
+        "date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "timezone": {
+          "enum": [
+            "Asia/Seoul",
+            null
+          ]
+        },
+        "event_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "kind",
+        "date",
+        "timezone",
+        "event_id",
+        "description"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

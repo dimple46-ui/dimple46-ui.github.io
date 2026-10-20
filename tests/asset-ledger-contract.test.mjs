@@ -55,3 +55,13 @@ test('duplicate accounts/holdings, currency, coercion, negative/nonfinite/overfl
  }
  assert.throws(()=>run(fixture(),{...policy,maxPriceAgeMs:null}),/INVALID_LEDGER_POLICY/);
 });
+test('six-digit numeric ticker identities are rejected even when a matching object-key quote exists or quantity is zero',()=>{
+ for(const quantity of [1,0]){
+  const f=fixture();f.ledger.accounts[0].holdings=[{ticker:123456,quantity}];
+  f.prices['123456']={...f.prices['005930']};
+  const r=run(f);assert.equal(r.status,'BLOCKED');
+  assert.ok(r.issues.some(i=>i.code==='INVALID_OR_DUPLICATE_TICKER'));
+  assert.ok(Object.values(r.totals).every(value=>value===null));
+ }
+ assert.equal(run(fixture()).status,'CALCULATED');
+});

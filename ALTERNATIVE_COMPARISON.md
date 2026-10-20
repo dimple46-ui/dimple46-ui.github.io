@@ -1,5 +1,17 @@
 # Four-alternative comparison — fictional local prototype
 
+## Optional goal-aware cash comparison
+
+Supplying the same optional schema1 goalPlan and reconciled schedule as the private risk summary opts into goal-aware funding. The existing life-goal helper protects all declared payments, account-specific protected cash and existing goal earmarks. Unconfirmed/invalid goals block every funding row; the comparison never falls back to the older ledger remainder. This optional private input does not change the research-package or public consumer contracts.
+
+The goal-aware fundingBasis is GOAL_UNALLOCATED_AGGREGATE_CASH_UPPER_BOUND. Costs and common capital are compared against current unallocated cash without deducting a linked payment twice. A positive fundingGapKrw is a **minimum aggregate cash gap**, not an account-routed funding diagnosis. A zero gap has status WITHIN_DECLARED_CASH_UPPER_BOUND_NOT_CLEARED; it does not prove transfers, settlement, account permission, personal suitability or approved investment capacity. Any account with insufficient cash for declared payments plus protected cash blocks all comparison funding, even if another account has a surplus.
+
+Fixed goalFunding context retains status, inputCutoffMs, planRevision, required/allocated/shortfall/unallocated KRW and cashProtectionStatus; it exposes no account/goal/allocation IDs. Original earmarks remain unchanged across alternatives. These are current-cash comparisons, not future goal outcomes, goal-priority optimization or projected real returns. KEEP_CASH represents retaining existing holdings while leaving the common comparison capital in cash; it is not a sell-all or permission to withdraw goal funds. Recommendation, ranking and trade quantities remain null.
+
+No goalPlan preserves the original response shape and behavior. Evidence for this connection: validation/goal-alternative-local-20261020.json. Local fictional validation and CI are distinct from actual private financial input, external storage, deployment and Watch adoption.
+
+This direct comparison's goal revision metadata remains declared; goalRevisionEvidence states that limitation explicitly. The separate existing private input receiver can now check content against a complete bounded sealed history as documented in ASSET_LEDGER_CONTRACT.md. Passing a plain goalPlan to this calculator does not import that receiver evidence or authorize investment. The current comparison has no goal-specific automated event or execution history.
+
 Status: IMPLEMENTED / LOCAL_VALIDATED / NOT_DEPLOYED / NOT_USER_READY. No scheduled consumer, private storage or recommendation engine.
 
 `domain/alternative-comparison.mjs` reuses evaluateAssetLedger without changing that contract. It compares exactly one each of ADD_EXISTING, ADD_NEW, KEEP_CASH and REPAY_DEBT with an explicit common capitalKrw and horizonDays. These are user-supplied hypothetical comparison inputs, not recommended allocation or target returns. No ranking, recommendation or trade quantities are generated.
