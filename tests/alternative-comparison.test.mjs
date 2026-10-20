@@ -30,6 +30,7 @@ test('goal-aware comparison cannot reuse earmarked cash and never treats aggrega
  const f=withGoals(),before=structuredClone(f),r=compareAlternatives(f,policy);
  assert.deepEqual(f,before);assert.ok(r.rows.every(x=>x.status==='KNOWN_FUNDING_GAP'&&x.fundingGapKrw===300));
  assert.equal(r.goalFunding.unallocatedCashKrw,200);assert.equal(r.goalFunding.shortfallKrw,0);
+ assert.equal(r.goalFunding.goalRevisionEvidence,'CALLER_DECLARED_NOT_CONTENT_BOUND_OR_MONOTONICALLY_VERIFIED');
  assert.equal(r.fundingBasis,'GOAL_UNALLOCATED_AGGREGATE_CASH_UPPER_BOUND');assert.equal(r.fundingGapInterpretation,'MINIMUM_GAP_NOT_ACCOUNT_ROUTED_CLEARANCE');
  assert.ok(!['fake-account','fictional-goal','fictional-earmark','fictional-payment'].some(x=>JSON.stringify(r).includes(x)));
  f.capitalKrw=100;const enough=compareAlternatives(f,policy);

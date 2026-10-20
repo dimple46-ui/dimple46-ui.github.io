@@ -27,6 +27,7 @@ const provenance={engineGitSha:'1'.repeat(40),workflowVersion:1,inputSchemaVersi
 test('explicit current cash earmarks protect obligations/reserve and link an existing payment once',()=>{
  const f=fixture(),before=structuredClone(f),r=evaluate(f),g=r.components.goalFunding;
  assert.equal(g.status,'CALCULATED');assert.equal(r.capabilities.goalFunding,'AVAILABLE');
+ assert.equal(g.goalRevisionEvidence,'CALLER_DECLARED_NOT_CONTENT_BOUND_OR_MONOTONICALLY_VERIFIED');
  assert.deepEqual(g.totals,{planRevision:1,goalCount:2,requiredKrw:600,allocatedKrw:500,shortfallKrw:100,unallocatedCashKrw:400,earliestUnfundedDueAtMs:now+2*day});
  assert.equal(g.goals[0].availableAtMs,now);assert.equal(g.goals[0].shortfallKrw,100);
  assert.equal(g.goals[1].shortfallKrw,0);assert.equal(g.accounts[0].newEarmarkKrw,300);
@@ -94,6 +95,7 @@ test('saved workflow exposes goal aggregates and suppresses stale values without
  const w=runPrivateRiskWorkflow(fixture(),{analysisPolicy:policy}),head={revision:1,generatedAtMs:now,inputCutoffMs:now};
  const r=savedWorkflowView(w,head,{maxAnalysisAgeMs:1000,maxInputAgeMs:1000},now,provenance);
  assert.equal(r.metricsAsOf.goalFunding.shortfallKrw,100);assert.equal(r.capabilitiesAsOf.goalFunding,'AVAILABLE');
+ assert.equal(r.goalRevisionEvidence,'CALLER_DECLARED_NOT_CONTENT_BOUND_OR_MONOTONICALLY_VERIFIED');
  assert.ok(!['PRIVATE_ACCOUNT_SENTINEL','PRIVATE_GOAL','PRIVATE_OBLIGATION'].some(x=>JSON.stringify(r).includes(x)));assert.equal(r.metricsAsOf.valuation.investableCashKrw,null);
  const restored=JSON.parse(JSON.stringify(w));
  assert.deepEqual(savedWorkflowView(restored,head,r.ageLimits,now,provenance),r);

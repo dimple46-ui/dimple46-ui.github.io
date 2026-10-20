@@ -10,6 +10,8 @@ Fixed goalFunding context retains status, inputCutoffMs, planRevision, required/
 
 No goalPlan preserves the original response shape and behavior. Evidence for this connection: validation/goal-alternative-local-20261020.json. Local fictional validation and CI are distinct from actual private financial input, external storage, deployment and Watch adoption.
 
+Goal revision metadata is declared, not content-bound or checked for monotonic history; goalRevisionEvidence states that limitation explicitly. Immutable sealed storage revisions/request replay must not be confused with a guarantee that identical goal revisions always identify identical goal content. The current comparison has no goal-specific automated event or execution history.
+
 Status: IMPLEMENTED / LOCAL_VALIDATED / NOT_DEPLOYED / NOT_USER_READY. No scheduled consumer, private storage or recommendation engine.
 
 `domain/alternative-comparison.mjs` reuses evaluateAssetLedger without changing that contract. It compares exactly one each of ADD_EXISTING, ADD_NEW, KEEP_CASH and REPAY_DEBT with an explicit common capitalKrw and horizonDays. These are user-supplied hypothetical comparison inputs, not recommended allocation or target returns. No ranking, recommendation or trade quantities are generated.

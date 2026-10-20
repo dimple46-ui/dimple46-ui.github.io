@@ -86,6 +86,7 @@ export function evaluateLifeGoalFunding(ledger,schedule,goalPlan,{nowMs,maxLedge
  return {contractVersion:1,status:unknown?'PARTIAL':'CALCULATED',scope:'PRIVATE_LOCAL_GOAL_FUNDING_ONLY',currency:'KRW',
   generatedAtMs:nowMs,inputCutoffMs:ledger.asOfMs,totals:{planRevision:p.revision,goalCount:goals.size,requiredKrw:unknown?null:Number(required),
    allocatedKrw:Number(allocated),shortfallKrw:unknown?null:Number(shortfall),unallocatedCashKrw:Number(remaining),earliestUnfundedDueAtMs:unknown?null:earliest},
+  goalRevisionEvidence:'CALLER_DECLARED_NOT_CONTENT_BOUND_OR_MONOTONICALLY_VERIFIED',
   goals:output,accounts:accountRows,issues:unknown?[{code:'UNCONFIRMED_GOAL_AMOUNT_OR_DEADLINE'}]:[],
   limitations:['DECLARED_CURRENT_WITHDRAWABLE_CASH_ONLY','ALL_DECLARED_OBLIGATIONS_PROTECTED','NO_CROSS_ACCOUNT_NETTING',
    'NO_FUTURE_INCOME_SECURITY_SALE_NEW_BORROWING_OR_RETURN_ASSUMPTION','NO_INFLATION_ESCALATION_NOMINAL_KRW_INPUT_ONLY',

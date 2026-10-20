@@ -1,0 +1,34 @@
+{
+  "scope": "PUBLIC_CODE_AND_FICTIONAL_LOCAL_INPUTS_ONLY",
+  "recordedAtUtc": "2026-10-20T02:54:53.670694+00:00",
+  "baseSource": "4f6fed3c654c04ec2fed257917b5396536374d36",
+  "finding": "Goal/plan revision is declared metadata; existing storage revision/provenance and request idempotency do not bind reused goal revisions to material content. Past sealed rows remain unchanged.",
+  "minimalChange": "Explicit goalRevisionEvidence label in local goal output, fixed saved aggregate projection and comparison; no unsupported content history guarantee or new engine",
+  "sourceSha256": {
+    "domain/life-goal-funding.mjs": "7d46ec9f87e769d4acb442833c6621f7b035ece66fd9158ca8ccd7d9b862a045",
+    "domain/alternative-comparison.mjs": "28e83add08220e8a9dffc171b398d3d56ec5d8c69d9c0626134cbb9465359cde",
+    "private/saved-analysis-view.mjs": "1a74a61f85964a595f6e86113202acf30d6ac31f08f541d4546b081206b15276",
+    "tests/life-goal-funding.test.mjs": "f50e14f7e778b6b1051758b5e717712a394d0e1a48b6b9b31b5458730d663245",
+    "tests/alternative-comparison.test.mjs": "ee9efa1967b47f8620d1072e90ae78a0b20e6d075b65c81b711d6dd3430a80ca"
+  },
+  "validation": {
+    "relatedPassed": 74,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "reusedFullRegression": {
+      "source": "4f6fed3c654c04ec2fed257917b5396536374d36",
+      "passed": 524,
+      "newFullLocalRun": "NOT_REPEATED_FOR_LABEL_ONLY_CHANGE"
+    },
+    "newFinancialArithmeticChange": false
+  },
+  "unsupported": [
+    "goalRef_revision_content_binding",
+    "monotonic_goal_revision_check",
+    "reuse_after_deletion_or_reappearance_conflict_check",
+    "goal_specific_automatic_alerts"
+  ],
+  "futureGate": "A complete bounded historical goal-content resolution contract is needed; latest-snapshot-only comparison is insufficient. No history trust/retention semantics are silently invented.",
+  "operatingChange": false
+}

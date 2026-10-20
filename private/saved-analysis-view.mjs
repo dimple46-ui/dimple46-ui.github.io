@@ -60,6 +60,7 @@ export function privateSavedAnalysisView(value,nowMs){
  if(stale){for(const k of Object.keys(caps))caps[k]='UNAVAILABLE';for(const k of Object.keys(metrics))metrics[k]=null;}
  return {contractVersion:1,scope:'PRIVATE_SAVED_RISK_AGGREGATES_ONLY',status:stale?'UNAVAILABLE':'PARTIAL',revision,generatedAtMs,inputCutoffMs,
   temporalScope:'STORED_AS_OF_NOT_REEVALUATED',provenance,freshness:{analysisAgeMs,inputAgeMs,status:stale?'STALE_INPUT':'WITHIN_CONFIGURED_AGE_LIMITS'},
+  ...(Object.hasOwn(caps,'goalFunding')?{goalRevisionEvidence:'CALLER_DECLARED_NOT_CONTENT_BOUND_OR_MONOTONICALLY_VERIFIED'}:{}),
   ageLimits:{maxAnalysisAgeMs:ageLimits.maxAnalysisAgeMs,maxInputAgeMs:ageLimits.maxInputAgeMs},capabilitiesAsOf:caps,metricsAsOf:metrics,
   sourceVerification:'DECLARED_INPUTS_NOT_EXTERNAL_ACCOUNT_VERIFICATION',riskEventState:'RETAINED_NOT_REEVALUATED_OR_RESOLVED',
   featureVersion:null,signalVersion:null,limitations:['NO_CURRENT_CASH_OR_PRICE_RECALCULATION','EXPLICIT_STRESS_IS_NOT_PROBABILITY',
