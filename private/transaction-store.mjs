@@ -17,6 +17,8 @@ const headRow=r=>r&&({schemaVersion:r.schema_version,ownerRef:r.owner_ref,author
  policyEpoch:r.policy_epoch,restoreEpoch:r.restore_epoch,mode:r.mode,revision:r.revision,
  generatedAtMs:r.generated_at_ms,inputCutoffMs:r.input_cutoff_ms,sealedState:r.sealed_state});
 const receipt=r=>r&&({payloadTag:r.payload_tag,revision:r.revision,generatedAtMs:r.generated_at_ms,inputCutoffMs:r.input_cutoff_ms});
+export const PRIVATE_INPUT_HISTORY_PAGE_SIZE=4;
+export const PRIVATE_INPUT_HISTORY_PAGE_BYTES=2097152;
 export function createPrivateTransactionStore({sql,transactionSync}){
  if(typeof sql?.exec!=='function'||typeof transactionSync!=='function')throw new TypeError('PRIVATE_STORAGE_DEPENDENCY_REQUIRED');
  const rows=(query,...args)=>Array.from(sql.exec(query,...args));
@@ -30,6 +32,30 @@ export function createPrivateTransactionStore({sql,transactionSync}){
    !timestamp(r.generatedAtMs)||!timestamp(r.inputCutoffMs)||r.inputCutoffMs>r.generatedAtMs||r.generatedAtMs>head.generatedAtMs||r.inputCutoffMs>head.inputCutoffMs))fail('STORE_FROZEN_OR_SCOPE_MISMATCH');return r;
  }
  function readReceipt(scope,requestId){return findReceipt(scope,requestId,checkHead(scope));}
+ function readInputHistoryPage(scope,expectedHead,afterRevision){
+  const unavailable=()=>fail('PRIVATE_INPUT_HISTORY_UNAVAILABLE');
+  if(!Number.isSafeInteger(afterRevision)||afterRevision<0||afterRevision>expectedHead?.revision)unavailable();
+  const page=transactionSync(()=>{
+   const h=checkHead(scope);
+   if(!sameScope(h,expectedHead)||h.revision!==expectedHead.revision||h.generatedAtMs!==expectedHead.generatedAtMs||
+    h.inputCutoffMs!==expectedHead.inputCutoffMs)unavailable();
+   if(afterRevision===0&&rows('SELECT revision FROM private_versions WHERE revision<1 OR revision>? LIMIT 1',h.revision).length)unavailable();
+   const records=rows('SELECT revision,policy_epoch,restore_epoch,generated_at_ms,input_cutoff_ms,sealed_input,sealed_analysis FROM private_versions WHERE revision>? AND revision<=? ORDER BY revision ASC LIMIT 4',afterRevision,h.revision);
+   if(records.length>PRIVATE_INPUT_HISTORY_PAGE_SIZE||afterRevision<h.revision&&records.length===0)unavailable();
+   let bytes=0;
+   const versions=records.map((r,i)=>{
+    if(r.revision!==afterRevision+i+1||r.policy_epoch!==h.policyEpoch||r.restore_epoch!==h.restoreEpoch||
+     !timestamp(r.generated_at_ms)||!timestamp(r.input_cutoff_ms)||r.input_cutoff_ms>r.generated_at_ms||
+     r.generated_at_ms>h.generatedAtMs||r.input_cutoff_ms>h.inputCutoffMs||!envelopeValid(r.sealed_input)||!envelopeValid(r.sealed_analysis))unavailable();
+    bytes+=new TextEncoder().encode(r.sealed_input).byteLength+new TextEncoder().encode(r.sealed_analysis).byteLength;
+    if(bytes>PRIVATE_INPUT_HISTORY_PAGE_BYTES)unavailable();
+    if(r.revision===h.revision&&(r.generated_at_ms!==h.generatedAtMs||r.input_cutoff_ms!==h.inputCutoffMs))unavailable();
+    return {revision:r.revision,generatedAtMs:r.generated_at_ms,inputCutoffMs:r.input_cutoff_ms,sealedInput:r.sealed_input,sealedAnalysis:r.sealed_analysis};
+   });
+   return {versions,bytes,complete:afterRevision+versions.length===h.revision};
+  });
+  if(!page||typeof page.then==='function')unavailable();return page;
+ }
  function readAnalysisSnapshot(scope){
   const snapshot=transactionSync(()=>{
    const h=checkHead(scope);if(h.revision===0)return {head:h,version:null};
@@ -60,5 +86,5 @@ export function createPrivateTransactionStore({sql,transactionSync}){
    return {revision,generatedAtMs:p.generatedAtMs,inputCutoffMs:p.inputCutoffMs,replayed:false};
   });
  }
- return {readHead,readReceipt,readAnalysisSnapshot,commit};
+ return {readHead,readReceipt,readAnalysisSnapshot,readInputHistoryPage,commit};
 }

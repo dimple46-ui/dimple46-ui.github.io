@@ -1,0 +1,68 @@
+{
+  "scope": "PUBLIC_CODE_AND_FICTIONAL_PRIVATE_LOCAL_INPUTS_ONLY",
+  "recordedAtUtc": "2026-10-20T03:22:04.480753+00:00",
+  "baseHead": "36e49ba6e09607393ac8cfa04182b651fb8fe94d",
+  "contractVersion": 1,
+  "storageSchemaVersion": 1,
+  "before": {
+    "sixNewContractCasesFailed": true,
+    "findings": [
+      "same_goal_revision_changed_definition_accepted",
+      "same_plan_revision_changed_earmark_accepted",
+      "old_goal_revision_reappeared_after_deletion",
+      "omission_released_goal_earmarks_from_legacy_cash",
+      "no_complete_historical_content_verification"
+    ],
+    "savedCapabilityBypassReproducedThenFixed": true
+  },
+  "changes": [
+    "bounded_complete_existing_sealed_revision_scan_no_new_registry_or_schema",
+    "input_analysis_policy_provenance_and_original_request_tag_linked",
+    "goal_and_plan_material_version_binding_regression_and_reappearance_guard",
+    "rejected_attempts_kept_as_cash_records_not_accepted_goal_baselines",
+    "explicit_plan_required_after_any_accepted_plan",
+    "history_failure_or_limit_does_not_hide_independent_cash_risk",
+    "authorized_saved_projection_distinguishes_content_checked_from_declared_only"
+  ],
+  "limits": {
+    "previousRevisions": 128,
+    "pageRows": 4,
+    "encryptedPageBytes": 2097152,
+    "totalEncryptedBytes": 8388608,
+    "scope": "same_owner_authorization_policy_restore_epochs_complete_lineage_only"
+  },
+  "validation": {
+    "relatedPassed": 98,
+    "fullPassed": 539,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "command": "node --test --test-concurrency=4 tests/*.test.mjs",
+    "newTests": 15,
+    "actualCryptography": "Existing ephemeral RSA signature/AES-GCM/HMAC + local SQLite integration extended to valid goal admission and changed-content conflict; not actual runtime identity/storage proof",
+    "independentReview": "Read-only design and implementation review; temporal/provenance and rejection marker consistency tightened"
+  },
+  "sourceSha256": {
+    "private/transaction-store.mjs": "d818b9e4c6d11ad1476593082e543a8033f1c972e52aa80524ccb86b12f6ec1c",
+    "private/input-adapter.mjs": "4484d56cda6f74ad50e0766b67402c23a907e815f101041132ad67262b0bbf05",
+    "private/goal-version-history.mjs": "8e12be032e4e308cda41755fd2952863e6bce5025bd460ec9e1637f7ef9758b5",
+    "private/saved-analysis-view.mjs": "8c0038b581f3b342132b02058cd0777d46839dfe53ea1b9638a001e61e3e5645",
+    "tests/private-storage-adapter.test.mjs": "d13979ac92652377a6738da4f01942f102d87a72aa80272a365fb661d6296121"
+  },
+  "compatibility": [
+    "old_no_goal_calculations_unchanged_when_complete_history_proves_no_prior_goal",
+    "legacy_goal_rows_reviewed_without_rewriting_records",
+    "direct_calculators_and_comparisons_remain_declared_only",
+    "current_receiver_adds_optional_sealed_goalVersionHistory_no_research_or_public_contract_change"
+  ],
+  "unsupported": [
+    "external_rollback_or_fork_attestation",
+    "cross_epoch_history_migration",
+    "unbounded_incremental_indexing_or_operating_retention_policy",
+    "actual_financial_inputs_or_allocation_policy",
+    "goal_specific_alert_delivery_or_user_execution_history"
+  ],
+  "operatingChanges": false,
+  "remoteDatabaseWrites": false,
+  "newSecretsPermissionsOrLogin": false
+}

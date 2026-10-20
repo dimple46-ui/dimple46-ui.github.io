@@ -1,6 +1,7 @@
 // Minimal private as-of aggregate contract. No raw ledger/account identifiers, event state or sender payload.
 import {fail,timestamp} from './storage-contract.mjs';
 import {privateProvenanceView} from './analysis-provenance.mjs';
+import {GOAL_DECLARED_REVISION,GOAL_CHECKED_REVISION,privateGoalHistoryProjection} from './goal-version-history.mjs';
 const capKeys=['valuation','investableCash','priceStress','cashDeadlines','concentration','collateral','tax','tradeDecision','notifications','localRiskEventState','notificationDelivery'];
 const unsupported=['collateral','tax','tradeDecision','notifications','notificationDelivery'];
 const metricKeys={valuation:['securitiesValueKrw','grossAssetsKrw','debtPrincipalKrw','netAssetsKrw','withdrawableCashKrw','additionalOutflowsKrw','cashHeadroomAfterReserveKrw','investableCashKrw','cashShortfallKrw'],
@@ -35,7 +36,12 @@ export function privateSavedAnalysisView(value,nowMs){
   metrics[group]=target;
  }
  if(caps.investableCash==='AVAILABLE'&&metrics.valuation?.investableCashKrw===null)reject();
+ let goalRevisionEvidence=GOAL_DECLARED_REVISION,goalHistoryThroughRevision=null;
  if(Object.hasOwn(capabilitiesAsOf,'goalFunding')){
+  goalRevisionEvidence=value.goalRevisionEvidence??GOAL_DECLARED_REVISION;
+  if(![GOAL_DECLARED_REVISION,GOAL_CHECKED_REVISION].includes(goalRevisionEvidence))reject();
+  if(goalRevisionEvidence===GOAL_CHECKED_REVISION){goalHistoryThroughRevision=value.goalHistoryThroughRevision;
+   if(!Number.isSafeInteger(goalHistoryThroughRevision)||goalHistoryThroughRevision!==revision-1)reject();}
   const capability=capabilitiesAsOf.goalFunding;if(!['AVAILABLE','UNAVAILABLE'].includes(capability))reject();caps.goalFunding=capability;
   if(caps.investableCash!=='UNAVAILABLE'||metrics.valuation&&metrics.valuation.investableCashKrw!==null)reject();
   if(capability==='AVAILABLE'){
@@ -60,7 +66,7 @@ export function privateSavedAnalysisView(value,nowMs){
  if(stale){for(const k of Object.keys(caps))caps[k]='UNAVAILABLE';for(const k of Object.keys(metrics))metrics[k]=null;}
  return {contractVersion:1,scope:'PRIVATE_SAVED_RISK_AGGREGATES_ONLY',status:stale?'UNAVAILABLE':'PARTIAL',revision,generatedAtMs,inputCutoffMs,
   temporalScope:'STORED_AS_OF_NOT_REEVALUATED',provenance,freshness:{analysisAgeMs,inputAgeMs,status:stale?'STALE_INPUT':'WITHIN_CONFIGURED_AGE_LIMITS'},
-  ...(Object.hasOwn(caps,'goalFunding')?{goalRevisionEvidence:'CALLER_DECLARED_NOT_CONTENT_BOUND_OR_MONOTONICALLY_VERIFIED'}:{}),
+  ...(Object.hasOwn(caps,'goalFunding')?{goalRevisionEvidence,goalHistoryThroughRevision}:{}),
   ageLimits:{maxAnalysisAgeMs:ageLimits.maxAnalysisAgeMs,maxInputAgeMs:ageLimits.maxInputAgeMs},capabilitiesAsOf:caps,metricsAsOf:metrics,
   sourceVerification:'DECLARED_INPUTS_NOT_EXTERNAL_ACCOUNT_VERIFICATION',riskEventState:'RETAINED_NOT_REEVALUATED_OR_RESOLVED',
   featureVersion:null,signalVersion:null,limitations:['NO_CURRENT_CASH_OR_PRICE_RECALCULATION','EXPLICIT_STRESS_IS_NOT_PROBABILITY',
@@ -71,6 +77,7 @@ export function savedWorkflowView(workflow,head,ageLimits,nowMs,provenance){
   workflow.generatedAtMs!==head.generatedAtMs||workflow.inputCutoffMs!==head.inputCutoffMs||
   workflow.summary?.contractVersion!==1||workflow.summary.status!=='PARTIAL'||workflow.summary.scope!=='PRIVATE_LOCAL_RISK_SUMMARY_ONLY'||workflow.summary.generatedAtMs!==head.generatedAtMs||workflow.summary.inputCutoffMs!==head.inputCutoffMs)reject();
  const c=workflow.summary.components,metrics={};if(!c)reject();
+ let history;try{history=privateGoalHistoryProjection(workflow,head);}catch{reject();}
  for(const name of ['valuation','priceStress','cashDeadlines','concentration']){
   if(workflow.capabilities?.[name]==='AVAILABLE'&&!(name==='valuation'?['CALCULATED','PARTIAL']:['CALCULATED']).includes(c[name]?.status))reject();
  }
@@ -86,5 +93,5 @@ export function savedWorkflowView(workflow,head,ageLimits,nowMs,provenance){
   metrics.goalFunding=c.goalFunding?.totals??null;
  }
  return privateSavedAnalysisView({revision:head.revision,generatedAtMs:head.generatedAtMs,inputCutoffMs:head.inputCutoffMs,
-  ageLimits,provenance,capabilitiesAsOf:workflow.capabilities,metricsAsOf:metrics},nowMs);
+  ageLimits,provenance,capabilitiesAsOf:workflow.capabilities,metricsAsOf:metrics,...history},nowMs);
 }

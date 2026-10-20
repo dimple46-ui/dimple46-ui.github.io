@@ -10,7 +10,7 @@ Fixed goalFunding context retains status, inputCutoffMs, planRevision, required/
 
 No goalPlan preserves the original response shape and behavior. Evidence for this connection: validation/goal-alternative-local-20261020.json. Local fictional validation and CI are distinct from actual private financial input, external storage, deployment and Watch adoption.
 
-Goal revision metadata is declared, not content-bound or checked for monotonic history; goalRevisionEvidence states that limitation explicitly. Immutable sealed storage revisions/request replay must not be confused with a guarantee that identical goal revisions always identify identical goal content. The current comparison has no goal-specific automated event or execution history.
+This direct comparison's goal revision metadata remains declared; goalRevisionEvidence states that limitation explicitly. The separate existing private input receiver can now check content against a complete bounded sealed history as documented in ASSET_LEDGER_CONTRACT.md. Passing a plain goalPlan to this calculator does not import that receiver evidence or authorize investment. The current comparison has no goal-specific automated event or execution history.
 
 Status: IMPLEMENTED / LOCAL_VALIDATED / NOT_DEPLOYED / NOT_USER_READY. No scheduled consumer, private storage or recommendation engine.
 
