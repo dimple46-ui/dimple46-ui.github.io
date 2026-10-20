@@ -1707,6 +1707,16 @@ async function persistCompactHistoryRun(env,db,stored,rows) {
   const engineSourceSha256=String(env.FEATURE_COMPACT_ENGINE_SOURCE_SHA256??"");
   if(!/^[0-9a-f]{40}$/i.test(engineGitSha)||!/^[0-9a-f]{64}$/i.test(engineSourceSha256))
     return {status:"FAILED",reason:"COMPACT_RELEASE_METADATA_REQUIRED"};
+  // Optional trial limits apply to compact only; missing limits retain the existing explicit opt-in path.
+  const trialSlot=env.FEATURE_COMPACT_TRIAL_SLOT_MS,trialEnd=env.FEATURE_COMPACT_TRIAL_EXPIRES_AT_MS;
+  const trialConfigured=trialSlot!==undefined||trialEnd!==undefined;
+  const trialInteger=value=>typeof value==="string"&&/^[1-9][0-9]*$/.test(value)&&Number.isSafeInteger(Number(value));
+  if(trialConfigured&&(!trialInteger(trialSlot)||!trialInteger(trialEnd)||Number(trialEnd)<=Number(trialSlot)))
+    return {status:"FAILED",reason:"COMPACT_TRIAL_CONFIG_INVALID"};
+  if(trialConfigured&&stored.slot_ms!==Number(trialSlot))
+    return {status:"SKIPPED",reason:"COMPACT_TRIAL_SLOT_MISMATCH"};
+  if(trialConfigured&&Date.now()>=Number(trialEnd))
+    return {status:"SKIPPED",reason:"COMPACT_TRIAL_EXPIRED"};
   // All cutoffs use the immutable row selected after raw insertion, including a same-slot retry.
   const time=(stored.observed_at_ms+KST_OFFSET_MS)%86400000;
   const historical=await db.prepare(`WITH recent_days AS (
@@ -1721,6 +1731,10 @@ async function persistCompactHistoryRun(env,db,stored,rows) {
   const features=historyFeatures(decodeHistoryRow(stored),rows,historical.results);
   const run=buildCompactFeatureRun(stored,features,{engineGitSha,engineSourceSha256,
     queryMeta:{sameTime:normalizedD1Meta(historical)}});
+  // A slow read may cross expiry; do not start a new INSERT after the deadline.
+  // An INSERT already in flight cannot be cancelled or undone by this local check.
+  if(trialConfigured&&Date.now()>=Number(trialEnd))
+    return {status:"SKIPPED",reason:"COMPACT_TRIAL_EXPIRED"};
   const write=await db.prepare(`INSERT INTO feature_runs
     (slot_ms,feature_version,observed_at_ms,trading_day,engine_git_sha,engine_source_sha256,generated_at_ms,
       input_cutoff_ms,quality_ceiling,generation_status,compact_features_json,validation_json)

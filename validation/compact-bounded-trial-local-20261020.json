@@ -1,0 +1,13 @@
+{
+  "scope": "LOCAL_FICTIONAL_SQLITE_AND_SIMULATED_CLOCK_ONLY",
+  "upstream_checkpoint": "2580ce80857d3d03c3d9ee8152c09043b6c12993",
+  "prior_validated_source": "5bb1401af744dd91ed08bdf6c098b35ca257781e",
+  "modified_relay_sha256": "795d2f19141222aa1b1d2116c0e40c884a8fd80239c3f6ccd2b17409b38c6b8e",
+  "before": {"command": "node --test tests/legacy-compact-preparation.test.mjs", "pass": 5, "fail": 6},
+  "after_related": {"command": "node --test tests/legacy-compact-preparation.test.mjs tests/feature-storage.test.mjs tests/history.test.mjs", "pass": 35, "fail": 0},
+  "after_full": {"command": "node --test --test-concurrency=4 tests/*.test.mjs", "pass": 546, "fail": 0, "skipped": 0, "cancelled": 0},
+  "verified": ["Exact slot accepted and immutable retry returns EXISTS with one row", "Other slot skipped", "Expiry boundary skipped", "Partial/noncanonical/unsafe configuration rejected", "Expiry crossed during compact history read prevents subsequent INSERT", "Default-off and prior continuous opt-in preserved", "Raw/v1 persistence preserved"],
+  "limits": ["In-flight requests can finish after expiry", "Repeated eligible calls may consume reads and conflict writes", "No total account quota enforcement", "No automatic flag reset or protection against subsequent configuration changes", "No deployment or runtime verification"],
+  "runtime_changed": false,
+  "github_ci_for_modified_source": "PENDING_EXISTING_TESTS_AFTER_EXPLICIT_DEVELOPMENT_PUBLICATION_APPROVAL"
+}

@@ -1,5 +1,19 @@
 # Resume
 
+## Local bounded compact trial preparation — 2026-10-20
+
+- local_branch: local/compact-bounded-trial-20261020, isolated full public-source import from checkpoint2580ce8; upstream feature/research-handoff remains untouched. Existing dirty original checkout preserved.
+- new_change: optional exact stored-slot and expiry bindings checked inside the shared compact persistence helper. Invalid/partial config fails closed, other slots/expired calls skip, expiry is rechecked after history calculation before INSERT. Both limits absent preserves prior opt-in behavior. Legacy source preparation extracts the same helper; raw/v1/publication remain independent.
+- validation: six initial gating cases failed before implementation. Related35/35 and full546/546 PASS after implementation; fictional SQLite and simulated clock only, no runtime write proof. Generated validator rebuilt for full-source hash consistency; retained runtime candidate identity remains separate.
+- bounds: one immutable slot/version key for this fixed configuration, not one invocation or global DB budget. In-flight INSERT may complete after expiry. No automatic binding reset, read-scan cap, other-writer exclusion or rollback of already committed rows.
+- deployment: none; no flag/binding/Secret/route/schedule/DB mutation. Existing deployed release does not contain the new checks. Prior CI539PASS applies only to previous source; the modified source needs its own existing Tests workflow result.
+- build_boundary: read-only metadata confirms research parent/child exclude all paths and the two candidate triggers include only feature/m2-operational-storage. No build setting changed. Development publication uses expected HEAD2580ce8; no main update or candidate deployment dispatch.
+- publication_status: explicit six-file development publication and existing Tests approval received after the earlier review hold. Remote HEAD2580ce8, Draft/Open PR6 and existing build exclusions rechecked; source calculations unchanged since546PASS.
+- NEXT_EXACT_STEP: observe existing Tests for this exact published source commit and record its run ID/result without duplicate dispatch. Source upload to Cloudflare, any deployment, fixed trial bindings and remote DB writes remain separately unauthorized. Do not activate an older retained release expecting new limits or retry held health/auth routes.
+- remaining_runtime_gate: approved deploy identity, fixed eligible observation slot/expiry, controllable disable/readback path, runtime-bound enforcement and stored-row receipt. No new personal financial policy or G2 research change.
+
+## Prior verified upstream checkpoint
+
 - active_branch: feature/research-handoff; PR6 Draft/Open, base feature/m2-operational-storage. Check actual ref before writes; no main merge.
 - validated_code_sha: 5bb1401af744dd91ed08bdf6c098b35ca257781e. Existing private input receiver now checks goal/plan versions against the complete bounded sealed input/analysis lineage. New helper: private/goal-version-history.mjs; existing transaction store gains a fixed read-only history page method; no schema migration/new registry.
 - completed: same goal/version changed definition and same plan/version changed allocation reject; prior revisions cannot be restored; explicit deletion retains goal identity and reappearance requires a newer goal revision. Array ordering and observation/verification refresh are not material changes. Rejected attempts retain independent cash results but never become goal baselines. Missing goalPlan after a prior accepted plan cannot silently release earmarks.

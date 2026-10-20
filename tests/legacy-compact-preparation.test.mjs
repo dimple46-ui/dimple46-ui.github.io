@@ -37,29 +37,55 @@ test('unknown legacy contracts and repeat application fail rather than broadly r
  assert.throws(()=>prepareLegacyCompactSource(base.replace('status:"STORED",slotMs:current.slot_ms','status:"OTHER",slotMs:current.slot_ms'),parts),/LEGACY_RETURN_CONTRACT_CHANGED/);
  assert.throws(()=>legacyCompactParts('unsupported source'),/COMPACT_EXTRACTION_BOUNDARY_CHANGED/);
 });
-for(const enabled of [false,true]) test(`legacy SQLite path preserves v1 with compact ${enabled?'explicitly enabled':'default off'}`,async()=>{
+const trialSlot=Date.parse('2026-10-01T00:00:00Z');
+const trialEnd=trialSlot+60000;
+const cases=[
+ {name:'default off',enabled:false},
+ {name:'explicitly enabled',enabled:true},
+ {name:'trial exact slot',enabled:true,trial:{slot:String(trialSlot),end:String(trialEnd)},expected:'INSERTED'},
+ {name:'trial other slot',enabled:true,trial:{slot:String(trialSlot-120000),end:String(trialEnd)},expected:'SKIPPED',reason:'COMPACT_TRIAL_SLOT_MISMATCH'},
+ {name:'trial expired at boundary',enabled:true,trial:{slot:String(trialSlot),end:String(trialSlot+1000)},expected:'SKIPPED',reason:'COMPACT_TRIAL_EXPIRED'},
+ {name:'trial partial configuration',enabled:true,trial:{slot:String(trialSlot)},expected:'FAILED',reason:'COMPACT_TRIAL_CONFIG_INVALID'},
+ {name:'trial noncanonical number',enabled:true,trial:{slot:String(trialSlot),end:'1e15'},expected:'FAILED',reason:'COMPACT_TRIAL_CONFIG_INVALID'},
+ {name:'trial unsafe integer',enabled:true,trial:{slot:'9007199254740992',end:String(trialEnd)},expected:'FAILED',reason:'COMPACT_TRIAL_CONFIG_INVALID'},
+ {name:'trial expires during history read',enabled:true,trial:{slot:String(trialSlot),end:String(trialEnd)},expireOnRead:true,expected:'SKIPPED',reason:'COMPACT_TRIAL_EXPIRED'}
+];
+for(const {name,enabled,trial,expected,reason,expireOnRead} of cases) test(`legacy SQLite preserves v1: compact ${name}`,async()=>{
  const sqlite=new DatabaseSync(':memory:');
+ let now=trialSlot+1000;
  try {
   sqlite.exec(readFileSync(new URL('../migrations/0001_market_history.sql',import.meta.url),'utf8'));
   if(enabled) sqlite.exec(readFileSync(new URL('../migrations/0002_feature_runs.sql',import.meta.url),'utf8'));
   const db={prepare(sql){return {bind(...args){return {
    run:async()=>({success:true,meta:{changes:Number(sqlite.prepare(sql).run(...args).changes)}}),
    first:async()=>sqlite.prepare(sql).get(...args)??null,
-   all:async()=>({success:true,results:sqlite.prepare(sql).all(...args)})
+   all:async()=>{if(expireOnRead&&sql.includes('WITH recent_days'))now=trialEnd;
+    return {success:true,results:sqlite.prepare(sql).all(...args)};}
   };}};}};
-  const context=vm.createContext({TextEncoder,Date,console,db});
+  class Clock extends Date {static now(){return now;}}
+  const context=vm.createContext({TextEncoder,Date:Clock,console,db});
   vm.runInContext(prepareLegacyCompactSource(base,parts).source,context);
   context.row={slot_ms:Date.parse('2026-10-01T00:00:00Z'),observed_at_ms:Date.parse('2026-10-01T00:00:01Z'),
    available_at_ms:Date.parse('2026-10-01T00:00:01Z'),trading_day:'20261001',schema_version:3,
    quality_version:'fictional',pipeline_status:'DEGRADED',metrics:{},quality:{}};
   context.env={MARKET_HISTORY:db,...(enabled?{FEATURE_COMPACT_WRITE_ENABLED:'true',
    FEATURE_COMPACT_ENGINE_GIT_SHA:'a'.repeat(40),FEATURE_COMPACT_ENGINE_SOURCE_SHA256:'b'.repeat(64)}:{})};
+  if(trial){context.env.FEATURE_COMPACT_TRIAL_SLOT_MS=trial.slot;
+   if(trial.end!==undefined)context.env.FEATURE_COMPACT_TRIAL_EXPIRES_AT_MS=trial.end;}
   vm.runInContext(`function historyEnabled(){return true;}function historyObservation(){return row;}
    function isKoreaMarketRelayWindow(){return true;}function decodeHistoryRow(value){return value;}`,context);
   const result=await vm.runInContext('persistMarketHistory(env,{})',context);
   assert.equal(result.status,'STORED');
   assert.equal(JSON.parse(sqlite.prepare('SELECT features_json FROM market_observations').get().features_json).version,1);
-  if(enabled) {assert.equal(result.compact.status,'INSERTED');assert.equal(sqlite.prepare('SELECT feature_version FROM feature_runs').get().feature_version,2);}
+  if(enabled) {
+   assert.equal(result.compact.status,expected??'INSERTED');
+   if(reason) assert.equal(result.compact.reason,reason);
+   if(!expected||expected==='INSERTED') {
+    assert.equal(sqlite.prepare('SELECT feature_version FROM feature_runs').get().feature_version,2);
+    if(trial){const again=await vm.runInContext('persistMarketHistory(env,{})',context);
+     assert.equal(again.compact.status,'EXISTS');assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM feature_runs').get().n,1);}
+   } else assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM feature_runs').get().n,0);
+  }
   else assert.equal(Object.hasOwn(result,'compact'),false);
  } finally {sqlite.close();}
 });

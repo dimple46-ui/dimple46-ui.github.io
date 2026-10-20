@@ -171,6 +171,25 @@ Cron, binding or migration and changes no collection/publication cadence.
   It cannot reject that raw result or independently scheduled GitHub publication. An ambiguous
   compact insert failure may have stored a row; idempotent future handling must never overwrite it.
 
+### Optional bounded compact trial (source only)
+
+`FEATURE_COMPACT_TRIAL_SLOT_MS` and `FEATURE_COMPACT_TRIAL_EXPIRES_AT_MS` may be supplied
+together with the separately authorized compact opt-in and release metadata. Both must be
+canonical positive decimal safe-integer millisecond strings, and expiry must follow the slot.
+Partial or invalid configuration fails closed for compact while raw/v1 persistence remains intact.
+Only the exact stored observation slot is eligible. Expiry is checked before compact history reads
+and again immediately before starting the immutable INSERT. Other slots or expired trials are
+reported as SKIPPED with their reason; no clock relabels the stored observation.
+
+This limits this compact path to one `(slot_ms, feature_version=2)` key under the existing
+immutable primary key, including retries/concurrent invocations with the same fixed configuration.
+It is not a one-request lock, scan/read quota, global database write budget, or automatic flag reset.
+An INSERT already in flight can complete after expiry. Raw/v1 writes and other database writers
+remain independent. Neither limit supplied preserves the existing continuous opt-in behavior.
+Actual use requires a separately approved future source deployment, fixed slot/expiry and release
+identity, verified effective bindings, and explicit disable/readback recovery. The retained deployed
+version23 does not contain these new checks. No bindings, schedules or deployment are changed here.
+
 Changing the relay source changes its full-file SHA even when Feature calculations are unchanged.
 The generated validator is rebuilt for source consistency, but this is not permission to redeploy it.
 Existing candidate runtime receipts and pinned local trial commands refer to their earlier exact
