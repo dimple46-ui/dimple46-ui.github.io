@@ -1,0 +1,90 @@
+[
+  {
+    "recordVersion": 1,
+    "judgmentId": "public-example-samsung-2026q2-20261016-v1",
+    "generatedAtMs": 1792123971628,
+    "inputCutoffMs": 1792123971628,
+    "ticker": "005930",
+    "kind": "HISTORICAL_REPORT_CHANGE_EXAMPLE",
+    "comparison": "PRELIMINARY_TO_COMPANY_REPORTED_SAME_PERIOD",
+    "baseline": {
+      "documentId": "samsung-2026q2-guidance-20260707",
+      "issuerId": "samsung-electronics",
+      "ticker": "005930",
+      "author": "Samsung Electronics corporate newsroom",
+      "url": "https://news.samsung.com/global/samsung-electronics-announces-earnings-guidance-for-second-quarter-2026",
+      "location": "Consolidated Sales / Consolidated Operating Profit bullets; original lines75-77 read2026-10-16",
+      "publishedDate": "2026-07-07",
+      "firstSeenAtMs": 1792123971628,
+      "originalRead": true,
+      "fiscalPeriod": "2026Q2",
+      "scope": "CONSOLIDATED",
+      "currency": "KRW",
+      "unit": "KRW_BILLION",
+      "figureStatus": "PRELIMINARY_ESTIMATE",
+      "metrics": {
+        "revenue": 171000,
+        "operatingProfit": 89400
+      }
+    },
+    "current": {
+      "documentId": "samsung-2026q2-results-20260730",
+      "issuerId": "samsung-electronics",
+      "ticker": "005930",
+      "author": "Samsung Electronics corporate newsroom",
+      "url": "https://news.samsung.com/global/samsung-electronics-announces-second-quarter-2026-results",
+      "location": "Opening consolidated revenue/operating profit paragraph; original lines73-76 read2026-10-16",
+      "publishedDate": "2026-07-30",
+      "firstSeenAtMs": 1792123971628,
+      "originalRead": true,
+      "fiscalPeriod": "2026Q2",
+      "scope": "CONSOLIDATED",
+      "currency": "KRW",
+      "unit": "KRW_BILLION",
+      "figureStatus": "COMPANY_REPORTED",
+      "metrics": {
+        "revenue": 171500,
+        "operatingProfit": 89500
+      }
+    },
+    "changes": [
+      {
+        "metric": "operatingProfit",
+        "previous": 89400,
+        "current": 89500,
+        "delta": 100,
+        "percentageChange": 0.11185682326621924
+      },
+      {
+        "metric": "revenue",
+        "previous": 171000,
+        "current": 171500,
+        "delta": 500,
+        "percentageChange": 0.29239766081871343
+      }
+    ],
+    "independentIssuerCount": 1,
+    "thesis": {
+      "interpretation": "Small upward differences from preliminary figures support only numerical consistency for this historical period.",
+      "contraryEvidence": "No valuation, current quarter, independent issuer or portfolio suitability evidence is evaluated.",
+      "invalidation": "Reopen this record through a new entry if the company restates the compared figures or their basis.",
+      "status": "ANALYST_INFERENCE_NOT_COMPANY_GUIDANCE"
+    },
+    "judgment": {
+      "state": "REVIEW_EVIDENCE_ONLY",
+      "target": null,
+      "horizon": null,
+      "expiry": null,
+      "probability": null,
+      "userAction": "NOT_RECORDED",
+      "outcome": "NOT_APPLICABLE_NOT_A_FORECAST"
+    },
+    "limitations": [
+      "NOT_CURRENT_INVESTMENT_ADVICE",
+      "COMPANY_REPORTED_DOES_NOT_MEAN_AUDITED",
+      "SINGLE_ISSUER_NOT_INDEPENDENT_CORROBORATION",
+      "NO_PRIVATE_PORTFOLIO_OR_AUTOMATED_ORDER"
+    ],
+    "contentSha256": "de888c98d0544498e3aeeec815c1aa613ebe3099837da79f175d59776ceb65af"
+  }
+]

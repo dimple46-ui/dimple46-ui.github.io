@@ -1,0 +1,59 @@
+{
+  "validationType": "CURRENT_PUBLIC_SNAPSHOT_LOCAL_CLI",
+  "validatedAtKst": "2026-10-16T13:39:41.965+09:00",
+  "codeSha": "474c9e876e6bcb782e44172c34d3a7b689a4061a",
+  "cliSha256": "aea5546587d0595bfef002057301adb16d1762938154084037119821666edd77",
+  "sourceUrl": "https://raw.githubusercontent.com/dimple46-ui/dimple46-ui.github.io/main/market-live.json",
+  "sourceCaptureSha256": "4b8d43951e884cb0fc2b03751cad80d03e5ca02fdf50195734eda279b4a1fbcd",
+  "sourceSchemaVersion": 3,
+  "relayUpdatedAt": "2026-10-16T04:38:47.368Z",
+  "inputCutoffMs": 1792125527368,
+  "referenceMs": 1792125581965,
+  "observationAgeMs": 54597,
+  "policy": {
+    "maxObservationAgeMs": 180000,
+    "maxFeatureAgeMs": 300000,
+    "scope": "THIS_VALIDATION_ONLY_NOT_OPERATIONAL_POLICY"
+  },
+  "cliExitCode": 0,
+  "cliStatus": "PARTIAL",
+  "pipelineStatus": "DEGRADED",
+  "sourceErrors": [],
+  "issues": [
+    {
+      "path": "program",
+      "status": "STALE"
+    }
+  ],
+  "unverifiedMarketTimes": [
+    "indexes.kospi",
+    "indexes.kospi200",
+    "futures.kospi200",
+    "futuresInvestors.kospi200"
+  ],
+  "stockSourceStatus": {
+    "samsung": "LIVE",
+    "skHynix": "LIVE"
+  },
+  "program": {
+    "status": "STALE",
+    "marketTime": "2026-10-16T04:30:00.000Z",
+    "ingestionAgeSeconds": 527,
+    "maxAgeSeconds": 300
+  },
+  "advancedCapabilities": {
+    "features": "UNAVAILABLE",
+    "signals": "UNAVAILABLE",
+    "portfolio": "UNAVAILABLE",
+    "decision": "UNAVAILABLE"
+  },
+  "selectedInputFixture": "tests/fixtures/public-state-20261016-1338.json",
+  "scopeNotes": [
+    "One public fetch, no polling",
+    "CLI applied to full capture; selected fixture is a projection retained for future tests",
+    "No authenticated API/D1/provider/Signal runtime validation",
+    "Fresh ingestion and empty sourceErrors do not certify all source freshness"
+  ],
+  "deployment": "NOT_PERFORMED",
+  "productionImpact": "NONE"
+}

@@ -1,0 +1,35 @@
+{
+  "validatedAtKst": "2026-10-16T13:58:57.531951+09:00",
+  "validationType": "LOCAL_MODULE_EXTRACTION_REGRESSION",
+  "parentSha": "2dbc2363b63cb2cfb094335c1108b19e70436567",
+  "changedFilesSha256": {
+    "cloudflare/public-consumer-summary.mjs": "39203ad45a2effa19625ca6ea44deea21043afe2c5fff20cdc75b239d8ae7a12",
+    "domain/local-consumer-workflow.mjs": "8adc2100039ac6a16524d85c7da5dcff8afc14fb38bc0fda83e71da12e5181bf",
+    "scripts/summarize-public-input.mjs": "b4b9d7dc25476956760cb54bac3e0f0da590f9e9e147a07eaf2ae42791342d91",
+    "tests/public-module-boundary.test.mjs": "b8bd6fb709d5deb55b960c6e83e3548f287eeb50e8957a9d9336a0bb87ad7804"
+  },
+  "targeted": {
+    "tests": 15,
+    "pass": 15
+  },
+  "full": {
+    "tests": 143,
+    "pass": 143,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "moduleBoundary": {
+    "publicEntry": "cloudflare/public-consumer-summary.mjs",
+    "dependencies": [
+      "cloudflare/consumer-fallback.mjs"
+    ],
+    "privateDomainImports": false,
+    "cliDirectPublicImport": true,
+    "compatibilityExportIdentity": true
+  },
+  "remoteCi": "NOT_RUN",
+  "deployment": "NOT_PERFORMED",
+  "newMarketFetch": false,
+  "productionImpact": "NONE"
+}
