@@ -1,8 +1,8 @@
 {
   "schemaVersion": 3,
   "fresh": true,
-  "relayUpdatedAt": "2026-10-26T10:26:53.395Z",
-  "sourceFetchedAt": "2026-10-26T10:26:53.395Z",
+  "relayUpdatedAt": "2026-10-26T10:28:54.611Z",
+  "sourceFetchedAt": "2026-10-26T10:28:54.611Z",
   "sourceAgeSeconds": 0,
   "koreaDate": "20261026",
   "stocks": {
@@ -19,11 +19,11 @@
       "open": 213500,
       "high": 216000,
       "low": 211500,
-      "volume": 11178176,
-      "tradingValue": 2388447649000,
-      "nxtPrice": "214,500",
-      "nxtChangeRate": "-0.46",
-      "lastTradedAt": "2026-10-26T19:26:52.961443+09:00"
+      "volume": 11184004,
+      "tradingValue": 2389694846000,
+      "nxtPrice": "214,000",
+      "nxtChangeRate": "-0.70",
+      "lastTradedAt": "2026-10-26T19:28:53.385283+09:00"
     },
     "skHynix": {
       "code": "000660",
@@ -38,11 +38,11 @@
       "open": 1279000,
       "high": 1315000,
       "low": 1267000,
-      "volume": 2427489,
-      "tradingValue": 3126141603000,
-      "nxtPrice": "1,290,000",
-      "nxtChangeRate": "1.02",
-      "lastTradedAt": "2026-10-26T19:26:52.946429+09:00"
+      "volume": 2428169,
+      "tradingValue": 3127017816000,
+      "nxtPrice": "1,289,000",
+      "nxtChangeRate": "0.94",
+      "lastTradedAt": "2026-10-26T19:28:53.403907+09:00"
     }
   },
   "indexes": {
@@ -85,23 +85,23 @@
   },
   "kospiInvestors": {
     "bizdate": "20261026",
-    "time": "192652",
+    "time": "192853",
     "summary": {
-      "foreigner": -687830000000,
-      "individual": 36396000000,
-      "institution": 613021000000,
-      "otherCorporation": 36629000000,
-      "otherForeigner": 1784000000
+      "foreigner": -687950000000,
+      "individual": 36495000000,
+      "institution": 613034000000,
+      "otherCorporation": 36635000000,
+      "otherForeigner": 1785000000
     },
     "detail": [
       {
         "code": "1000",
         "name": "금융투자",
-        "netAmount": 676645000000,
+        "netAmount": 676658000000,
         "sellAmount": 560449000000,
-        "buyAmount": 1237094000000,
+        "buyAmount": 1237107000000,
         "sellQuantity": 7285977,
-        "buyQuantity": 12330809
+        "buyQuantity": 12331679
       },
       {
         "code": "2000",
@@ -169,38 +169,38 @@
       {
         "code": "7100",
         "name": "기타법인",
-        "netAmount": 36629000000,
+        "netAmount": 36635000000,
         "sellAmount": 57607000000,
-        "buyAmount": 94236000000,
+        "buyAmount": 94242000000,
         "sellQuantity": 1332567,
-        "buyQuantity": 2733183
+        "buyQuantity": 2733478
       },
       {
         "code": "8000",
         "name": "개인",
-        "netAmount": 36396000000,
-        "sellAmount": 3143917000000,
-        "buyAmount": 3180313000000,
-        "sellQuantity": 97683996,
-        "buyQuantity": 99889271
+        "netAmount": 36495000000,
+        "sellAmount": 3146970000000,
+        "buyAmount": 3183465000000,
+        "sellQuantity": 97735440,
+        "buyQuantity": 99936591
       },
       {
         "code": "9000",
         "name": "외국인",
-        "netAmount": -687830000000,
-        "sellAmount": 5094905000000,
-        "buyAmount": 4407075000000,
-        "sellQuantity": 69591234,
-        "buyQuantity": 64239177
+        "netAmount": -687950000000,
+        "sellAmount": 5095128000000,
+        "buyAmount": 4407178000000,
+        "sellQuantity": 69594476,
+        "buyQuantity": 64245312
       },
       {
         "code": "9001",
         "name": "기타외국인",
-        "netAmount": 1784000000,
+        "netAmount": 1785000000,
         "sellAmount": 7923000000,
-        "buyAmount": 9707000000,
-        "sellQuantity": 641820,
-        "buyQuantity": 557365
+        "buyAmount": 9708000000,
+        "sellQuantity": 641821,
+        "buyQuantity": 557432
       }
     ]
   },
@@ -427,12 +427,12 @@
     }
   },
   "dataMeta": {
-    "generatedAt": "2026-10-26T10:26:53.395Z",
+    "generatedAt": "2026-10-26T10:28:54.611Z",
     "session": {
       "source": "KIS_OPEN_API",
       "marketTime": "2026-10-25T15:00:00.000Z",
       "fetchedAt": "2026-10-26T00:00:54.156Z",
-      "sourceAgeSeconds": 37559,
+      "sourceAgeSeconds": 37680,
       "status": "TRADING_DAY",
       "openDay": "Y",
       "tradingDay": "Y",
@@ -441,25 +441,25 @@
     "stocks": {
       "samsung": {
         "source": "NAVER_NPAY",
-        "marketTime": "2026-10-26T19:26:52.961443+09:00",
-        "fetchedAt": "2026-10-26T10:26:53.395Z",
-        "sourceAgeSeconds": 0,
+        "marketTime": "2026-10-26T19:28:53.385283+09:00",
+        "fetchedAt": "2026-10-26T10:28:54.611Z",
+        "sourceAgeSeconds": 1,
         "status": "LIVE",
         "timeBasis": "SOURCE_TRADE_TIME",
         "maxAgeSeconds": 300,
-        "marketAgeSeconds": 0,
+        "marketAgeSeconds": 1,
         "fetchAgeSeconds": 0,
         "hasValue": true
       },
       "skHynix": {
         "source": "NAVER_NPAY",
-        "marketTime": "2026-10-26T19:26:52.946429+09:00",
-        "fetchedAt": "2026-10-26T10:26:53.395Z",
-        "sourceAgeSeconds": 0,
+        "marketTime": "2026-10-26T19:28:53.403907+09:00",
+        "fetchedAt": "2026-10-26T10:28:54.611Z",
+        "sourceAgeSeconds": 1,
         "status": "LIVE",
         "timeBasis": "SOURCE_TRADE_TIME",
         "maxAgeSeconds": 300,
-        "marketAgeSeconds": 0,
+        "marketAgeSeconds": 1,
         "fetchAgeSeconds": 0,
         "hasValue": true
       }
@@ -468,7 +468,7 @@
       "kospi": {
         "source": "NAVER_NPAY",
         "marketTime": null,
-        "fetchedAt": "2026-10-26T10:26:53.395Z",
+        "fetchedAt": "2026-10-26T10:28:54.611Z",
         "sourceAgeSeconds": null,
         "status": "CLOSED",
         "timeBasis": "FETCH_TIME_NO_EXCHANGE_TIMESTAMP",
@@ -480,7 +480,7 @@
       "kospi200": {
         "source": "NAVER_NPAY",
         "marketTime": null,
-        "fetchedAt": "2026-10-26T10:26:53.395Z",
+        "fetchedAt": "2026-10-26T10:28:54.611Z",
         "sourceAgeSeconds": null,
         "status": "CLOSED",
         "timeBasis": "FETCH_TIME_NO_EXCHANGE_TIMESTAMP",
@@ -492,25 +492,25 @@
     },
     "kospiInvestors": {
       "source": "NAVER_NPAY",
-      "marketTime": "2026-10-26T10:26:52.000Z",
-      "fetchedAt": "2026-10-26T10:26:53.395Z",
-      "sourceAgeSeconds": 1,
+      "marketTime": "2026-10-26T10:28:53.000Z",
+      "fetchedAt": "2026-10-26T10:28:54.611Z",
+      "sourceAgeSeconds": 2,
       "status": "CLOSED",
       "timeBasis": "SOURCE_MARKET_TIME",
       "maxAgeSeconds": 300,
-      "marketAgeSeconds": 1,
+      "marketAgeSeconds": 2,
       "fetchAgeSeconds": 0,
       "hasValue": true
     },
     "program": {
       "source": "NAVER_NPAY",
       "marketTime": "2026-10-26T10:20:00.000Z",
-      "fetchedAt": "2026-10-26T10:26:53.395Z",
-      "sourceAgeSeconds": 413,
+      "fetchedAt": "2026-10-26T10:28:54.611Z",
+      "sourceAgeSeconds": 535,
       "status": "CLOSED",
       "timeBasis": "SOURCE_MARKET_TIME",
       "maxAgeSeconds": 300,
-      "marketAgeSeconds": 413,
+      "marketAgeSeconds": 535,
       "fetchAgeSeconds": 0,
       "hasValue": true
     },
@@ -519,24 +519,24 @@
         "source": "KIS_OPEN_API",
         "marketTime": "2026-10-26T05:30:00.000Z",
         "fetchedAt": "2026-10-26T05:36:53.245Z",
-        "sourceAgeSeconds": 17813,
+        "sourceAgeSeconds": 17935,
         "status": "CURRENT_BUCKET",
         "timeBasis": "SOURCE_SCHEDULED_BUCKET",
         "maxAgeSeconds": null,
-        "marketAgeSeconds": 17813,
-        "fetchAgeSeconds": 17400,
+        "marketAgeSeconds": 17935,
+        "fetchAgeSeconds": 17521,
         "hasValue": true
       },
       "skHynix": {
         "source": "KIS_OPEN_API",
         "marketTime": "2026-10-26T05:30:00.000Z",
         "fetchedAt": "2026-10-26T05:36:53.543Z",
-        "sourceAgeSeconds": 17813,
+        "sourceAgeSeconds": 17935,
         "status": "CURRENT_BUCKET",
         "timeBasis": "SOURCE_SCHEDULED_BUCKET",
         "maxAgeSeconds": null,
-        "marketAgeSeconds": 17813,
-        "fetchAgeSeconds": 17400,
+        "marketAgeSeconds": 17935,
+        "fetchAgeSeconds": 17521,
         "hasValue": true
       }
     },
@@ -550,7 +550,7 @@
         "timeBasis": "FETCH_TIME_NO_EXCHANGE_TIMESTAMP",
         "maxAgeSeconds": 300,
         "marketAgeSeconds": null,
-        "fetchAgeSeconds": 13319,
+        "fetchAgeSeconds": 13440,
         "hasValue": true
       }
     },
@@ -564,7 +564,7 @@
         "timeBasis": "FETCH_TIME_NO_EXCHANGE_TIMESTAMP",
         "maxAgeSeconds": 300,
         "marketAgeSeconds": null,
-        "fetchAgeSeconds": 13319,
+        "fetchAgeSeconds": 13440,
         "hasValue": true
       }
     },
@@ -572,8 +572,8 @@
       "samsung": {
         "source": "NAVER_NPAY",
         "marketTime": "2026-10-23T06:30:00.000Z",
-        "fetchedAt": "2026-10-26T10:26:53.395Z",
-        "sourceAgeSeconds": 273413,
+        "fetchedAt": "2026-10-26T10:28:54.611Z",
+        "sourceAgeSeconds": 273535,
         "status": "DAILY_CONFIRMED",
         "timeBasis": "DAILY_CONFIRMED_CLOSE",
         "maxAgeSeconds": null
@@ -581,8 +581,8 @@
       "skHynix": {
         "source": "NAVER_NPAY",
         "marketTime": "2026-10-23T06:30:00.000Z",
-        "fetchedAt": "2026-10-26T10:26:53.395Z",
-        "sourceAgeSeconds": 273413,
+        "fetchedAt": "2026-10-26T10:28:54.611Z",
+        "sourceAgeSeconds": 273535,
         "status": "DAILY_CONFIRMED",
         "timeBasis": "DAILY_CONFIRMED_CLOSE",
         "maxAgeSeconds": null
@@ -591,7 +591,7 @@
   },
   "qualityVersion": "2026-10-01.1",
   "dataQuality": {
-    "evaluatedAt": "2026-10-26T10:26:53.395Z",
+    "evaluatedAt": "2026-10-26T10:28:54.611Z",
     "issues": [],
     "unverifiedMarketTimes": [
       "indexes.kospi",
