@@ -1,9 +1,16 @@
+import {summarizeJsonGrowth} from "./operational-storage-policy.mjs";
+import {buildPublicConsumerSummary} from "./public-consumer-summary.mjs";
+
 const API_SCHEMA_VERSION = 1;
 const SUPPORTED_FEATURE_VERSION = 2;
+const SERVICE_RELEASE_VERSION = 3;
 const MAX_HISTORY_RANGE_MS = 12 * 60 * 60 * 1000;
 const MAX_HISTORY_LIMIT = 120;
 const MAX_RESPONSE_BYTES = 900000;
 const DEFAULT_RATE_LIMIT = 60;
+const DEFAULT_QUERY_TIMEOUT_MS = 5000;
+const ALLOWED_TICKERS = Object.freeze({"005930": "samsung", "000660": "skHynix"});
+const SHARED_HISTORY_PREFIXES = ["kospi.", "kospi200.", "market.", "program.", "futures."];
 
 const rateWindows = new Map();
 const runtime = {startedAtMs: Date.now(), requests: 0, failures: 0, rateLimited: 0};
@@ -28,6 +35,18 @@ function safeEqual(left, right) {
 function authenticated(request, env) {
   const header = request.headers.get("Authorization") || "";
   return header.startsWith("Bearer ") && safeEqual(header.slice(7), env.INTELLIGENCE_READ_TOKEN);
+}
+
+function tickerScope(url, {required = false, allowAll = true} = {}) {
+  const raw = url.searchParams.get("ticker");
+  if (!raw) {
+    if (required) throw new ApiError(400, "TICKER_REQUIRED");
+    return {ticker: "ALL", metricPrefix: null};
+  }
+  if (allowAll && raw === "ALL") return {ticker: "ALL", metricPrefix: null};
+  const metricPrefix = ALLOWED_TICKERS[raw];
+  if (!metricPrefix) throw new ApiError(400, "INVALID_TICKER");
+  return {ticker: raw, metricPrefix};
 }
 
 function boundedInteger(raw, {name, minimum, maximum, fallback}) {
@@ -74,6 +93,9 @@ function d1Meta(result) {
 
 async function select(db, sql, parameters = []) {
   if (!db?.prepare) throw new Error("D1_UNAVAILABLE");
+  const normalized = String(sql || "").trim();
+  if (!/^SELECT\b/i.test(normalized) || /\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|REPLACE|PRAGMA|ATTACH|DETACH)\b/i.test(normalized))
+    throw new Error("READ_ONLY_SQL_REQUIRED");
   let statement = db.prepare(sql);
   if (parameters.length) statement = statement.bind(...parameters);
   const result = await statement.all();
@@ -91,11 +113,31 @@ function storedJson(value) {
   }
 }
 
-function publicObservation(row) {
+function publicObservation(row, metricPrefix = null) {
+  const allMetrics = storedJson(row.metrics_json);
+  const metrics = metricPrefix ? Object.fromEntries(Object.entries(allMetrics).filter(([name]) =>
+    name.startsWith(`${metricPrefix}.`) || SHARED_HISTORY_PREFIXES.some(prefix => name.startsWith(prefix)))) : allMetrics;
   return {
     slotMs: row.slot_ms, observedAtMs: row.observed_at_ms, availableAtMs: row.available_at_ms,
     tradingDay: row.trading_day, schemaVersion: row.schema_version, qualityVersion: row.quality_version,
-    pipelineStatus: row.pipeline_status, metrics: storedJson(row.metrics_json), quality: storedJson(row.quality_json)
+    pipelineStatus: row.pipeline_status, metrics, quality: storedJson(row.quality_json)
+  };
+}
+
+function responseMetadata({schemaVersion = API_SCHEMA_VERSION, featureVersion = null, generatedAtMs,
+  inputCutoffMs, observedAtMs = null, freshnessReferenceMs = inputCutoffMs,
+  quality = null, pipelineStatus = null}) {
+  return {
+    schema_version: schemaVersion,
+    feature_version: featureVersion,
+    generated_at: generatedAtMs == null ? null : new Date(generatedAtMs).toISOString(),
+    input_cutoff: inputCutoffMs == null ? null : new Date(inputCutoffMs).toISOString(),
+    freshness: observedAtMs == null || freshnessReferenceMs == null ? null : {
+      age_ms: Math.max(0, freshnessReferenceMs - observedAtMs),
+      basis: "AS_OF_MINUS_OBSERVED_AT"
+    },
+    quality,
+    pipeline_status: pipelineStatus
   };
 }
 
@@ -127,51 +169,112 @@ function response(payload, status = 200, extraHeaders = {}) {
   }});
 }
 
-async function health(db, now) {
+async function enforceProviderRateLimit(url, env) {
+  if (!env.INTELLIGENCE_RATE_LIMITER?.limit)
+    throw new ApiError(503, "PROVIDER_RATE_LIMIT_UNAVAILABLE");
+  const result = await env.INTELLIGENCE_RATE_LIMITER.limit({key: `candidate-v1:${url.pathname}`});
+  if (!result?.success) throw new ApiError(429, "RATE_LIMITED");
+  return {scope: "CLOUDFLARE_RATE_LIMIT_BINDING"};
+}
+
+function queryTimeoutMs(env) {
+  const configured = Number(env.INTELLIGENCE_QUERY_TIMEOUT_MS || DEFAULT_QUERY_TIMEOUT_MS);
+  return Number.isFinite(configured) ? Math.min(10000, Math.max(100, Math.trunc(configured))) : DEFAULT_QUERY_TIMEOUT_MS;
+}
+
+function withDeadline(promise, timeoutMs) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => { timer = setTimeout(() => reject(new ApiError(504, "QUERY_TIMEOUT")), timeoutMs); })
+  ]).finally(() => clearTimeout(timer));
+}
+
+function healthAge(timestamp, now, basis) {
+  const status = !Number.isSafeInteger(timestamp) || timestamp < 0 ? "INVALID_OR_MISSING_TIME"
+    : timestamp > now ? "FUTURE_TIME" : "AGE_AVAILABLE";
+  return {age_ms: status === "AGE_AVAILABLE" ? now - timestamp : null, basis, status};
+}
+
+async function health(db, now, env, url) {
+  const values = url.searchParams.getAll("includeStorageGrowth");
+  if (values.length > 1 || (values.length && !["true", "false"].includes(values[0])))
+    throw new ApiError(400, "INVALID_STORAGE_GROWTH_OPTION");
+  const includeGrowth = values[0] !== "false";
+  const growthOptions = {excludeOnOrAfterTradingDay:
+    new Date(now + 9 * 60 * 60 * 1000).toISOString().slice(0, 10).replaceAll("-", "")};
   const [observation, feature, observationGrowth, featureGrowth] = await Promise.all([
     select(db, `SELECT slot_ms,observed_at_ms,available_at_ms,trading_day,schema_version,quality_version,
       pipeline_status,metrics_json,quality_json FROM market_observations ORDER BY slot_ms DESC LIMIT 1`),
     select(db, `SELECT * FROM feature_runs WHERE feature_version = ? ORDER BY slot_ms DESC LIMIT 1`, [SUPPORTED_FEATURE_VERSION]),
-    select(db, `SELECT trading_day,COUNT(*) AS row_count,
+    includeGrowth ? select(db, `SELECT trading_day,COUNT(*) AS row_count,
       SUM(length(metrics_json)+length(quality_json)+coalesce(length(features_json),0)) AS json_bytes
-      FROM market_observations GROUP BY trading_day ORDER BY trading_day DESC LIMIT 5`),
-    select(db, `SELECT trading_day,COUNT(*) AS row_count,
+      FROM market_observations GROUP BY trading_day ORDER BY trading_day DESC LIMIT 5`) : null,
+    includeGrowth ? select(db, `SELECT trading_day,COUNT(*) AS row_count,
       SUM(length(compact_features_json)+length(validation_json)) AS json_bytes
       FROM feature_runs WHERE feature_version = ? GROUP BY trading_day ORDER BY trading_day DESC LIMIT 5`,
-      [SUPPORTED_FEATURE_VERSION])
+      [SUPPORTED_FEATURE_VERSION]) : null
   ]);
   const raw = observation.rows[0];
   const run = feature.rows[0];
+  const observationAge = healthAge(raw?.observed_at_ms, now, "AS_OF_MINUS_OBSERVED_AT");
+  const featureAge = healthAge(run?.input_cutoff_ms, now, "AS_OF_MINUS_FEATURE_INPUT_CUTOFF");
   const quality = raw ? storedJson(raw.quality_json) : null;
+  const deploymentId = env.CF_VERSION_METADATA?.id || null;
+  const deploymentTag = env.CF_VERSION_METADATA?.tag || null;
+  const deploymentTimestamp = env.CF_VERSION_METADATA?.timestamp || null;
+  const workerGitSha = /^[0-9a-f]{7,64}$/i.test(String(env.INTELLIGENCE_WORKER_GIT_SHA || "")) ?
+    env.INTELLIGENCE_WORKER_GIT_SHA : null;
   return {
     service: "market-intelligence-read-candidate", apiSchemaVersion: API_SCHEMA_VERSION, readOnly: true,
+    metadata: {...responseMetadata({schemaVersion: raw?.schema_version ?? API_SCHEMA_VERSION,
+      featureVersion: run?.feature_version ?? null, generatedAtMs: now,
+      inputCutoffMs: run ? (featureAge.status === "AGE_AVAILABLE" ? run.input_cutoff_ms : null)
+        : (healthAge(raw?.available_at_ms, now, "AVAILABLE_AT").status === "AGE_AVAILABLE" ? raw.available_at_ms : null),
+      observedAtMs: raw?.observed_at_ms ?? null, freshnessReferenceMs: now,
+      quality: run?.quality_ceiling ?? null,
+      pipelineStatus: raw?.pipeline_status ?? "NO_OBSERVATIONS"}), freshness: observationAge},
+    release: {serviceReleaseVersion: SERVICE_RELEASE_VERSION,
+      supportedFeatureVersion: SUPPORTED_FEATURE_VERSION, workerGitSha, deploymentId,
+      deploymentTag, deploymentTimestamp},
     nowMs: now, collectionHealth: raw ? raw.pipeline_status : "NO_OBSERVATIONS",
     latestObservation: raw ? {slotMs: raw.slot_ms, observedAtMs: raw.observed_at_ms,
-      ageMs: Math.max(0, now - raw.observed_at_ms), tradingDay: raw.trading_day,
+      ageMs: observationAge.age_ms, freshness: observationAge, tradingDay: raw.trading_day,
       schemaVersion: raw.schema_version, sourceErrors: quality?.sourceErrors || []} : null,
     latestFeatureRun: run ? {slotMs: run.slot_ms, featureVersion: run.feature_version,
       generationStatus: run.generation_status, qualityCeiling: run.quality_ceiling,
-      inputCutoffMs: run.input_cutoff_ms, generatedAtMs: run.generated_at_ms} : null,
-    storageGrowth: {scope: "LATEST_FIVE_TRADING_DAYS_JSON_ONLY",
-      observations: observationGrowth.rows, featureRuns: featureGrowth.rows},
+      inputCutoffMs: run.input_cutoff_ms, generatedAtMs: run.generated_at_ms,
+      freshness: featureAge} : null,
+    storageGrowth: includeGrowth ? {scope: "LATEST_FIVE_TRADING_DAYS_JSON_ONLY",
+      observations: observationGrowth.rows, featureRuns: featureGrowth.rows,
+      observationProjection: summarizeJsonGrowth(observationGrowth.rows, growthOptions),
+      featureRunProjection: summarizeJsonGrowth(featureGrowth.rows, growthOptions)} : {status: "NOT_REQUESTED"},
     queryMeta: {observation: observation.meta, feature: feature.meta,
-      observationGrowth: observationGrowth.meta, featureGrowth: featureGrowth.meta},
+      ...(includeGrowth ? {observationGrowth: observationGrowth.meta, featureGrowth: featureGrowth.meta} : {})},
     runtime: {...runtime, scope: "WORKER_ISOLATE_LIFETIME"},
-    limitations: ["JSON byte totals exclude SQLite pages, indexes and replication overhead",
-      "Failure count and rate limiting are per Worker isolate until provider-level observability/rate limiting is configured"]
+    limitations: ["Age is elapsed time only, not proof of live source data or verified exchange time",
+      "JSON byte totals exclude SQLite pages, indexes and replication overhead",
+      "Annual JSON projections exclude the current KST day; earlier sample completeness is not verified",
+      "Failure count is per Worker isolate; provider-level and isolate fallback rate limiting are configured"]
   };
 }
 
-async function state(db, cutoffMs) {
+async function state(db, cutoffMs, now, scope) {
   const result = await select(db, `SELECT slot_ms,observed_at_ms,available_at_ms,trading_day,schema_version,
     quality_version,pipeline_status,metrics_json,quality_json FROM market_observations
     WHERE available_at_ms <= ? ORDER BY slot_ms DESC LIMIT 1`, [cutoffMs]);
   if (!result.rows[0]) throw new ApiError(404, "STATE_NOT_FOUND");
-  return {apiSchemaVersion: API_SCHEMA_VERSION, inputCutoffMs: cutoffMs,
-    state: publicObservation(result.rows[0]), queryMeta: result.meta};
+  const row = result.rows[0];
+  const state = publicObservation(row, scope.metricPrefix);
+  return {apiSchemaVersion: API_SCHEMA_VERSION, inputCutoffMs: cutoffMs, scope: {ticker: scope.ticker},
+    metadata: responseMetadata({schemaVersion: row.schema_version, generatedAtMs: now,
+      inputCutoffMs: cutoffMs, observedAtMs: row.observed_at_ms,
+      freshnessReferenceMs: cutoffMs,
+      quality: state.quality?.dataQuality ?? state.quality ?? null, pipelineStatus: row.pipeline_status}),
+    state, queryMeta: result.meta};
 }
 
-async function features(db, url, cutoffMs) {
+async function features(db, url, cutoffMs, now, scope) {
   const featureVersion = boundedInteger(url.searchParams.get("featureVersion"), {
     name: "FEATURE_VERSION", minimum: SUPPORTED_FEATURE_VERSION, maximum: SUPPORTED_FEATURE_VERSION,
     fallback: SUPPORTED_FEATURE_VERSION
@@ -181,15 +284,21 @@ async function features(db, url, cutoffMs) {
   });
   const result = slotMs == null ?
     await select(db, `SELECT * FROM feature_runs WHERE feature_version = ? AND input_cutoff_ms <= ?
-      ORDER BY slot_ms DESC LIMIT 1`, [featureVersion, cutoffMs]) :
+      AND generated_at_ms <= ? ORDER BY slot_ms DESC LIMIT 1`, [featureVersion, cutoffMs, cutoffMs]) :
     await select(db, `SELECT * FROM feature_runs WHERE feature_version = ? AND slot_ms = ?
-      AND input_cutoff_ms <= ? LIMIT 1`, [featureVersion, slotMs, cutoffMs]);
+      AND input_cutoff_ms <= ? AND generated_at_ms <= ? LIMIT 1`, [featureVersion, slotMs, cutoffMs, cutoffMs]);
   if (!result.rows[0]) throw new ApiError(404, "FEATURES_NOT_FOUND");
-  return {apiSchemaVersion: API_SCHEMA_VERSION, inputCutoffMs: cutoffMs,
-    feature: publicFeature(result.rows[0]), queryMeta: result.meta};
+  const feature = publicFeature(result.rows[0]);
+  return {apiSchemaVersion: API_SCHEMA_VERSION, inputCutoffMs: cutoffMs, scope: {ticker: scope.ticker},
+    metadata: responseMetadata({schemaVersion: API_SCHEMA_VERSION, featureVersion: feature.featureVersion,
+      generatedAtMs: feature.generatedAtMs, inputCutoffMs: feature.inputCutoffMs,
+      observedAtMs: feature.observedAtMs, freshnessReferenceMs: cutoffMs,
+      quality: feature.qualityCeiling,
+      pipelineStatus: feature.generationStatus}),
+    feature, queryMeta: result.meta};
 }
 
-async function history(db, url, cutoffMs) {
+async function history(db, url, cutoffMs, now, scope) {
   const toMs = boundedInteger(url.searchParams.get("toMs"), {
     name: "TO", minimum: 1, maximum: cutoffMs, fallback: cutoffMs
   });
@@ -204,9 +313,54 @@ async function history(db, url, cutoffMs) {
     quality_version,pipeline_status,metrics_json,quality_json FROM market_observations
     WHERE observed_at_ms BETWEEN ? AND ? AND available_at_ms <= ?
     ORDER BY slot_ms DESC LIMIT ?`, [fromMs, toMs, cutoffMs, limit]);
-  const rows = result.rows.map(publicObservation).reverse();
-  return {apiSchemaVersion: API_SCHEMA_VERSION, inputCutoffMs: cutoffMs,
+  const rows = result.rows.map(row => publicObservation(row, scope.metricPrefix)).reverse();
+  const latest = rows.at(-1) || null;
+  return {apiSchemaVersion: API_SCHEMA_VERSION, inputCutoffMs: cutoffMs, scope: {ticker: scope.ticker},
+    metadata: responseMetadata({schemaVersion: latest?.schemaVersion ?? API_SCHEMA_VERSION,
+      generatedAtMs: now, inputCutoffMs: cutoffMs, observedAtMs: latest?.observedAtMs ?? null,
+      freshnessReferenceMs: cutoffMs,
+      quality: latest?.quality?.dataQuality ?? latest?.quality ?? null,
+      pipelineStatus: latest?.pipelineStatus ?? null}),
     range: {fromMs, toMs, limit, returned: rows.length}, rows, queryMeta: result.meta};
+}
+
+async function summary(db, url, cutoffMs, now, env) {
+  const allowed = new Set(["ticker", "cutoffMs", "maxObservationAgeMs", "maxFeatureAgeMs"]);
+  for (const key of url.searchParams.keys()) {
+    if (!allowed.has(key) || url.searchParams.getAll(key).length !== 1)
+      throw new ApiError(400, "INVALID_SUMMARY_QUERY");
+  }
+  const maxObservationAgeMs = boundedInteger(url.searchParams.get("maxObservationAgeMs"), {
+    name: "OBSERVATION_AGE", minimum: 0, maximum: 15 * 60 * 1000, fallback: null
+  });
+  const maxFeatureAgeMs = boundedInteger(url.searchParams.get("maxFeatureAgeMs"), {
+    name: "FEATURE_AGE", minimum: 0, maximum: 60 * 60 * 1000, fallback: null
+  });
+  if (maxObservationAgeMs == null || maxFeatureAgeMs == null)
+    throw new ApiError(400, "SUMMARY_AGE_POLICY_REQUIRED");
+  const scope = tickerScope(url);
+  const deadline = now + queryTimeoutMs(env);
+  const observation = await state(db, cutoffMs, now, scope);
+  if (Date.now() >= deadline) throw new ApiError(504, "QUERY_TIMEOUT");
+  let feature = null, featureReadStatus = "OK";
+  try {feature = await features(db, url, cutoffMs, now, scope);}
+  catch (error) {
+    if (error instanceof ApiError && error.code === "FEATURES_NOT_FOUND") featureReadStatus = "NOT_FOUND";
+    else {featureReadStatus = "FAILED"; runtime.failures++;}
+  }
+  const projected = buildPublicConsumerSummary({candidateState: observation, candidateFeatures: feature}, {
+    nowMs: cutoffMs, maxObservationAgeMs, maxFeatureAgeMs
+  });
+  const workerGitSha = /^[0-9a-f]{7,64}$/i.test(String(env.INTELLIGENCE_WORKER_GIT_SHA || "")) ?
+    env.INTELLIGENCE_WORKER_GIT_SHA : null;
+  return {...projected, generatedAtMs: now, apiSchemaVersion: API_SCHEMA_VERSION, readOnly: true,
+    evaluationReferenceMs: cutoffMs, scope: {ticker: scope.ticker},
+    // Implemented handler presence is not a deployment or scheduler validation claim.
+    integrationStatus: "ISOLATED_CANDIDATE_HANDLER_NOT_PRODUCTION_OR_SCHEDULER_VALIDATION",
+    release: {serviceReleaseVersion: SERVICE_RELEASE_VERSION, supportedFeatureVersion: SUPPORTED_FEATURE_VERSION, workerGitSha},
+    agePolicy: {maxObservationAgeMs, maxFeatureAgeMs},
+    featureRead: {status: featureReadStatus},
+    queryMeta: {observation: observation.queryMeta, feature: feature?.queryMeta ?? null}};
 }
 
 export default {
@@ -219,16 +373,20 @@ export default {
       rate = enforceRateLimit(request, env, now);
       runtime.requests++;
       const url = new URL(request.url);
+      const providerRate = await enforceProviderRateLimit(url, env);
       const cutoffMs = cutoffFrom(url, now);
-      let payload;
-      if (url.pathname === "/health") payload = await health(env.MARKET_HISTORY, now);
-      else if (url.pathname === "/state") payload = await state(env.MARKET_HISTORY, cutoffMs);
-      else if (url.pathname === "/features") payload = await features(env.MARKET_HISTORY, url, cutoffMs);
-      else if (url.pathname === "/history") payload = await history(env.MARKET_HISTORY, url, cutoffMs);
+      let operation;
+      if (url.pathname === "/health") operation = health(env.MARKET_HISTORY, now, env, url);
+      else if (url.pathname === "/summary") operation = summary(env.MARKET_HISTORY, url, cutoffMs, now, env);
+      else if (url.pathname === "/state") operation = state(env.MARKET_HISTORY, cutoffMs, now, tickerScope(url));
+      else if (url.pathname === "/features") operation = features(env.MARKET_HISTORY, url, cutoffMs, now, tickerScope(url));
+      else if (url.pathname === "/history") operation = history(env.MARKET_HISTORY, url, cutoffMs, now,
+        tickerScope(url, {required: true, allowAll: false}));
       else throw new ApiError(404, "NOT_FOUND");
+      const payload = await withDeadline(operation, queryTimeoutMs(env));
       return response(payload, 200, {
         "X-RateLimit-Limit": String(rate.limit), "X-RateLimit-Remaining": String(rate.remaining),
-        "X-RateLimit-Scope": rate.scope
+        "X-RateLimit-Scope": `${providerRate.scope}+${rate.scope}`
       });
     } catch (error) {
       if (error instanceof ApiError) return response({error: error.code}, error.status,
@@ -239,4 +397,3 @@ export default {
     }
   }
 };
-

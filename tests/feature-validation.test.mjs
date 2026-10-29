@@ -1,9 +1,19 @@
 import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import vm from 'node:vm';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
 const source=readFileSync(new URL('../cloudflare/feature-validation-worker.js',import.meta.url),'utf8');
+test('generated validator identifies the current relay source and embeds its feature core',()=>{
+ const relay=readFileSync(new URL('../cloudflare/market-relay-worker.js',import.meta.url),'utf8');
+ const digest=createHash('sha256').update(relay).digest('hex');
+ assert.equal(source.match(/const CANDIDATE_SHA256 = "([a-f0-9]{64})";/)?.[1],digest,
+  'Regenerate with node cloudflare/build-feature-validation.mjs before validation deployment');
+ const start=relay.indexOf('function usableHistoryMetric('),end=relay.indexOf('async function persistMarketHistory(');
+ assert.ok(start>=0&&end>start,'Feature core extraction boundaries must remain valid');
+ assert.ok(source.includes(relay.slice(start,end)),'Validator must embed the current feature core');
+});
 function worker(){
  const ctx=vm.createContext({console,Date,Request,Response,TextEncoder,Set,URL});
  vm.runInContext(source.replace('export default {','const worker = {'),ctx);

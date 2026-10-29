@@ -6,6 +6,10 @@ D1 History MVP stores immutable two-minute observations and computes past-only 5
 
 ## Feature Engine 2.0 candidate
 
+Derived window/source-aligned metrics retain the weakest quality of historical inputs actually used. Scheduled estimate buckets remain UNVERIFIED_TIME; a LIVE current sample cannot upgrade an unverified baseline. Existing combinedFeatureQuality and downstream Signal2 confidence ceilings are reused. Numeric formulas, Feature2/Signal2 versions and compact encoding are unchanged.
+
+Realized volatility includes the explicit current observation exactly once, with identical results whether that row is already in query history. RSS log-return formula, percent units and quality filtering remain unchanged. The existing generated validator is rebuilt from the relay source. These source corrections do not establish a deployed/runtime result.
+
 The candidate keeps latest-snapshot `schemaVersion: 3` and raw history schema version 1. Production
 `market_observations.features_json` remains v1. Candidate v2 output uses the additive `feature_runs` table after explicit write opt-in; no backfill
 rewrites existing rows. Three distinct real rows were persisted and verified, then the candidate
