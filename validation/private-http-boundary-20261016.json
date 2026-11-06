@@ -1,0 +1,28 @@
+{
+  "timestampKst": "2026-10-16T19:37:55+09:00",
+  "parentSha": "678c7c5b611d1e6040cd14315eec2c061ac81be3",
+  "status": "LOCAL_TESTED_NOT_DEPLOYED",
+  "scope": "FICTIONAL_LOCAL_REQUEST_RESPONSE_STREAM_SQLITE",
+  "sourceSha256": {
+    "private/input-request.mjs": "d42b3446bce10d0a74bbfbef8e48f0a9936964812bff3559a9f1fdd4d463004e",
+    "private/input-adapter.mjs": "016c6c374ea4136c52636af6f7805e9b630343d1ef3ffc16426d1d220d67b275",
+    "private/http-boundary.mjs": "1009341a335f37f1d47f01dfe9d7ac53288c7534db05009f1a8b1e4aff5d2791",
+    "tests/private-http-boundary.test.mjs": "54b1b10e935dad07c0b8ad4fa4127f7d9d09aa3ca77b4246ad377ed9f772af69",
+    "tests/private-storage-adapter.test.mjs": "fb4dbd2dd0e11bd0e0f508bead345fdc7890ca1a29321e13635bd6c1becc5173"
+  },
+  "tests": {
+    "http": 17,
+    "adapter": 22,
+    "totalTargeted": 39,
+    "failed": 0,
+    "fullRegressionForThisSource": false
+  },
+  "writeTimeout": "UNKNOWN_NOT_CANCELLATION_OR_ROLLBACK_PROOF",
+  "automaticRetry": false,
+  "providerAccessOrRateValidation": false,
+  "actualPersonalData": false,
+  "remoteResourcesChanged": false,
+  "productionImpact": "NONE",
+  "blocked": "PRIVATE_ADMIN_ACCOUNT_SELECTION_AND_MANAGEMENT_ACCESS_REQUIRED",
+  "nextExactStep": "SAVED_ANALYSIS_FIXED_SELECT_READER_AND_FRESHNESS_PROJECTION"
+}

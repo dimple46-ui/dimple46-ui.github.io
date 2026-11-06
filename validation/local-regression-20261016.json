@@ -1,0 +1,26 @@
+{
+  "validatedAtKst": "2026-10-16T12:04:17+09:00",
+  "codeSha": "b9e7adfa0d8f3310f4ffc7606d3a5b27a1dc5f8d",
+  "validationType": "LOCAL_REGRESSION",
+  "runtime": "Node v24.19.0",
+  "command": "node --test tests/*.test.mjs",
+  "tests": 107,
+  "pass": 107,
+  "fail": 0,
+  "skipped": 0,
+  "cancelled": 0,
+  "sourceIdentity": {
+    "matchedGitBlobs": 35,
+    "paths": [
+      "cloudflare/",
+      "scripts/",
+      "tests/",
+      "migrations/"
+    ],
+    "mismatches": 0
+  },
+  "remoteCi": "NOT_RUN",
+  "deployment": "NOT_PERFORMED",
+  "liveValidation": "NOT_PERFORMED",
+  "productionImpact": "NONE"
+}
