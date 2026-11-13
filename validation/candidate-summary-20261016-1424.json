@@ -1,0 +1,78 @@
+{
+  "recordSchemaVersion": 1,
+  "validatedAtKst": "2026-10-16T14:24:17.466+09:00",
+  "codeSha": "c62ec46cdc1161b3f98d72c0ed1257aad1da400c",
+  "build": {
+    "status": "PASS",
+    "evidence": "PROVIDER_BUILD_CHECK",
+    "repository": "dimple46-ui/dimple46-ui.github.io",
+    "sha": "c62ec46cdc1161b3f98d72c0ed1257aad1da400c",
+    "checkRunId": 116826182160,
+    "conclusion": "success",
+    "runtimeValidation": "PENDING",
+    "deployment": "NOT_PERFORMED_BY_CHECKER"
+  },
+  "authenticatedSmoke": {
+    "status": "PASS",
+    "kind": "intelligence",
+    "validation": "AUTHENTICATED_READ_ONLY_SMOKE",
+    "runtimeReportedSha": "c62ec46cdc1161b3f98d72c0ed1257aad1da400c",
+    "deploymentId": "a573fe53-e437-4df6-87b7-295c7754cd8c",
+    "identityEvidence": "RUNTIME_REPORTED_SHA_NOT_PROVIDER_CODE_ATTESTATION",
+    "healthQueryCount": 2,
+    "featureAge": {
+      "age_ms": 777927690,
+      "basis": "AS_OF_MINUS_FEATURE_INPUT_CUTOFF",
+      "status": "AGE_AVAILABLE"
+    },
+    "storageGrowthStatus": "NOT_REQUESTED",
+    "collectionHealth": "OK",
+    "latestObservation": 1792128166644,
+    "featureVersion": 2,
+    "featureInputCutoff": 1791350328109,
+    "quality": "STALE_INPUT",
+    "freshness": {
+      "age_ms": 89498,
+      "basis": "AS_OF_MINUS_OBSERVED_AT"
+    },
+    "summary": {
+      "status": "PARTIAL",
+      "serviceReleaseVersion": 3,
+      "runtimeReportedSha": "c62ec46cdc1161b3f98d72c0ed1257aad1da400c",
+      "evaluationReferenceMs": 1792128255597,
+      "observationAgeMs": 88953,
+      "featureAgeMs": 777927488,
+      "featureInputCutoffMs": 1791350328109,
+      "featureStatus": "UNAVAILABLE",
+      "featureQuality": "STALE_INPUT",
+      "pipelineStatus": "OK",
+      "sourceQuality": "REPORTED_ISSUES",
+      "d1Writes": 0,
+      "privateCapabilities": "UNAVAILABLE",
+      "scope": "AUTHENTICATED_CANDIDATE_NOT_PRODUCTION_OR_SCHEDULER"
+    },
+    "d1Writes": 0,
+    "liveMarketGate": "UNCHANGED",
+    "deployment": "NOT_PERFORMED"
+  },
+  "ci": {
+    "fullRunId": 38855556255,
+    "fullJobId": 116826090523,
+    "tests": 157,
+    "pass": 157,
+    "conclusion": "success",
+    "candidateRunId": 38855552812,
+    "remoteJobId": 116826119392,
+    "conclusionRemote": "success",
+    "validator": "skipped",
+    "providerAudit": "skipped"
+  },
+  "artifact": {
+    "id": 12026807174,
+    "url": "https://github.com/dimple46-ui/dimple46-ui.github.io/actions/runs/38855552812/artifacts/12026807174",
+    "sha256": "cfc10ec5370f0900d80e3bfbdc2329676be91e208fc750645f5eff25ffd0c882"
+  },
+  "scope": "ISOLATED_CANDIDATE_ONLY_NOT_PRODUCTION_OR_SCHEDULER",
+  "productionImpact": "NO_PRODUCTION_MUTATION",
+  "currentLiveGates": "UNCHANGED"
+}

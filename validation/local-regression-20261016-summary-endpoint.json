@@ -1,0 +1,32 @@
+{
+  "validatedAtKst": "2026-10-16T14:03:11.939017+09:00",
+  "validationType": "LOCAL_ISOLATED_CANDIDATE_HANDLER",
+  "parentSha": "94c515c44040acdc8617a4ef854f10e74b98ee55",
+  "changedFilesSha256": {
+    "cloudflare/intelligence-read-worker.mjs": "a79b1a31ccb6ab9bd5c0b8a30f5905c9c621b77ef254d2d80f49e1aa37051c51",
+    "tests/intelligence-read.test.mjs": "46a47519cce50dd530de56f7ba50b1a870f853c6d821a6de8914b898f04f43ca",
+    "tests/intelligence-summary.test.mjs": "ddc8073c90398e0e28624991cd6d13847ea388ac3a80985d19375118e822b43a",
+    "tests/public-module-boundary.test.mjs": "8afddd183f9d8cb7ad2f4e5f8d4197518807e310ea9b646bb41bab57f4c725f5"
+  },
+  "initialRelated": {
+    "tests": 17,
+    "pass": 17,
+    "scope": "before added deadline test/import-graph extension"
+  },
+  "finalFull": {
+    "tests": 149,
+    "pass": 149,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "newSummaryTestsInFinalSuite": 6,
+  "auth": "LOCAL_MOCKED_CREDENTIAL",
+  "d1": "LOCAL_SELECT_ONLY_FIXTURES",
+  "maxQueriesPerSummary": 2,
+  "serviceReleaseVersion": 3,
+  "apiSchemaVersion": 1,
+  "remoteCi": "NOT_RUN",
+  "deployment": "NOT_PERFORMED",
+  "productionImpact": "NONE"
+}

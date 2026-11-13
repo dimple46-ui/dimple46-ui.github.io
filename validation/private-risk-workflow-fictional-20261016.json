@@ -1,0 +1,28 @@
+{
+  "recordSchemaVersion": 1,
+  "validatedAtKst": "2026-10-16T15:34:22+09:00",
+  "scope": "LOCAL_FICTIONAL_CORRECTNESS_ONLY",
+  "deployment": "NOT_PERFORMED",
+  "actualPersonalData": "NOT_USED",
+  "notificationDelivery": "NOT_CONNECTED",
+  "fullRegression": {
+    "command": "node --test tests/*.test.mjs",
+    "status": "PASS",
+    "tests": 221,
+    "pass": 221,
+    "fail": 0,
+    "skipped": 0,
+    "logSha256": "11a02b85bff72aea54aa34bc34f6ade9088240260adcfafc9c304a6012ca912e"
+  },
+  "sourceSha256": {
+    "domain/private-risk-workflow.mjs": "195b5cf42cc1d2e6e12daf27e0e5878797ad2396de733ee463966a2c95a104e1",
+    "tests/private-risk-workflow.test.mjs": "957a356b19c3e4f7cfa9074283316466aa2d734ce552555d33a7074b39bab6dc",
+    "domain/cash-risk-events.mjs": "e4e27dad373c6bc64aac04ce9e1a55ac756f18cab385a203884af7ab0c6da304",
+    "domain/risk-event-lifecycle.mjs": "a3e004774677a3ea4dc19306c5bd387d3701ccbcb580b2e26c1fda9c2304f421",
+    "domain/cash-deadline-contract.mjs": "f4566534fc124987072c2dc4299ec3dd9b9aff2de7c7b086ed4174a488f07e91",
+    "domain/private-risk-summary.mjs": "5e786b98fa0b0a8bf1528d7016e41b4900e6d8559ede807f5f461de1a8c44206"
+  },
+  "candidateRuntimeUnchanged": "c62ec46cdc1161b3f98d72c0ed1257aad1da400c",
+  "liveMarketGates": "UNCHANGED",
+  "sourceParentSha": "19dadac6bc89d01cfe8cd1b741561b013ba8483a"
+}

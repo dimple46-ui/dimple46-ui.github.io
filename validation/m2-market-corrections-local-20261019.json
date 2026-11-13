@@ -1,0 +1,33 @@
+{
+  "scope": "ISOLATED_EXISTING_M2_BASE_CANDIDATE_PREPARATION",
+  "base_sha": "6ef8dfcdba2af7148a085c8026100d3ac184b2bf",
+  "origin_integration_code_sha": "dd75510f6d02aa3c5ca3625ae41d1f70eee10138",
+  "base_materialization": {
+    "files_verified_by_git_blob": 136,
+    "matching_active_files": 110,
+    "matching_original_git_objects": 26,
+    "missing": 0
+  },
+  "source_scope": "Four existing public modules and four relevant tests copied byte-for-byte from validated integration source. Existing M2 docs receive relevant corrections only.",
+  "full": {
+    "tests": 326,
+    "pass": 326,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0
+  },
+  "integration_evidence_separate": {
+    "tests": 462,
+    "pass": 462,
+    "ci_run": 39205782937
+  },
+  "relay_source_sha256": "f21b700675c8ca0cb312b79db65af559dafdef09e896cbbeb953677bdfdb5d2a",
+  "runtime": "Node24.19.0; real local SQLite with shipped migrations",
+  "compatibility": "Feature2/Signal2/API versions and encoding retained; scheduled/historical quality conservative, saved cutoffs and current-sample inclusion corrected.",
+  "deployment": "NOT_PERFORMED_APPROVAL_REQUIRED",
+  "boundaries": [
+    "No actual research/private approval/financial input",
+    "No main/Production/Secret/Access/Watch change",
+    "Existing candidate Builds only; no new deployer"
+  ]
+}

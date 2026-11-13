@@ -1,0 +1,40 @@
+{
+  "timestampKst": "2026-10-16T17:17:18+09:00",
+  "parentSha": "bdee968ffbcb4ecd59a746580daf97c6beaa7102",
+  "source": "CONTAINING_COMMIT_WITH_EXACT_FILE_MANIFEST",
+  "status": "LOCAL_TESTED_NOT_DEPLOYED",
+  "scope": "FICTIONAL_OFFLINE_ONLY",
+  "sourceSha256": {
+    "private/storage-contract.mjs": "12b68f204406e80a7989057ea67ea62c0004fb9a9f55da6a22599e37be343411",
+    "private/transaction-store.mjs": "b999633b3d14be46a9089b9e094a167b3acd4077980bfa7c7c1d3964021b7376",
+    "private/input-adapter.mjs": "18c1c01120ab21c1f53c3c84abfa1674089a2c4e01d00b29abc8fd20e5e0ee47",
+    "private/envelope-crypto.mjs": "49ea12ffeb71ef8edf8e4f429fc7f021df19eee2df41ff6c797ffd0e12341c6c",
+    "private/access-identity.mjs": "3bcc04034b1d8b071f99954fa9d5c6e6fea10723d283cbc9328e3d07583777cc",
+    "tests/private-storage-adapter.test.mjs": "0bbeda591c64cd42636f16ea80db4cf4e24310dbf2d173b4bff18c015e4332c0",
+    "tests/private-envelope-crypto.test.mjs": "7a79122d23b8f9919ca0a3c68a9eb10130de23ebf5ee642a321189f47c721317",
+    "tests/private-access-identity.test.mjs": "127449ebeb7c56566af843d268d579c583623c5bc54c205bf5bae717d59b460b"
+  },
+  "tests": {
+    "command": "node --test tests/*.test.mjs",
+    "total": 262,
+    "passed": 262,
+    "failed": 0,
+    "adapter": 21,
+    "envelope": 7,
+    "identity": "LOCALLY_SIGNED_FICTIONAL_JWT",
+    "regressionLogSha256": "649163089a2b87032e7c7cdf5e0e12098beb273d8875f46279f4df39b4b629ac",
+    "storage": "MEMORY_SQLITE",
+    "keys": "EPHEMERAL_NON_EXTRACTABLE_TEST_KEYS"
+  },
+  "deployment": "NOT_PERFORMED",
+  "runtimeSecretsCreated": false,
+  "resourcesProvisioned": false,
+  "actualPersonalData": false,
+  "productionImpact": "NONE",
+  "existingPublicCandidate": "c62ec46cdc1161b3f98d72c0ed1257aad1da400c",
+  "providerValidation": false,
+  "durableNonceAllocation": false,
+  "realAccessAuthentication": false,
+  "liveGates": "UNCHANGED",
+  "nextExactStep": "PRIVATE_RESOURCE_SCOPE_APPROVAL_AND_ACCOUNT_ACCESS_BEFORE_PROVIDER_PROVISIONING"
+}

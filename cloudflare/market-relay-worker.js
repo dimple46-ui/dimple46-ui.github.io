@@ -1054,6 +1054,34 @@ function usableHistoryMetric(metric, atMs) {
 function decodeHistoryRow(row) {
   return {...row, metrics: row.metrics ?? JSON.parse(row.metrics_json), quality: row.quality ?? JSON.parse(row.quality_json)};
 }
+function sourceAlignedProgramWindow(field,current,rows,minutes) {
+  const metric=current.metrics[field],currentSourceMs=Date.parse(metric?.marketTime);
+  if(!usableHistoryMetric(metric,current.observed_at_ms)||!Number.isFinite(currentSourceMs)) return null;
+  const bySource=new Map();
+  for(const row of [...rows,current]){
+    const candidate=row.metrics[field],sourceMs=Date.parse(candidate?.marketTime);
+    if(!Number.isFinite(sourceMs)||sourceMs>currentSourceMs||!usableHistoryMetric(candidate,row.observed_at_ms)) continue;
+    bySource.set(sourceMs,{sourceMs,value:candidate.value,quality:featureMetricQuality(candidate)});
+  }
+  const points=[...bySource.values()].sort((a,b)=>a.sourceMs-b.sourceMs);
+  const atTarget=target=>points.filter(point=>point.sourceMs<=target&&target-point.sourceMs<=SAME_TIME_TOLERANCE_MS).at(-1);
+  const baseline=atTarget(currentSourceMs-minutes*60000);
+  if(!baseline) return null;
+  const earlier=atTarget(currentSourceMs-minutes*120000);
+  const currentMinutes=(currentSourceMs-baseline.sourceMs)/60000;
+  const delta=metric.value-baseline.value;
+  let acceleration=null;
+  if(earlier&&currentMinutes>0){
+    const previousMinutes=(baseline.sourceMs-earlier.sourceMs)/60000;
+    if(previousMinutes>0) acceleration=delta/currentMinutes-(baseline.value-earlier.value)/previousMinutes;
+  }
+  const currentQuality={quality:featureMetricQuality(metric)};
+  return {delta,acceleration,sampleCount:earlier?3:2,
+    deltaQuality:combinedFeatureQuality(currentQuality,baseline),
+    accelerationQuality:combinedFeatureQuality(currentQuality,baseline,earlier),
+    sourceElapsedSeconds:(currentSourceMs-baseline.sourceMs)/1000,
+    previousSourceElapsedSeconds:earlier?(baseline.sourceMs-earlier.sourceMs)/1000:null};
+}
 // Keep the production persistence contract on Feature v1 unless a controlled rollout explicitly opts in.
 // Feature v2 is validated by the separate candidate Worker and must not silently replace v1 rows.
 function featureEngineV2Enabled(env) {
@@ -1144,7 +1172,8 @@ function historyFeaturesV1(current, rawRows) {
 function featureMetricQuality(metric) {
   if (!metric || metric.value == null || !Number.isFinite(metric.value)) return "MISSING_INPUT";
   if (["STALE", "STALE_BUCKET"].includes(metric.status)) return "STALE_INPUT";
-  if (metric.status === "RECENT_FETCH") return "UNVERIFIED_TIME";
+  if (metric.status === "RECENT_FETCH" ||
+      (metric.status === "CURRENT_BUCKET" && metric.timeBasis === "SOURCE_SCHEDULED_BUCKET")) return "UNVERIFIED_TIME";
   return ["LIVE", "CURRENT_BUCKET"].includes(metric.status) ? "VERIFIED" : "UNUSABLE_INPUT";
 }
 function featureValue(value=null,status="INSUFFICIENT_HISTORY",sampleCount=0,quality="UNKNOWN",extra={}) {
@@ -1157,6 +1186,9 @@ function combinedFeatureQuality(...items) {
   if(qualities.includes("UNUSABLE_INPUT")) return "UNUSABLE_INPUT";
   if(qualities.includes("UNVERIFIED_TIME")) return "UNVERIFIED_TIME";
   return qualities.length&&qualities.every(value=>value==="VERIFIED") ? "VERIFIED" : "UNKNOWN";
+}
+function combinedHistoryMetricQuality(...metrics) {
+  return combinedFeatureQuality(...metrics.map(metric=>({quality:featureMetricQuality(metric)})));
 }
 function average(values) { return values.reduce((sum,value)=>sum+value,0)/values.length; }
 function median(values) {
@@ -1258,6 +1290,7 @@ function historyFeatures(current, rawRows, rawSameTimeRows=[]) {
         result.status = "UNUSABLE_DATA";
         if (usableHistoryMetric(metric,now) && usableHistoryMetric(old,baseline.observed_at_ms)) {
           result.status = "OK";
+          result.quality = combinedHistoryMetricQuality(metric,old);
           const bucket = name.endsWith("Flow");
           const isFuture = name.startsWith("futures.");
           if (isFuture && (!current.quality.futuresCode || current.quality.futuresCode !== baseline.quality.futuresCode)) {
@@ -1287,6 +1320,12 @@ function historyFeatures(current, rawRows, rawSameTimeRows=[]) {
       }
       window.metrics[name]=result;
     }
+    const alignedProgram={};
+    for(const field of ["program.arbitrageNet","program.nonArbitrageNet","program.totalNet"]){
+      const aligned=sourceAlignedProgramWindow(field,current,rows,minutes);alignedProgram[field]=aligned;
+      if(aligned) window.metrics[field]=featureValue(aligned.delta,"OK",2,aligned.deltaQuality,
+        {timeBasis:current.metrics[field].timeBasis,sourceElapsedSeconds:aligned.sourceElapsedSeconds});
+    }
     // Acceleration is change in shares/minute across two actual sampled windows.
     const previousTarget = baseline ? baseline.observed_at_ms-minutes*60000 : null;
     const earlier = baseline ? rows.filter(r => r.observed_at_ms<=previousTarget && previousTarget-r.observed_at_ms<=150000).at(-1) : null;
@@ -1300,7 +1339,7 @@ function historyFeatures(current, rawRows, rawSameTimeRows=[]) {
         {unit:"shares_per_minute_change"});
       if (baseline && earlier && usableHistoryMetric(metric,now) && usableHistoryMetric(old,baseline.observed_at_ms) && usableHistoryMetric(prev,earlier.observed_at_ms)) {
         const d1=metric.value-old.value,d0=old.value-prev.value;
-        if(d1>=0 && d0>=0){result.value=d1/((now-baseline.observed_at_ms)/60000)-d0/((baseline.observed_at_ms-earlier.observed_at_ms)/60000);result.status="OK";}
+        if(d1>=0 && d0>=0){result.value=d1/((now-baseline.observed_at_ms)/60000)-d0/((baseline.observed_at_ms-earlier.observed_at_ms)/60000);result.status="OK";result.quality=combinedHistoryMetricQuality(metric,old,prev);}
         else result.status="COUNTER_RESET";
       }
       window.volumeAcceleration[name]=result;
@@ -1308,17 +1347,20 @@ function historyFeatures(current, rawRows, rawSameTimeRows=[]) {
       window.volumeRate[name]=featureValue(volumeDelta?.value!=null&&window.actualElapsedSeconds>0?
         volumeDelta.value/(window.actualElapsedSeconds/60):null,volumeDelta?.status??"INSUFFICIENT_HISTORY",
         volumeDelta?.sampleCount??0,volumeDelta?.quality??"UNKNOWN",{unit:"shares_per_minute"});
-      const priceField=`${name}.price`,series=baseline?rows.filter(row=>row.observed_at_ms>=baseline.observed_at_ms)
-        .filter(row=>usableHistoryMetric(row.metrics[priceField],row.observed_at_ms)).map(row=>row.metrics[priceField].value):[];
+      const priceField=`${name}.price`,priceRows=baseline?[...rows.filter(row=>row.observed_at_ms>=baseline.observed_at_ms&&row.observed_at_ms<now),current]
+        .filter(row=>usableHistoryMetric(row.metrics[priceField],row.observed_at_ms)):[];
+      const series=priceRows.map(row=>row.metrics[priceField].value);
       const returns=[];for(let i=1;i<series.length;i++) if(series[i-1]>0&&series[i]>0) returns.push(Math.log(series[i]/series[i-1])*100);
       window.realizedVolatility[name]=featureValue(returns.length?Math.sqrt(returns.reduce((sum,value)=>sum+value**2,0)):null,
-        returns.length?"OK":"INSUFFICIENT_HISTORY",returns.length,featureMetricQuality(current.metrics[priceField]),{unit:"log_return_rss_percent"});
+        returns.length?"OK":"INSUFFICIENT_HISTORY",returns.length,returns.length?
+          combinedHistoryMetricQuality(...priceRows.map(row=>row.metrics[priceField])):featureMetricQuality(current.metrics[priceField]),{unit:"log_return_rss_percent"});
       const currentReturn=window.metrics[priceField],oldPrice=baseline?.metrics[priceField],previousPrice=earlier?.metrics[priceField];
       let acceleration=null,status="INSUFFICIENT_HISTORY";
       if(currentReturn?.status==="OK"&&usableHistoryMetric(oldPrice,baseline.observed_at_ms)&&usableHistoryMetric(previousPrice,earlier?.observed_at_ms)&&previousPrice.value>0){
         acceleration=currentReturn.value-(oldPrice.value/previousPrice.value-1)*100;status="OK";
       }
-      window.momentumAcceleration[name]=featureValue(acceleration,status,acceleration==null?0:3,featureMetricQuality(current.metrics[priceField]),{unit:"percentage_points"});
+      window.momentumAcceleration[name]=featureValue(acceleration,status,acceleration==null?0:3,acceleration==null?
+        featureMetricQuality(current.metrics[priceField]):combinedHistoryMetricQuality(current.metrics[priceField],oldPrice,previousPrice),{unit:"percentage_points"});
     }
     window.acceleration={};
     window.direction={};
@@ -1327,7 +1369,9 @@ function historyFeatures(current, rawRows, rawSameTimeRows=[]) {
       "futures.individualNet","futures.openInterest"]){
       const currentDelta=window.metrics[field],old=baseline?.metrics[field],previous=earlier?.metrics[field];
       let value=null,status="INSUFFICIENT_HISTORY";
-      if(currentDelta?.status==="OK"&&usableHistoryMetric(old,baseline?.observed_at_ms)&&
+      const aligned=alignedProgram[field];
+      if(aligned?.acceleration!=null){value=aligned.acceleration;status="OK";}
+      else if(currentDelta?.status==="OK"&&usableHistoryMetric(old,baseline?.observed_at_ms)&&
         usableHistoryMetric(previous,earlier?.observed_at_ms)){
         const currentMinutes=(now-baseline.observed_at_ms)/60000;
         const previousMinutes=(baseline.observed_at_ms-earlier.observed_at_ms)/60000;
@@ -1335,8 +1379,10 @@ function historyFeatures(current, rawRows, rawSameTimeRows=[]) {
           value=currentDelta.value/currentMinutes-(old.value-previous.value)/previousMinutes;status="OK";
         }
       }
-      window.acceleration[field]=featureValue(value,status,value==null?0:3,featureMetricQuality(current.metrics[field]),
-        {unit:"value_per_minute_change"});
+      window.acceleration[field]=featureValue(value,status,value==null?0:3,aligned?.acceleration!=null?aligned.accelerationQuality:
+        value==null?featureMetricQuality(current.metrics[field]):combinedHistoryMetricQuality(current.metrics[field],old,previous),
+        {unit:"value_per_minute_change",...(aligned?.acceleration!=null?{
+          sourceElapsedSeconds:aligned.sourceElapsedSeconds,previousSourceElapsedSeconds:aligned.previousSourceElapsedSeconds}: {})});
       window.direction[field]={state:currentDelta?.value==null?null:currentDelta.value>0?"INCREASING":
         currentDelta.value<0?"DECREASING":"UNCHANGED",status:currentDelta?.status??"INSUFFICIENT_HISTORY",
         quality:currentDelta?.quality??"UNKNOWN"};
@@ -1383,7 +1429,10 @@ function historyFeatures(current, rawRows, rawSameTimeRows=[]) {
       const stockVolume=current.metrics[`${name}.volume`];
       bucketChanges[name][field]={value,status:!validCurrent?featureMetricQuality(metric):sameBucket?"BUCKET_UNCHANGED":
         previous?"BUCKET_DELTA":"INSUFFICIENT_BUCKET_HISTORY",unit:"shares",sampleCount:value==null?0:2,
-        quality:featureMetricQuality(metric),direction:value==null?null:value>0?"INCREASING":value<0?"DECREASING":"UNCHANGED",
+        quality:value==null?featureMetricQuality(metric):combinedHistoryMetricQuality(metric,previous.metrics[key],
+          ...(priorDelta!=null?[previousPrevious.metrics[key]]:[]),
+          ...(usableHistoryMetric(stockVolume,now)&&stockVolume.value>0?[stockVolume]:[])),
+        direction:value==null?null:value>0?"INCREASING":value<0?"DECREASING":"UNCHANGED",
         acceleration:value!=null&&priorDelta!=null?value-priorDelta:null,
         accelerationStatus:value!=null&&priorDelta!=null?"VALID":"INSUFFICIENT_BUCKET_HISTORY",
         shareOfVolumePct:value!=null&&usableHistoryMetric(stockVolume,now)&&stockVolume.value>0?value/stockVolume.value*100:null,
@@ -1397,7 +1446,8 @@ function historyFeatures(current, rawRows, rawSameTimeRows=[]) {
     const key=`${name}.price`,metric=current.metrics[key],first=firstRow?.metrics?.[key];
     intraday.returns[name]=featureValue(usableHistoryMetric(metric,now)&&usableHistoryMetric(first,firstRow?.observed_at_ms)&&first.value>0?
       (metric.value/first.value-1)*100:null,usableHistoryMetric(metric,now)&&usableHistoryMetric(first,firstRow?.observed_at_ms)&&first.value>0?"OK":"INSUFFICIENT_HISTORY",
-      firstRow?2:1,featureMetricQuality(metric),{unit:"percent",baselineAt:firstRow?new Date(firstRow.observed_at_ms).toISOString():null});
+      firstRow?2:1,usableHistoryMetric(metric,now)&&usableHistoryMetric(first,firstRow?.observed_at_ms)&&first.value>0?
+        combinedHistoryMetricQuality(metric,first):featureMetricQuality(metric),{unit:"percent",baselineAt:firstRow?new Date(firstRow.observed_at_ms).toISOString():null});
   }
   for(const [a,b] of [["samsung","skHynix"],["samsung","kospi"],["skHynix","kospi"],["samsung","kospi200"],["skHynix","kospi200"]]){
     const av=intraday.returns[a],bv=intraday.returns[b];intraday.relativeStrength[`${a}_vs_${b}`]=featureValue(

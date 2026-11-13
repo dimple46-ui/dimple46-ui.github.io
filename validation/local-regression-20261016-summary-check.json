@@ -1,0 +1,29 @@
+{
+  "validatedAtKst": "2026-10-16T14:10:07.772888+09:00",
+  "parentSha": "3baffb358d97c32332a7e5dc4ef94491ae5eb69e",
+  "changedFilesSha256": {
+    "scripts/check-candidate.mjs": "05df97f0feca657f8f1e3b177bd3075e0f7a3a69f18644ef6af07ec57220639e",
+    "tests/candidate-summary-check.test.mjs": "c5695301399cfce9b0277bfe22b775df93ce8f06e425aae5bb901eb1cea29758",
+    "tests/candidate-automation.test.mjs": "9b0c34729a0a477107b43ab286d0c461237734d0e0d1cc1ce1a0bfcceb722b5a",
+    ".github/workflows/candidate-check.yml": "3bc3efe2e98d2acca50ddfe8664a1b8add4a706d4850f69813e9bf9d9948bdd6"
+  },
+  "validationType": "LOCAL_SUMMARY_CHECKER_AND_WORKFLOW",
+  "initialTargeted": {
+    "tests": 17,
+    "pass": 17
+  },
+  "full": {
+    "tests": 154,
+    "pass": 154,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "finalWorkflowTargeted": {
+    "tests": 22,
+    "pass": 22
+  },
+  "remoteValidation": "PENDING_ACTUAL_CI_RECEIPT",
+  "candidateDeployment": "NOT_YET_VERIFIED",
+  "productionImpact": "NONE"
+}

@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 3,
+  "koreaDate": "20261016",
+  "relayUpdatedAt": "2026-10-16T02:28:46.739Z",
+  "pipelineStatus": "DEGRADED",
+  "sourceErrors": [],
+  "stockFlowEstimates": {
+    "samsung": {
+      "source": "KIS_OPEN_API",
+      "isEstimate": true,
+      "stockCode": "005930",
+      "businessDate": "20261016",
+      "scheduledBucket": "1120",
+      "fetchedAt": "2026-10-16T02:26:46.092Z",
+      "latest": {
+        "bucket": "3",
+        "inputTimeKst": "11:20",
+        "foreignNetBuyQty": -684000,
+        "institutionNetBuyQty": -108000,
+        "combinedNetBuyQty": -792000
+      },
+      "rows": [
+        {
+          "bucket": "1",
+          "inputTimeKst": "09:30",
+          "foreignNetBuyQty": -916000,
+          "institutionNetBuyQty": 0,
+          "combinedNetBuyQty": -916000
+        },
+        {
+          "bucket": "2",
+          "inputTimeKst": "10:00",
+          "foreignNetBuyQty": -865000,
+          "institutionNetBuyQty": 111000,
+          "combinedNetBuyQty": -754000
+        },
+        {
+          "bucket": "3",
+          "inputTimeKst": "11:20",
+          "foreignNetBuyQty": -684000,
+          "institutionNetBuyQty": -108000,
+          "combinedNetBuyQty": -792000
+        }
+      ]
+    },
+    "skHynix": {
+      "source": "KIS_OPEN_API",
+      "isEstimate": true,
+      "stockCode": "000660",
+      "businessDate": "20261016",
+      "scheduledBucket": "1120",
+      "fetchedAt": "2026-10-16T02:26:46.099Z",
+      "latest": {
+        "bucket": "3",
+        "inputTimeKst": "11:20",
+        "foreignNetBuyQty": -448000,
+        "institutionNetBuyQty": -27000,
+        "combinedNetBuyQty": -475000
+      },
+      "rows": [
+        {
+          "bucket": "1",
+          "inputTimeKst": "09:30",
+          "foreignNetBuyQty": -146000,
+          "institutionNetBuyQty": 0,
+          "combinedNetBuyQty": -146000
+        },
+        {
+          "bucket": "2",
+          "inputTimeKst": "10:00",
+          "foreignNetBuyQty": -291000,
+          "institutionNetBuyQty": 58000,
+          "combinedNetBuyQty": -233000
+        },
+        {
+          "bucket": "3",
+          "inputTimeKst": "11:20",
+          "foreignNetBuyQty": -448000,
+          "institutionNetBuyQty": -27000,
+          "combinedNetBuyQty": -475000
+        }
+      ]
+    }
+  },
+  "dataMeta": {
+    "stockFlowEstimates": {
+      "samsung": {
+        "source": "KIS_OPEN_API",
+        "marketTime": "2026-10-16T02:20:00.000Z",
+        "fetchedAt": "2026-10-16T02:26:46.092Z",
+        "sourceAgeSeconds": 527,
+        "status": "CURRENT_BUCKET",
+        "timeBasis": "SOURCE_SCHEDULED_BUCKET",
+        "maxAgeSeconds": null,
+        "marketAgeSeconds": 527,
+        "fetchAgeSeconds": 121,
+        "hasValue": true
+      },
+      "skHynix": {
+        "source": "KIS_OPEN_API",
+        "marketTime": "2026-10-16T02:20:00.000Z",
+        "fetchedAt": "2026-10-16T02:26:46.099Z",
+        "sourceAgeSeconds": 527,
+        "status": "CURRENT_BUCKET",
+        "timeBasis": "SOURCE_SCHEDULED_BUCKET",
+        "maxAgeSeconds": null,
+        "marketAgeSeconds": 527,
+        "fetchAgeSeconds": 121,
+        "hasValue": true
+      }
+    }
+  }
+}

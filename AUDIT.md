@@ -1,5 +1,20 @@
 # Relay audit — 2026-10-01 KST
 
+> Historical audit. Its 2026-10-01 observations are retained for traceability and are not the current
+> system state. Current evidence is in `PROJECT_STATUS.md` and `RESUME.md`.
+
+## Superseding status — 2026-10-08 KST
+
+- PR #2 D1 History is merged and production-validated; `market_observations` continues accumulating.
+- PR #3 Feature Engine 2.0 is merged to GitHub main, while the deployed production Cloudflare relay
+  intentionally remains the PR #2 baseline. Merge and production deployment are separate states.
+- PR #4 remains Draft/Open. Its isolated authenticated read-only candidate is deployed with bounded
+  `/health`, `/state`, `/features` and `/history`; no production route or mutation handler exists.
+- Exact candidate release SHA, multiple live snapshot-equivalence checks, real third-bucket Feature
+  acceleration and live-input descriptive Signal confidence ceilings are validated.
+- Continuous production Feature v2 persistence, retention deletion, reduced GitHub publication cadence
+  and production candidate routing are not enabled or authorized.
+
 ## Verified evidence
 - Inspected main at 7cd48b7; latest snapshot 2026-09-30 20:00:06 KST, schemaVersion 3, sourceErrors empty.
 - Both stocks, estimates (14:30 bucket), futures, OI, basis and investor groups are present. This confirms the stored snapshot, not today's live trading.
