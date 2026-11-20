@@ -44,4 +44,9 @@ retention monitoring. Same-day
 reads are capped at 331 rows; same-time reads are bounded to the latest 20 stored trading days.
 See `FEATURE_STORAGE.md` for the alternatives, schema, rollback and observability gates.
 
-Cloudflare limits and pricing can change, and the existing account plan/usage is unknown. Check the current account dashboard before relying on any capacity estimate. No automatic deletion is implemented. Worker CPU limits and `ctx.waitUntil` lifetime must be validated in the candidate. R2 archival and daily compaction remain future work, not a promised zero-cost unlimited history.
+The read-only health sample at 2026-10-08 13:38 KST measured five trading days of raw-observation
+JSON at an average 5,316,252.6 bytes/day and a 250-trading-day projection of 1,329,063,150 bytes.
+This excludes SQLite pages, indexes and replication overhead. Compact Feature growth has only three
+controlled rows from one trading day, so continuous Feature v2 storage growth remains unmeasured.
+
+Cloudflare limits and pricing can change, and the existing account plan/usage is unknown. Check the current account dashboard before relying on any capacity estimate. No automatic deletion is implemented. Provider CPU percentiles were captured for the Feature validator, but long-running D1 provider-byte growth still requires at least 20 trading days of measurement. R2 archival and daily compaction remain future work, not a promised zero-cost unlimited history.
