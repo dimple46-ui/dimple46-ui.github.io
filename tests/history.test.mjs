@@ -70,6 +70,31 @@ test('real SQLite migration and 21 distinct observations produce past-only featu
  console.log('Measured JSON bytes per row:',Buffer.byteLength(last.metrics_json)+Buffer.byteLength(last.quality_json)+Buffer.byteLength(last.features_json));
  }finally{s.db.close();}
 });
+test('program acceleration aligns distinct source times without using observations after the current cutoff',async()=>{
+ const s=setup();try{
+  const programPoint=(observedMinute,sourceMinute,total,status='LIVE')=>{
+   const p=sample(observedMinute),sourceAt=new Date(start+sourceMinute*60000).toISOString();
+   p.program={arbitrageNet:0,nonArbitrageNet:total,totalNet:total};
+   p.dataMeta.program={status,marketTime:sourceAt,fetchedAt:p.relayUpdatedAt,timeBasis:'SOURCE_MARKET_TIME'};
+   return p;
+  };
+  await put(s,2,programPoint(2,0,0));
+  await put(s,10.7,programPoint(10.7,0,0,'STALE'));
+  await put(s,12.8,programPoint(12.8,10,100));
+  await put(s,20.7,programPoint(20.7,10,100,'STALE'));
+  await put(s,22.7,programPoint(22.7,20,150));
+  const f=JSON.parse(s.db.prepare('SELECT features_json FROM market_observations ORDER BY slot_ms DESC LIMIT 1').get().features_json);
+  const window=f.windows['10m'];
+  assert.equal(window.metrics['program.totalNet'].value,50);
+  assert.equal(window.metrics['program.totalNet'].status,'OK');
+  assert.equal(window.metrics['program.totalNet'].sourceElapsedSeconds,600);
+  assert.equal(window.acceleration['program.totalNet'].value,-5);
+  assert.equal(window.acceleration['program.totalNet'].status,'OK');
+  assert.equal(window.acceleration['program.totalNet'].sourceElapsedSeconds,600);
+  assert.equal(window.acceleration['program.totalNet'].previousSourceElapsedSeconds,600);
+  assert.equal(window.acceleration['program.totalNet'].sampleCount,3);
+ }finally{s.db.close();}
+});
 test('same two-minute slot is immutable and retries do not duplicate',async()=>{
  const s=setup();try{await put(s,2);const before=s.db.prepare('SELECT metrics_json FROM market_observations').get().metrics_json;
  await put(s,3);assert.equal(s.db.prepare('SELECT COUNT(*) AS n FROM market_observations').get().n,1);

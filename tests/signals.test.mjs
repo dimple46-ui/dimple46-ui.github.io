@@ -15,7 +15,7 @@ function fixture(){
    cashVsFutures:{state:'CASH_UP_FUTURES_DOWN',status:'VALID',quality:'UNVERIFIED_TIME',strength:1,
     supportingEvidence:[{metric:'cash',value:1},{metric:'futures',value:-1}],contraryEvidence:[]}}};
  return {version:2,inputCutoff:cutoff,
-  bucketChanges:{samsung:{foreignFlow:metric(100,{status:'BUCKET_DELTA',acceleration:150}),
+  bucketChanges:{samsung:{foreignFlow:metric(100,{status:'BUCKET_DELTA',acceleration:50}),
     institutionFlow:metric(20,{status:'BUCKET_DELTA',acceleration:50})},
    skHynix:{foreignFlow:metric(-100,{status:'BUCKET_DELTA',acceleration:40}),
     institutionFlow:metric(0,{status:'BUCKET_UNCHANGED',acceleration:null})}},
@@ -36,9 +36,9 @@ test('descriptive signals cover flow acceleration, reversal, program, futures, r
 
 test('signal schema is reproducible and carries evidence, invalidation and versions',()=>{
  const signal=generated().find(value=>value.signal_type==='FOREIGN_BUYING_ACCELERATING');
- assert.equal(signal.signal_id,`s1:${cutoff}:005930:BUCKET:FOREIGN_BUYING_ACCELERATING`);
+ assert.equal(signal.signal_id,`s2:${cutoff}:005930:BUCKET:FOREIGN_BUYING_ACCELERATING`);
  assert.equal(signal.input_cutoff,cutoff);assert.equal(signal.generated_at,generatedAt);
- assert.equal(signal.feature_version,2);assert.equal(signal.signal_version,1);assert.equal(signal.engine_git_sha,sha);
+ assert.equal(signal.feature_version,2);assert.equal(signal.signal_version,2);assert.equal(signal.engine_git_sha,sha);
  assert.ok(signal.supporting_evidence.length>=2);assert.ok(signal.invalidation.length>=1);
  assert.match(signal.confidence.meaning,/NOT_PREDICTIVE_PROBABILITY/);
 });
@@ -58,6 +58,18 @@ test('stale, null and unchanged inputs do not create false zero-flow signals',()
  assert.equal(signals.length,0);
 });
 
+test('foreign reversal and institution acceleration are mutually exclusive per flow bucket',()=>{
+ const features=fixture();
+ features.bucketChanges.samsung.foreignFlow=metric(40,{status:'BUCKET_DELTA',acceleration:100});
+ features.bucketChanges.samsung.institutionFlow=metric(100,{status:'BUCKET_DELTA',acceleration:40});
+ features.bucketChanges.skHynix.institutionFlow=metric(-100,{status:'BUCKET_DELTA',acceleration:-40});
+ const signals=generated(features).filter(value=>value.horizon==='BUCKET');
+ assert.ok(signals.some(value=>value.ticker==='005930'&&value.signal_type==='FOREIGN_FLOW_REVERSAL'));
+ assert.ok(signals.some(value=>value.ticker==='005930'&&value.signal_type==='INSTITUTION_BUYING_ACCELERATING'));
+ assert.ok(signals.some(value=>value.ticker==='000660'&&value.signal_type==='INSTITUTION_SELLING_ACCELERATING'));
+ assert.equal(signals.filter(value=>value.ticker==='005930'&&value.signal_type.startsWith('FOREIGN_')).length,1);
+});
+
 test('futures classifications preserve contrary evidence and remain descriptive',()=>{
  const features=fixture();
  features.windows['5m'].futuresPosition.contraryEvidence=[{metric:'futures.basis',value:-1,reason:'OPPOSES_PRICE_DIRECTION'}];
@@ -73,3 +85,63 @@ test('invalid feature versions, engine revisions and times are rejected',()=>{
  assert.throws(()=>generateDescriptiveSignals(fixture(),{engineGitSha:sha,generatedAt:'2026-10-07T02:00:00Z'}),/INVALID_SIGNAL_TIME/);
 });
 
+
+test('nonfinite stock-flow acceleration and overflow cannot create reversal evidence',()=>{
+ for(const stock of ['samsung','skHynix']) for(const flow of ['foreignFlow','institutionFlow']) {
+  for(const acceleration of [NaN,Infinity,-Infinity,null,'50']) {
+   const features={version:2,inputCutoff:cutoff,bucketChanges:{[stock]:{[flow]:metric(100,{status:'BUCKET_DELTA',acceleration})}}};
+   assert.deepEqual(generated(features),[]);
+  }
+  const overflow={version:2,inputCutoff:cutoff,bucketChanges:{[stock]:{[flow]:metric(Number.MAX_VALUE,{status:'BUCKET_DELTA',acceleration:-Number.MAX_VALUE})}}};
+  assert.deepEqual(generated(overflow),[]);
+ }
+});
+
+test('stale categorical futures and divergence never become active low-confidence signals',()=>{
+ for(const quality of ['STALE_INPUT','MISSING_INPUT','UNUSABLE_INPUT']) {
+  const features=fixture();
+  for(const window of Object.values(features.windows)) {
+   window.futuresPosition.quality=quality;
+   for(const divergence of Object.values(window.divergences)) divergence.quality=quality;
+  }
+  const types=generated(features).map(signal=>signal.signal_type);
+  assert.ok(!types.some(type=>type.startsWith('OI_')||type.startsWith('FUTURES_')||type.includes('DIVERGENCE')));
+  assert.ok(types.includes('PROGRAM_BUYING_ACCELERATING'));
+ }
+ const recent=fixture();
+ recent.windows['5m'].futuresPosition.quality='UNVERIFIED_TIME';
+ const signal=generated(recent).find(signal=>signal.horizon==='5m'&&signal.signal_type==='OI_NEW_LONG_CANDIDATE');
+ assert.equal(signal.confidence.ceiling,'MEDIUM');
+ assert.equal(signal.data_quality.ceiling,'UNVERIFIED_TIME');
+});
+
+test('relative-strength subtraction overflow emits no signal or nonfinite evidence',()=>{
+ const features={version:2,inputCutoff:cutoff,windows:{'5m':{momentumAcceleration:{
+  samsung:metric(Number.MAX_VALUE),skHynix:metric(-Number.MAX_VALUE)}}}};
+ assert.deepEqual(generated(features),[]);
+ features.windows['5m'].momentumAcceleration={samsung:metric(2),skHynix:metric(-1)};
+ assert.equal(generated(features)[0].signal_type,'RELATIVE_STRENGTH_IMPROVING');
+});
+
+test('abnormal volume requires a finite percentile in range or finite z-score without coercion',()=>{
+ for(const stock of ['samsung','skHynix']) {
+  const ticker=stock==='samsung'?'005930':'000660';
+  const make=(percentile,zScore,value=100)=>({version:2,inputCutoff:cutoff,
+   sameTimeHistorical:{windows:{'5d':{metrics:{[`${stock}.volume`]:metric(value,{status:'VALID',percentile,zScore})}}}}});
+  for(const invalid of [NaN,Infinity,-Infinity,null,undefined,'99',true]) {
+   assert.deepEqual(generated(make(invalid,null)),[]);
+   assert.deepEqual(generated(make(null,invalid)),[]);
+  }
+  for(const invalid of [-1,101]) assert.deepEqual(generated(make(invalid,null)),[]);
+  assert.deepEqual(generated(make(94.9,1.99)),[]);
+  assert.deepEqual(generated(make(99,3,-1)),[]);
+  for(const [percentile,zScore] of [[95,null],[null,2],[Infinity,2],[95,Infinity]]) {
+   const signal=generated(make(percentile,zScore))[0];
+   assert.equal(signal.ticker,ticker);assert.equal(signal.signal_type,'ABNORMAL_VOLUME');
+   assert.ok(signal.supporting_evidence.every(e=>e.value===null||Number.isFinite(e.value)));
+   const evidence=Object.fromEntries(signal.supporting_evidence.map(e=>[e.metric,e.value]));
+   if(!Number.isFinite(percentile))assert.equal(evidence.sameTimePercentile,null);
+   if(!Number.isFinite(zScore))assert.equal(evidence.sameTimeZScore,null);
+  }
+ }
+});
